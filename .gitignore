@@ -1,0 +1,8 @@
+.llm/
+.spago/
+output/
+dist/index.js
+node_modules/
+.psci_modules/
+WIP.md
+result
