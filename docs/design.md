@@ -16,6 +16,34 @@ verified via Merkle proofs before being presented to the user.
 
 ## Trust Model
 
+### What the User Needs
+
+To use the application, a user provides exactly three inputs:
+
+1. **Token ID** — published by the oracle (token owner) alongside
+   the schema. The oracle is responsible for making this public.
+2. **MPFS API URL** — the address of any MPFS off-chain service.
+   This is **untrusted** — it is just a data pipe.
+3. **Institutional UTXO Merkle root source** — a trusted party
+   (e.g. Cardano Foundation) that publishes the current UTXO
+   Merkle tree root.
+
+Everything else is provable. The MPFS service is **obligated** to
+provide proofs for anything it claims — if it lies or withholds
+data, the proofs won't verify and the user knows immediately.
+
+### The Oracle's Responsibility
+
+The oracle (token owner) publishes:
+
+- The **token ID** — identifies the cage on-chain
+- The **schema** — describes how to interpret facts
+- The **schema hash** is stored as a fact in the trie itself
+
+By publishing the token ID, the oracle gives users the entry
+point to independently verify everything: the cage UTxO, the
+trie root, the schema hash, and every fact.
+
 ### The Verification Chain
 
 The application verifies facts through a four-layer chain, where
@@ -47,9 +75,26 @@ client-side using cryptographic proofs and a single trusted root.
 
 ### What the User Trusts
 
+- The oracle's published token ID (explicit, public)
 - The institutional root publisher (explicit, auditable)
 - The browser (runs the verification code)
-- Nothing else — not the MPFS off-chain service, not the API
+- **Nothing else** — not the MPFS off-chain service, not the API
+
+### The MPFS Service Obligation
+
+The off-chain service is untrusted but has a clear contract: for
+any data it holds that is committed to the Merkle tree, it
+**must** provide the corresponding proof. The user can always
+verify:
+
+- Is this fact actually in the trie? (MPF proof)
+- Does this trie root match what's on-chain? (cage UTxO)
+- Does this cage UTxO actually exist? (CSMT proof)
+- Is the UTXO set root authentic? (institutional root)
+
+If any link breaks, the user sees it. The service cannot
+selectively lie — it either provides valid proofs or the
+verification fails visibly.
 
 ## Schema-Driven Fact Rendering
 
@@ -60,26 +105,27 @@ will be structured data (JSON-LD, CBOR, etc.) but the trie is
 format-agnostic. The frontend needs to know how to interpret
 and render the bytes.
 
-### Schema Discovery via Facts
+### Schema Discovery
 
-The schema itself is a fact in the trie. The token owner publishes
-the schema at a well-known key and stores the schema's hash as
-a fact:
+The oracle publishes the token ID and the schema together. The
+schema's hash is stored as a fact in the trie, so the trust chain
+applies to the schema itself — a bogus schema would fail hash
+verification.
 
 ```mermaid
 sequenceDiagram
+    participant O as Oracle
     participant U as User/Frontend
     participant API as MPFS API
-    participant S as Schema Source
+
+    Note over O: Publishes: token ID + schema
+
+    U->>U: Receive token ID and schema from oracle
 
     U->>API: GET /tokens/:id/facts/__schema__
     API-->>U: schema_hash + MPF proof
 
     U->>U: Verify MPF proof against cage root
-
-    U->>S: Fetch schema (URL, IPFS, on-chain)
-    S-->>U: Schema document
-
     U->>U: Hash schema, compare with fact
     U->>U: Schema verified ✓
 
@@ -91,9 +137,9 @@ sequenceDiagram
     U->>U: Render structured fact to user
 ```
 
-The trust chain applies to the schema too — a bogus schema would
-fail hash verification. The schema is as trustworthy as any other
-fact in the trie.
+The schema is as trustworthy as any other fact in the trie. If
+the oracle updates the schema, the hash fact is updated too, and
+the frontend detects the change on next verification.
 
 ### Schema Content
 
