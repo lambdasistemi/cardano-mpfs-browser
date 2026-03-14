@@ -25,7 +25,7 @@
             packages = [
               pkgs.purs
               pkgs.spago-unstable
-              pkgs.purs-tidy-0_10_0
+              pkgs.purs-tidy-bin.purs-tidy-0_10_0
               pkgs.purescript-language-server
               pkgs.esbuild
               pkgs.nodejs_20
