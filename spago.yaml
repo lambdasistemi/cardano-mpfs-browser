@@ -20,15 +20,12 @@ package:
     - transformers
     - ordered-collections
     - console
-
-workspace:
-  package_set:
-    registry: 72.1.0
-  build_opts:
-    output: output
-  extra_packages: {}
   bundle:
     module: Main
     outfile: dist/index.js
     platform: browser
-    minify: true
+    type: app
+
+workspace:
+  packageSet:
+    registry: 72.1.0
