@@ -1,0 +1,34 @@
+package:
+  name: mpfs-explorer
+  dependencies:
+    - prelude
+    - effect
+    - aff
+    - halogen
+    - fetch
+    - argonaut
+    - argonaut-codecs
+    - argonaut-core
+    - either
+    - maybe
+    - arrays
+    - strings
+    - web-html
+    - web-dom
+    - tuples
+    - foldable-traversable
+    - transformers
+    - ordered-collections
+    - console
+
+workspace:
+  package_set:
+    registry: 72.1.0
+  build_opts:
+    output: output
+  extra_packages: {}
+  bundle:
+    module: Main
+    outfile: dist/index.js
+    platform: browser
+    minify: true
