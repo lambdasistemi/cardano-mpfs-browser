@@ -1,7 +1,7 @@
-site_name: MPFS Explorer
-site_url: https://lambdasistemi.github.io/mpfs-explorer/
-repo_url: https://github.com/lambdasistemi/mpfs-explorer
-repo_name: lambdasistemi/mpfs-explorer
+site_name: Cardano MPFS Browser
+site_url: https://lambdasistemi.github.io/cardano-mpfs-browser/
+repo_url: https://github.com/lambdasistemi/cardano-mpfs-browser
+repo_name: lambdasistemi/cardano-mpfs-browser
 
 theme:
   name: material
