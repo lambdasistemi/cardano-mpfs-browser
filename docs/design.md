@@ -387,11 +387,21 @@ sequenceDiagram
     FE->>API: POST /tx/request/insert {token, key, value, address}
     API-->>FE: unsigned tx (CBOR hex)
 
-    FE->>FE: Decode CBOR transaction
-    FE->>FE: Parse MPFS semantics from tx body
+    FE->>FE: Decode CBOR, extract TxIns
 
-    FE->>U: Display: "This transaction will:"
-    Note over FE,U: • Insert key "X" with value "Y"<br/>• Into token T<br/>• Fee: 1.5 ADA<br/>• Your address: addr1...
+    loop For each TxIn
+        FE->>API: GET /utxo/:txin
+        API-->>FE: TxOut (datum, value, address)
+        FE->>API: GET /utxo/:txin/proof
+        API-->>FE: CSMT inclusion proof
+        FE->>FE: Verify TxIn exists in UTXO set
+    end
+
+    FE->>FE: Parse MPFS semantics from tx body
+    FE->>FE: Render resolved inputs with proof status
+
+    FE->>U: Display verified transaction
+    Note over FE,U: Inputs (verified on-chain):<br/>• Cage UTxO root=abc... ✓<br/>Operation:<br/>• Insert key "X" = value "Y"<br/>• Fee: 1.5 ADA
 
     U->>FE: "Approve"
     FE->>W: api.signTx(unsignedTx)
@@ -402,24 +412,58 @@ sequenceDiagram
     FE->>U: "Submitted: tx abc123..."
 ```
 
-### What the Frontend Decodes
+### Input Resolution and Verification
 
-From the unsigned CBOR transaction, the frontend extracts and
-displays:
+The unsigned transaction contains TxIns — references to UTxOs
+being spent. Raw TxIns are opaque hashes. The client **resolves**
+each TxIn to its full TxOut content and **verifies** it exists
+in the UTXO set via a CSMT proof.
+
+```mermaid
+graph LR
+    subgraph "Unsigned Tx"
+        TI1["TxIn #1<br/>(hash)"]
+        TI2["TxIn #2<br/>(hash)"]
+    end
+
+    subgraph "Resolved + Verified"
+        TO1["TxOut #1<br/>cage UTxO<br/>root: abc...<br/>value: 5 ADA<br/>✓ CSMT proof"]
+        TO2["TxOut #2<br/>user UTxO<br/>addr: addr1...<br/>value: 10 ADA<br/>✓ CSMT proof"]
+    end
+
+    TI1 -->|"GET /utxo/:txin<br/>+ proof"| TO1
+    TI2 -->|"GET /utxo/:txin<br/>+ proof"| TO2
+```
+
+This is critical: without resolving and verifying inputs, the
+user cannot know what the transaction actually spends. The API
+could claim a TxIn points to one UTxO while the transaction
+actually consumes another. The CSMT proof makes this impossible
+— each input is independently proven to exist in the UTXO set.
+
+### What the Frontend Displays
+
+From the decoded transaction and resolved inputs, the frontend
+presents:
 
 | Field | Source | Display |
 |-------|--------|---------|
+| **Inputs** | TxIns, resolved via API | Full TxOut content with CSMT proof status |
+| Cage UTxO | Input datum | Trie root, owner, config — verified on-chain |
 | Operation | Redeemer (Contribute/Modify/Mint) | "Insert", "Delete", "Update", "Boot", "Retract", "End" |
 | Token | Asset name in tx outputs | Token identifier |
 | Key | Request datum field | Decoded via verified schema |
 | Value | Request datum field | Decoded via verified schema |
 | Fee | Tx fee field | ADA amount |
 | Address | Tx output addresses | Bech32, highlighted if user's |
-| Inputs consumed | Tx inputs | Which UTxOs are spent |
 
 If the schema is verified, the key and value are rendered in
 structured form. Otherwise they are shown as hex with a warning
 that no verified schema is available.
+
+Every input carries a proof indicator. If any input cannot be
+verified, the UI warns prominently — the user should not sign
+a transaction with unverified inputs.
 
 ### Transaction Signing State Machine
 
