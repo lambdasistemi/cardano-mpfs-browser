@@ -61,26 +61,26 @@ decoded transactions, and proof verification. The consumer
 supplies the "decide" step — a human in the browser, business
 logic in an agent, a prompt in a CLI.
 
-```
-┌─────────────────────────────────────────────┐
-│           MPFS Client Library (JS)          │
-│                                             │
-│  Inputs: token ID, schema, API URL, root    │
-│                                             │
-│  ┌──────────┐ ┌───────────┐ ┌────────────┐ │
-│  │  Verify  │→│ Interpret │→│  Expose    │ │
-│  │  proofs  │ │  schema   │ │  verified  │ │
-│  │          │ │           │ │  data      │ │
-│  └──────────┘ └───────────┘ └─────┬──────┘ │
-└───────────────────────────────────┼────────┘
-                                    │
-             ┌──────────────────────┼──────┐
-             │                      ▼      │
-             │  Consumer supplies "decide" │
-             │  • Browser: show to human   │
-             │  • Agent: apply logic       │
-             │  • CLI: print to terminal   │
-             └─────────────────────────────┘
+```mermaid
+graph TB
+    subgraph "MPFS Client Library"
+        IN["Inputs<br/>token ID, schema,<br/>API URL, root source"]
+        V["Verify<br/>check proofs"]
+        I["Interpret<br/>apply schema"]
+        E["Expose<br/>verified data +<br/>decoded transactions"]
+
+        IN --> V --> I --> E
+    end
+
+    subgraph "Consumer (the decide step)"
+        B["Browser<br/>show to human"]
+        A["Agent<br/>apply logic"]
+        C["CLI<br/>print to terminal"]
+    end
+
+    E --> B
+    E --> A
+    E --> C
 ```
 
 Beyond JavaScript, we are committed to providing the same
@@ -109,6 +109,34 @@ The browser serves two purposes:
    human-readable MPFS semantics before signing
 
 ## Trust Model
+
+### System Context
+
+```mermaid
+graph TB
+    subgraph "Trusted"
+        User["Human User"]
+        Browser["MPFS Browser<br/>(this application)"]
+        Wallet["CIP-30 Wallet<br/>(Nami, Eternl, Lace)"]
+    end
+
+    subgraph "Untrusted"
+        API["MPFS Off-Chain API<br/>(data pipe)"]
+        Node["Cardano Node<br/>(behind API)"]
+    end
+
+    subgraph "Trust Anchors"
+        Oracle["Oracle<br/>(publishes token ID +<br/>schema)"]
+        Inst["Institutional Party<br/>(publishes UTXO<br/>Merkle root)"]
+    end
+
+    Oracle -->|"token ID + schema"| User
+    Inst -->|"UTXO root"| Browser
+    User <-->|"view facts,<br/>approve txs"| Browser
+    Browser <-->|"query facts,<br/>get proofs,<br/>build txs"| API
+    Browser <-->|"sign txs"| Wallet
+    API <--> Node
+```
 
 ### What the User Needs
 
@@ -256,6 +284,31 @@ schema is stable (changing it means changing fact encoding). View
 templates evolve freely — new views can be added without touching
 the schema or existing facts.
 
+```mermaid
+graph TB
+    subgraph "Trie (hashed facts)"
+        S["__schema__<br/>hash of schema"]
+        V1["__view/summary__<br/>hash of summary template"]
+        V2["__view/detail__<br/>hash of detail template"]
+        V3["__view/ops__<br/>hash of operations template"]
+        F1["fact-key-1<br/>raw bytes"]
+        F2["fact-key-2<br/>raw bytes"]
+    end
+
+    subgraph "Rendering Pipeline"
+        D["Decode<br/>schema → structured data"]
+        R["Render<br/>view template → display"]
+    end
+
+    S -.->|"verified"| D
+    F1 --> D
+    F2 --> D
+    V1 -.->|"verified"| R
+    V2 -.->|"verified"| R
+    V3 -.->|"verified"| R
+    D --> R
+```
+
 ### Multiple Views
 
 A token can have multiple view templates, each hashed as a
@@ -278,6 +331,29 @@ better ways to present the data, submit templates, and the oracle
 curates them. Complex applications can ship multiple views for
 different roles or workflows without changing the underlying
 data.
+
+### View Template Lifecycle
+
+```mermaid
+sequenceDiagram
+    participant C as Community
+    participant O as Oracle
+    participant T as Trie
+    participant B as Browser
+
+    C->>O: Propose new view template
+    O->>O: Review template
+    O->>T: Insert __view/proposed__ = hash
+    T-->>O: MPF proof
+
+    B->>T: GET __view/* (discover views)
+    T-->>B: list of view template hashes
+
+    B->>B: Fetch templates, verify hashes
+    B->>B: User selects view
+
+    Note over B: Same facts, different<br/>rendering — verified
+```
 
 ### Schema Format
 
@@ -344,6 +420,37 @@ displays:
 If the schema is verified, the key and value are rendered in
 structured form. Otherwise they are shown as hex with a warning
 that no verified schema is available.
+
+### Transaction Signing State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> SelectOperation: user chooses action
+    SelectOperation --> BuildingTx: submit parameters
+    BuildingTx --> TxReceived: API returns unsigned CBOR
+
+    TxReceived --> Decoding: parse CBOR
+    Decoding --> Decoded: extract MPFS semantics
+    Decoding --> DecodeFailed: malformed or unexpected
+
+    Decoded --> ReviewPending: display to user
+    ReviewPending --> Approved: user approves
+    ReviewPending --> Rejected: user rejects
+
+    Approved --> Signing: CIP-30 signTx
+    Signing --> Signed: wallet returns signature
+    Signing --> SignFailed: wallet refused
+
+    Signed --> Submitting: POST /tx/submit
+    Submitting --> Submitted: TxId received
+    Submitting --> SubmitFailed: submission error
+
+    Rejected --> [*]
+    DecodeFailed --> [*]
+    SignFailed --> [*]
+    SubmitFailed --> [*]
+    Submitted --> [*]
+```
 
 ### Why the Server Doesn't Matter
 
@@ -488,6 +595,39 @@ Expandable panel showing the full verification chain:
 - Cage UTxO details (TxIn, datum, value)
 - MPF proof steps (trie path)
 - Final verdict: fully verified / partially verified / unverified
+
+### Fact Verification State Machine
+
+Each fact goes through a verification pipeline. The UI reflects
+the current state with visual indicators:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Fetching: query fact
+    Fetching --> ProofReceived: API returns bytes + proof
+
+    ProofReceived --> MPFValid: MPF proof valid
+    ProofReceived --> MPFFailed: MPF proof invalid
+
+    MPFValid --> CageVerified: cage UTxO exists (CSMT proof)
+    MPFValid --> CageUnverified: no CSMT proof available
+
+    CageVerified --> FullyVerified: root matches institutional
+    CageVerified --> PartiallyVerified: no institutional root
+
+    CageUnverified --> PartiallyVerified
+
+    FullyVerified --> [*]
+    PartiallyVerified --> [*]
+    MPFFailed --> [*]
+```
+
+| State | UI Indicator | Meaning |
+|-------|-------------|---------|
+| Fetching | Spinner | Awaiting API response |
+| MPF Failed | Red | Fact proof invalid — data cannot be trusted |
+| Partially Verified | Yellow | Fact is in trie, but chain anchor incomplete |
+| Fully Verified | Green | Complete proof chain from fact to institutional root |
 
 ## Institutional Root Sources
 
