@@ -1,0 +1,25 @@
+site_name: MPFS Explorer
+site_url: https://lambdasistemi.github.io/mpfs-explorer/
+repo_url: https://github.com/lambdasistemi/mpfs-explorer
+repo_name: lambdasistemi/mpfs-explorer
+
+theme:
+  name: material
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+
+nav:
+  - Home: index.md
+  - Design: design.md
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_mermaid_format
+  - tables
+  - admonition
