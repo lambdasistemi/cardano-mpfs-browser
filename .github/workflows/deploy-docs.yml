@@ -20,8 +20,8 @@ jobs:
           name: paolino
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       - name: Generate speech annotations
-        run: nix develop github:paolino/dev-assets?dir=mkdocs --quiet -c mkdocs-speech docs
+        run: nix develop github:paolino/dev-assets/a549585?dir=mkdocs --quiet -c mkdocs-speech docs
       - name: Build docs
-        run: nix develop github:paolino/dev-assets?dir=mkdocs --quiet -c mkdocs build --strict
+        run: nix develop github:paolino/dev-assets/a549585?dir=mkdocs --quiet -c mkdocs build --strict
       - name: Deploy docs
-        run: nix develop github:paolino/dev-assets?dir=mkdocs --quiet -c mkdocs gh-deploy --force
+        run: nix develop github:paolino/dev-assets/a549585?dir=mkdocs --quiet -c mkdocs gh-deploy --force
