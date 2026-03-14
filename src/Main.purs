@@ -9,5 +9,5 @@ import App as App
 
 main :: Effect Unit
 main = HA.runHalogenAff do
-    body <- HA.awaitBody
-    runUI App.component unit body
+  body <- HA.awaitBody
+  runUI App.component unit body
