@@ -358,6 +358,40 @@ The frontend does **not** use `api.submitTx()` — submission goes
 through the MPFS API which handles chain submission via its node
 connection.
 
+## State Persistence
+
+The entire application state is serialized to localStorage. If the
+browser tab closes — accidentally or intentionally — reopening
+restores the exact same view: same token, same fact, same pending
+transaction, same wallet connection.
+
+### What Lives Where
+
+| Storage | Content | Purpose |
+|---------|---------|---------|
+| URL hash | Navigation: token, fact key, current page | Bookmarkable, shareable |
+| localStorage | Session config: API URL, root source, connected wallet, verified schemas, view state | Survives tab close |
+
+### URL Structure
+
+```
+#/token/abc123                    → token detail
+#/token/abc123/facts              → fact list
+#/token/abc123/facts/mykey        → fact detail + proof
+#/token/abc123/tx/insert          → build insert tx
+```
+
+### Recovery Guarantee
+
+The app serializes its full state to localStorage on every state
+change. On load, it reads localStorage first, then the URL hash.
+The result: Ctrl+W → reopen → identical view. No re-entry of API
+URL, no wallet reconnection prompt, no lost context.
+
+This is critical for the trust boundary role: the user must
+always be able to see where they are in a verification or
+signing flow, even after an interruption.
+
 ## Application Structure
 
 ### Pages
