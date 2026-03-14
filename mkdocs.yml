@@ -23,3 +23,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
   - tables
   - admonition
+
+extra_javascript:
+  - https://unpkg.com/mermaid@11/dist/mermaid.min.js
+  - js/mermaid-init.js
