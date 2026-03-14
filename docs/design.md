@@ -45,6 +45,57 @@ real MPFS client. Any domain-specific application built on MPFS
 replicates this same structure, adding domain logic on top of
 verified facts.
 
+### MPFS Client Libraries
+
+The verify–interpret–decide machinery is not application-specific.
+It belongs in a library that any MPFS application can consume.
+This repository produces two artifacts:
+
+1. **The browser app** — the SPA, a consumer of the library
+2. **The JS client library** — published to npm, usable by any
+   JavaScript/TypeScript application (browser or Node.js)
+
+The library takes the three user inputs (token ID, schema, API
+URL + institutional root source) and exposes verified facts,
+decoded transactions, and proof verification. The consumer
+supplies the "decide" step — a human in the browser, business
+logic in an agent, a prompt in a CLI.
+
+```
+┌─────────────────────────────────────────────┐
+│           MPFS Client Library (JS)          │
+│                                             │
+│  Inputs: token ID, schema, API URL, root    │
+│                                             │
+│  ┌──────────┐ ┌───────────┐ ┌────────────┐ │
+│  │  Verify  │→│ Interpret │→│  Expose    │ │
+│  │  proofs  │ │  schema   │ │  verified  │ │
+│  │          │ │           │ │  data      │ │
+│  └──────────┘ └───────────┘ └─────┬──────┘ │
+└───────────────────────────────────┼────────┘
+                                    │
+             ┌──────────────────────┼──────┐
+             │                      ▼      │
+             │  Consumer supplies "decide" │
+             │  • Browser: show to human   │
+             │  • Agent: apply logic       │
+             │  • CLI: print to terminal   │
+             └─────────────────────────────┘
+```
+
+Beyond JavaScript, we are committed to providing the same
+trust machinery as native libraries for backend and systems
+integration:
+
+| Library | Language | Target |
+|---------|----------|--------|
+| JS/npm | PureScript → JS | Browser, Node.js |
+| Native (C ABI) | Haskell or Rust | C, C++, Python, Go, any FFI |
+
+The native library exposes the same verify–interpret–decide
+interface via C-compatible FFI, enabling MPFS applications in
+any language that can call C functions.
+
 ### This Application
 
 The browser serves two purposes:
