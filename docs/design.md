@@ -19,7 +19,35 @@ sense that trust disappears, but that trust is **relocated** —
 from opaque servers to auditable client code that verifies proofs
 before presenting anything to the user.
 
-The application serves two purposes:
+## The MPFS Application Pattern
+
+Any application built on MPFS — whether a browser, a CLI, or an
+automated agent — must follow the same pattern:
+
+1. **Verify** — check proofs for every piece of data received
+   from the untrusted service
+2. **Interpret** — decode raw bytes into domain meaning using
+   a verified schema
+3. **Decide** — make a trust decision (sign or reject a
+   transaction)
+
+The difference between applications is only in step 3:
+
+- A **browser** presents verified facts to a human, who decides
+- An **agent** applies programmatic logic to verified facts and
+  decides autonomously
+- A **CLI** does the same as the browser, but in a terminal
+
+The trust architecture is identical. The browser is the
+**reference implementation** of this pattern — and the first
+real MPFS client. Any domain-specific application built on MPFS
+(a credential verifier, a supply chain tracker, a registry)
+replicates this same structure, adding domain logic on top of
+verified facts.
+
+### This Application
+
+The browser serves two purposes:
 
 1. **Fact Explorer** — given an MPFS token, query its facts and
    render them using a verified schema, with full proof
