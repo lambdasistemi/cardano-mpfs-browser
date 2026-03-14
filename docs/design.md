@@ -2,18 +2,32 @@
 
 ## Overview
 
-Cardano MPFS Browser is a PureScript single-page application that
-serves two purposes:
+Cardano MPFS Browser is the **trusted interface** between the user
+and the MPFS protocol. It is the boundary where the digital world
+(cryptographic proofs, on-chain state, Merkle trees) meets the
+non-digital world (a human making decisions).
+
+Everything below this layer is verifiable: proofs are mathematical,
+chain state is consensus, the MPFS service is just a data pipe.
+But none of that matters if the interface that translates digital
+facts into human-readable information is wrong. If this code
+misrepresents a transaction, the user signs something they didn't
+intend. If it misrenders a fact, the user acts on false data.
+
+This is the trust boundary. This is Web3: not "trustless" in the
+sense that trust disappears, but that trust is **relocated** —
+from opaque servers to auditable client code that verifies proofs
+before presenting anything to the user.
+
+The application serves two purposes:
 
 1. **Fact Explorer** — given an MPFS token, query its facts and
-   render them using a verified schema
+   render them using a verified schema, with full proof
+   verification at every step
 2. **MPFS Client** — interact with the cage protocol (insert,
-   delete, update) and sign transactions via a CIP-30 wallet
-
-The fundamental design principle is **zero trust in the off-chain
-service**. The browser is a trusted client that independently
-verifies every piece of data via Merkle proofs — the server is
-just a data pipe.
+   delete, update) and sign transactions via a CIP-30 wallet,
+   with every unsigned transaction decoded and displayed in
+   human-readable MPFS semantics before signing
 
 ## Trust Model
 
