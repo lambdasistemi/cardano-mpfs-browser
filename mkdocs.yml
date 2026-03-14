@@ -13,6 +13,10 @@ theme:
 nav:
   - Home: index.md
   - Design: design.md
+  - Trust Model: trust-model.md
+  - Schema & Views: schema-views.md
+  - Transactions: transactions.md
+  - Architecture: architecture.md
 
 plugins:
   - search
