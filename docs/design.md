@@ -2,17 +2,18 @@
 
 ## Overview
 
-MPFS Explorer is a PureScript single-page application that serves
-two purposes:
+Cardano MPFS Browser is a PureScript single-page application that
+serves two purposes:
 
 1. **Fact Explorer** — given an MPFS token, query its facts and
    render them using a verified schema
-2. **Transaction Verifier** — decode unsigned MPFS transactions,
-   display their semantics, and delegate signing to a CIP-30 wallet
+2. **MPFS Client** — interact with the cage protocol (insert,
+   delete, update) and sign transactions via a CIP-30 wallet
 
 The fundamental design principle is **zero trust in the off-chain
-service**. Every piece of data the frontend receives is independently
-verified via Merkle proofs before being presented to the user.
+service**. The browser is a trusted client that independently
+verifies every piece of data via Merkle proofs — the server is
+just a data pipe.
 
 ## Trust Model
 
@@ -157,20 +158,18 @@ The exact schema format is TBD. Candidates:
 - A minimal custom format (since we only need decoding + display)
 - CIP-100 / JSON-LD alignment for Cardano ecosystem compatibility
 
-## Untrusted Transaction Verification
+## MPFS Client
 
-### The Problem
+### Transaction Flow
 
-The MPFS off-chain API builds unsigned transactions. The user must
-sign them via a CIP-30 wallet. But signing a transaction you don't
-understand is a security risk — the API could construct a
-malicious transaction.
+The client interacts with the cage protocol through the MPFS API.
+The API builds unsigned transactions; the client decodes them,
+displays their MPFS semantics in human-readable form, and
+delegates signing to the user's CIP-30 wallet.
 
-### The Solution
-
-The frontend decodes the unsigned CBOR transaction and displays
-its MPFS semantics in human-readable form before requesting
-a signature.
+Because the API is untrusted, the client always decodes the
+unsigned CBOR before requesting a signature — the user sees
+exactly what they are signing.
 
 ```mermaid
 sequenceDiagram
@@ -217,25 +216,19 @@ If the schema is verified, the key and value are rendered in
 structured form. Otherwise they are shown as hex with a warning
 that no verified schema is available.
 
-### State-of-the-Art: What "Untrusted" Means
+### Why the Server Doesn't Matter
 
-The MPFS off-chain service is a convenience layer. It:
+The MPFS off-chain service is a convenience layer. The client
+independently verifies everything:
 
-- Indexes the chain (could be wrong — but proofs catch lies)
-- Builds transactions (could be malicious — but the frontend
-  decodes them before signing)
-- Stores trie state (could be corrupted — but roots are
-  verified on-chain)
+- **Facts** — verified via the full proof chain
+- **Transactions** — decoded and displayed before signing
+- **State** — anchored on-chain via cage UTxOs
 
-The user never needs to trust the service because:
-
-1. **Facts** are verified via the full proof chain
-2. **Transactions** are decoded and displayed before signing
-3. **State** is anchored on-chain via cage UTxOs
-
-This is the key value proposition: MPFS provides the convenience
-of a centralized API with the trust guarantees of on-chain
-verification.
+The server could lie, omit data, or be compromised. The client
+catches it because every claim requires a cryptographic proof.
+This is the key value proposition: a trusted client that works
+with any untrusted server.
 
 ## CIP-30 Wallet Integration
 
@@ -285,9 +278,9 @@ graph TB
         FD["Fact Detail<br/>Decoded value + proof status"]
     end
 
-    subgraph "Transaction Verifier"
+    subgraph "MPFS Client"
         TX["Build Transaction<br/>Select operation"]
-        TV["Verify Transaction<br/>Decoded MPFS semantics"]
+        TV["Review Transaction<br/>Decoded MPFS semantics"]
         TS["Sign & Submit<br/>CIP-30 wallet"]
     end
 
