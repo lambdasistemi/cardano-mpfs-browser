@@ -14,16 +14,12 @@ nav:
   - Home: index.md
   - Design: design.md
 
+plugins:
+  - search
+  - mermaid2
+
 markdown_extensions:
   - pymdownx.highlight
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
-          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.superfences
   - tables
   - admonition
-
-extra_javascript:
-  - https://unpkg.com/mermaid@11/dist/mermaid.min.js
-  - js/mermaid-init.js
