@@ -33,4 +33,4 @@ markdown_extensions:
   - admonition
 
 extra_javascript:
-  - https://cdn.jsdelivr.net/gh/paolino/dev-assets@55d2de7/mkdocs/docs/js/read-aloud.js
+  - https://cdn.jsdelivr.net/gh/paolino/dev-assets@0e54367/mkdocs/docs/js/read-aloud.js
