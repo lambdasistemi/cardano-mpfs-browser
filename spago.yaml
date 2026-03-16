@@ -9,6 +9,7 @@ package:
     - argonaut
     - argonaut-codecs
     - argonaut-core
+    - bifunctors
     - either
     - maybe
     - arrays
