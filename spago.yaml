@@ -1,6 +1,7 @@
 package:
   name: mpfs-explorer
   dependencies:
+    - arraybuffer-types
     - prelude
     - effect
     - aff
