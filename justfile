@@ -62,7 +62,7 @@ e2e blueprint:
     SERVER_PID=$!
     trap "kill $SERVER_PID 2>/dev/null" EXIT
     for i in $(seq 1 60); do
-        if curl -sf "http://localhost:$PORT/status" >/dev/null 2>&1; then
+        if curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT/status" 2>/dev/null | grep -q '200'; then
             break
         fi
         if ! kill -0 "$SERVER_PID" 2>/dev/null; then
@@ -71,8 +71,10 @@ e2e blueprint:
         fi
         sleep 2
     done
-    if ! curl -sf "http://localhost:$PORT/status" >/dev/null 2>&1; then
-        echo "Server failed to start within timeout"
+    STATUS=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT/status" 2>/dev/null)
+    if [ "$STATUS" != "200" ]; then
+        echo "Server not ready, last status: $STATUS"
+        curl -s "http://localhost:$PORT/status" 2>&1 || true
         exit 1
     fi
     MPFS_BASE_URL="http://localhost:$PORT" spago test
