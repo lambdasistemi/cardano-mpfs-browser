@@ -23,3 +23,23 @@ jobs:
 
       - name: Build and bundle
         run: nix develop --quiet --command just ci
+
+  e2e:
+    runs-on: nixos
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/cachix-action@v15
+        with:
+          name: paolino
+          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      - name: Fetch cage blueprint
+        run: nix build .#cage-blueprint -o cage-blueprint
+
+      - name: Fetch devnet genesis
+        run: nix build .#devnet-genesis -o devnet-genesis
+
+      - name: E2E tests
+        run: E2E_GENESIS_DIR=devnet-genesis nix develop --quiet --command just e2e cage-blueprint
