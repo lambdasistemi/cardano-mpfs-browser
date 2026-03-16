@@ -40,6 +40,7 @@ lint:
 ci:
     #!/usr/bin/env bash
     set -euo pipefail
+    npm ci
     just lint
     just build
     just bundle
