@@ -7,9 +7,14 @@
       url = "github:thomashoneyman/purescript-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    cardano-mpfs-offchain = {
+      url = "github:lambdasistemi/cardano-mpfs-offchain";
+    };
+    cardano-mpfs-cage.follows = "cardano-mpfs-offchain/cardano-mpfs-cage";
+    cardano-mpfs-onchain.follows = "cardano-mpfs-offchain/cardano-mpfs-onchain";
   };
 
-  outputs = { self, nixpkgs, purescript-overlay }:
+  outputs = { self, nixpkgs, purescript-overlay, cardano-mpfs-offchain, cardano-mpfs-cage, cardano-mpfs-onchain }:
     let
       supportedSystems = [ "x86_64-linux" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
@@ -33,5 +38,9 @@
             ];
           };
         });
+      packages = forAllSystems (system: {
+        cage-blueprint = cardano-mpfs-onchain.packages.${system}.default;
+        cage-test-vectors = cardano-mpfs-cage.packages.${system}.cage-test-vectors;
+      });
     };
 }
