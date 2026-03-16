@@ -57,6 +57,7 @@ test:
 e2e blueprint:
     #!/usr/bin/env bash
     set -euo pipefail
+    npm ci
     PORT=18713
     MPFS_BLUEPRINT="{{blueprint}}" mpfs-devnet-server --port "$PORT" &
     SERVER_PID=$!
