@@ -58,7 +58,7 @@ e2e blueprint:
     #!/usr/bin/env bash
     set -euo pipefail
     npm ci
-    PORT=18713
+    PORT=$((10000 + RANDOM % 50000))
     MPFS_BLUEPRINT="{{blueprint}}" mpfs-devnet-server --port "$PORT" &
     SERVER_PID=$!
     trap "kill $SERVER_PID 2>/dev/null" EXIT
