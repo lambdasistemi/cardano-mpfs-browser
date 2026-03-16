@@ -9,6 +9,7 @@
             "argonaut",
             "argonaut-codecs",
             "argonaut-core",
+            "arraybuffer-types",
             "arrays",
             "bifunctors",
             "console",
