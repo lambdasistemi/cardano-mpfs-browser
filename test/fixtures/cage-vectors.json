@@ -1,0 +1,237 @@
+{
+    "vectors": [
+        {
+            "description": "insert into empty trie",
+            "expectedRoot": "5774710a4457e50a5a2ff1fe6149398617c895dd3fbd3bd8cac51ecc571f9319",
+            "initialRoot": "0000000000000000000000000000000000000000000000000000000000000000",
+            "key": "6162",
+            "proof": {
+                "cbor": "9fff",
+                "steps": []
+            },
+            "value": "6364"
+        },
+        {
+            "description": "insert creating fork",
+            "expectedRoot": "5a72ccdd24fe693d6c10aaacd4635f5daa94dbd881f3340a985634e7aaed3c7f",
+            "initialRoot": "51142f22ba3576be090b2dca505687be816e7829352ef97d3671bf974bc43719",
+            "key": "6b32",
+            "proof": {
+                "cbor": "9fd87b9f00582030e612d85865aaf22de5c95a43c5cbc1907323d74edcc3f2e122c385044dac2b5820ae11692325525e82337167fcfab34d45d1904ff786e2d4bf4be2d1c4878cd34cffff",
+                "steps": [
+                    {
+                        "constructor": 2,
+                        "fields": [
+                            0,
+                            {
+                                "bytes": "30e612d85865aaf22de5c95a43c5cbc1907323d74edcc3f2e122c385044dac2b"
+                            },
+                            {
+                                "bytes": "ae11692325525e82337167fcfab34d45d1904ff786e2d4bf4be2d1c4878cd34c"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "value": "7632"
+        },
+        {
+            "description": "insert with shared prefix",
+            "expectedRoot": "8ba3fb9d4d56aa4d03e3d5481e9e23ea0c87d4e9dee6debd9cf268b462b61f74",
+            "initialRoot": "220c9554d22d2e9f39ab34516bf6c69a11455689cc1acb55c5d4e880d06ec5c5",
+            "key": "6b62",
+            "proof": {
+                "cbor": "9fd87b9f0058209e3330d3dd6f271cf17f48426f651f7b4e9cd347561c9617110a8bf998eb49305820ac5370259669ccdf4639f09317bbb2adaa740a300a5dc98fd51912b1173155b0ffff",
+                "steps": [
+                    {
+                        "constructor": 2,
+                        "fields": [
+                            0,
+                            {
+                                "bytes": "9e3330d3dd6f271cf17f48426f651f7b4e9cd347561c9617110a8bf998eb4930"
+                            },
+                            {
+                                "bytes": "ac5370259669ccdf4639f09317bbb2adaa740a300a5dc98fd51912b1173155b0"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "value": "7662"
+        },
+        {
+            "description": "inclusion proof for middle key",
+            "expectedRoot": "91db563fdb311ea17481d01600e08179f6393a9c0e0c8cec41ffb9d8eaba9327",
+            "initialRoot": "91db563fdb311ea17481d01600e08179f6393a9c0e0c8cec41ffb9d8eaba9327",
+            "key": "79",
+            "proof": {
+                "cbor": "9fd8799f005f58409c7a465e42fff5f33d830117491d1754e12a901d4f0a6ce156f0d1da2a69b66996137bd9a8bdc4452f60cb31222fb2742a3f0b5ef9189188d06221c8153f7dc458400eb923b0cbd24df54401d998531feead35a47a99f4deed205de4af81120f97610000000000000000000000000000000000000000000000000000000000000000ffffff",
+                "steps": [
+                    {
+                        "constructor": 0,
+                        "fields": [
+                            0,
+                            {
+                                "bytes": "9c7a465e42fff5f33d830117491d1754e12a901d4f0a6ce156f0d1da2a69b66996137bd9a8bdc4452f60cb31222fb2742a3f0b5ef9189188d06221c8153f7dc40eb923b0cbd24df54401d998531feead35a47a99f4deed205de4af81120f97610000000000000000000000000000000000000000000000000000000000000000"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "value": "32"
+        },
+        {
+            "description": "asset name from TxOutRef index 0",
+            "expectedAssetName": "0e60b5bc267eb614324cc605869b377bd4f4770615f2c9dede78611a52f530e9",
+            "outputIndex": 0,
+            "txId": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+        },
+        {
+            "description": "asset name from TxOutRef index 1",
+            "expectedAssetName": "cbfb2fcbfefd664cb8bf2e3b6e02cbe123b43555fc20f297e235a24d4c96e4e3",
+            "outputIndex": 1,
+            "txId": "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
+        },
+        {
+            "description": "asset name from zero txId index 255",
+            "expectedAssetName": "23d8b3fbfc92dcda6c7975d70d25d325d162101b40a613c59c750d6b889b288a",
+            "outputIndex": 255,
+            "txId": "0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+            "description": "StateDatum encoding",
+            "plutusData": {
+                "constructor": 1,
+                "fields": [
+                    {
+                        "constructor": 0,
+                        "fields": [
+                            {
+                                "bytes": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                            },
+                            {
+                                "bytes": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+                            },
+                            2000000,
+                            300000,
+                            600000
+                        ]
+                    }
+                ]
+            },
+            "type": "CageDatum"
+        },
+        {
+            "description": "RequestDatum with OpInsert",
+            "plutusData": {
+                "constructor": 0,
+                "fields": [
+                    {
+                        "constructor": 0,
+                        "fields": [
+                            {
+                                "constructor": 0,
+                                "fields": [
+                                    {
+                                        "bytes": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+                                    }
+                                ]
+                            },
+                            {
+                                "bytes": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+                            },
+                            {
+                                "bytes": "010203"
+                            },
+                            {
+                                "constructor": 0,
+                                "fields": [
+                                    {
+                                        "bytes": "0405"
+                                    }
+                                ]
+                            },
+                            1000000,
+                            1700000000000
+                        ]
+                    }
+                ]
+            },
+            "type": "CageDatum"
+        },
+        {
+            "description": "MintRedeemer Minting",
+            "plutusData": {
+                "constructor": 0,
+                "fields": [
+                    {
+                        "constructor": 0,
+                        "fields": [
+                            {
+                                "constructor": 0,
+                                "fields": [
+                                    {
+                                        "bytes": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+                                    },
+                                    0
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "type": "MintRedeemer"
+        },
+        {
+            "description": "MintRedeemer Burning",
+            "plutusData": {
+                "constructor": 2,
+                "fields": []
+            },
+            "type": "MintRedeemer"
+        },
+        {
+            "description": "UpdateRedeemer End",
+            "plutusData": {
+                "constructor": 0,
+                "fields": []
+            },
+            "type": "UpdateRedeemer"
+        },
+        {
+            "description": "UpdateRedeemer Reject",
+            "plutusData": {
+                "constructor": 4,
+                "fields": []
+            },
+            "type": "UpdateRedeemer"
+        },
+        {
+            "description": "OpUpdate encoding",
+            "plutusData": {
+                "constructor": 2,
+                "fields": [
+                    {
+                        "bytes": "0102"
+                    },
+                    {
+                        "bytes": "0304"
+                    }
+                ]
+            },
+            "type": "OnChainOperation"
+        },
+        {
+            "description": "OpDelete encoding",
+            "plutusData": {
+                "constructor": 1,
+                "fields": [
+                    {
+                        "bytes": "aabb"
+                    }
+                ]
+            },
+            "type": "OnChainOperation"
+        }
+    ]
+}

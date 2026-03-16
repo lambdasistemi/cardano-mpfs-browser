@@ -22,6 +22,16 @@ package:
     - transformers
     - ordered-collections
     - console
+    - exceptions
+    - node-process
+    - node-child-process
+    - node-buffer
+  test:
+    main: Test.Main
+    dependencies:
+      - spec
+      - spec-node
+      - aff
   bundle:
     module: Main
     outfile: dist/index.js

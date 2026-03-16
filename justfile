@@ -43,6 +43,14 @@ ci:
     just lint
     just build
     just bundle
+    just test
+
+# Generate test vectors and run tests
+test:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    nix run .#cage-test-vectors > test/fixtures/cage-vectors.json
+    spago test
 
 # Serve locally
 serve:
