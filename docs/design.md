@@ -156,15 +156,24 @@ data, the proofs won't verify and the user knows immediately.
 
 ### The Oracle's Responsibility
 
-The oracle (token owner) publishes:
+The oracle (token owner) publishes a configuration document:
+
+```json
+{
+  "tokenId": "21c5...",
+  "schemas": [
+    { "format": "cddl", "document": "..." },
+    { "format": "json-schema", "document": "..." }
+  ]
+}
+```
 
 - The **token ID** — identifies the cage on-chain
-- The **schema** — describes how to interpret facts
-- The **schema hash** is stored as a fact in the trie itself
+- The **schemas** — one or more schema documents with their
+  format, used to decode facts
 
-By publishing the token ID, the oracle gives users the entry
-point to independently verify everything: the cage UTxO, the
-trie root, the schema hash, and every fact.
+By publishing the token ID and schemas, the oracle gives users
+the entry point to independently verify and interpret everything.
 
 ### The Verification Chain
 
@@ -220,148 +229,116 @@ verification fails visibly.
 
 ## Schema-Driven Fact Rendering
 
-### The Problem
+### Self-Describing Facts
 
-MPFS stores facts as raw bytestrings. In real applications these
-will be structured data (JSON-LD, CBOR, etc.) but the trie is
-format-agnostic. The frontend needs to know how to interpret
-and render the bytes.
+MPFS stores facts as raw bytestrings in the trie. The trie is
+format-agnostic — it stores whatever bytes the oracle inserts.
+To enable generic rendering, facts follow a convention: the
+first 32 bytes of the **value** are the blake2b-256 hash of
+the schema document used to encode the rest.
 
-### Schema Discovery
+```
+value = schema_hash (32 bytes) ++ payload
+```
 
-The oracle publishes the token ID and the schema together. The
-schema's hash is stored as a fact in the trie, so the trust chain
-applies to the schema itself — a bogus schema would fail hash
-verification.
+The schema hash links the fact to a specific schema document
+published by the oracle. The browser computes the hash of each
+known schema and matches it against the prefix. Facts with
+unknown schema hashes are displayed as raw hex.
+
+This is a convention, not enforced on-chain. The schema hash
+prefix is what makes facts interpretable by generic clients.
+
+### Schema Matching
 
 ```mermaid
 sequenceDiagram
     participant O as Oracle
-    participant U as User/Frontend
+    participant B as Browser
     participant API as MPFS API
 
-    Note over O: Publishes: token ID + schema
+    Note over O: Publishes: oracle config<br/>(token ID + schemas)
 
-    U->>U: Receive token ID and schema from oracle
+    B->>B: Receive oracle config
+    B->>B: Hash each schema document
 
-    U->>API: GET /tokens/:id/facts/__schema__
-    API-->>U: schema_hash + MPF proof
+    B->>API: GET /tokens/:id/facts/:key
+    API-->>B: value bytes + MPF proof
 
-    U->>U: Verify MPF proof against cage root
-    U->>U: Hash schema, compare with fact
-    U->>U: Schema verified ✓
+    B->>B: Verify MPF proof
+    B->>B: Extract first 32 bytes of value
+    B->>B: Match against known schema hashes
 
-    U->>API: GET /tokens/:id/facts/:key
-    API-->>U: raw bytes + MPF proof
-
-    U->>U: Verify MPF proof
-    U->>U: Decode bytes using verified schema
-    U->>U: Render structured fact to user
-```
-
-The schema is as trustworthy as any other fact in the trie. If
-the oracle updates the schema, the hash fact is updated too, and
-the frontend detects the change on next verification.
-
-### Schema and View Templates
-
-The oracle publishes two kinds of metadata, both hashed into
-the trie as facts:
-
-**Schema** — how to decode fact bytes:
-
-- **Encoding** — JSON, CBOR, UTF-8, custom
-- **Fields** — named fields with types
-
-**View templates** — how to render decoded facts for humans:
-
-- **Labels** — display names for fields
-- **Formatting** — dates, amounts, identifiers
-- **Layout** — which fields are primary, grouping, ordering
-
-The schema and the view templates are separate concerns. The
-schema is stable (changing it means changing fact encoding). View
-templates evolve freely — new views can be added without touching
-the schema or existing facts.
-
-```mermaid
-graph TB
-    subgraph "Trie (hashed facts)"
-        S["__schema__<br/>hash of schema"]
-        V1["__view/summary__<br/>hash of summary template"]
-        V2["__view/detail__<br/>hash of detail template"]
-        V3["__view/ops__<br/>hash of operations template"]
-        F1["fact-key-1<br/>raw bytes"]
-        F2["fact-key-2<br/>raw bytes"]
+    alt Known schema
+        B->>B: Decode payload with schema
+        B->>B: Render structured data
+    else Unknown schema
+        B->>B: Render as hex
     end
-
-    subgraph "Rendering Pipeline"
-        D["Decode<br/>schema → structured data"]
-        R["Render<br/>view template → display"]
-    end
-
-    S -.->|"verified"| D
-    F1 --> D
-    F2 --> D
-    V1 -.->|"verified"| R
-    V2 -.->|"verified"| R
-    V3 -.->|"verified"| R
-    D --> R
 ```
 
-### Multiple Views
+### Schema Formats
 
-A token can have multiple view templates, each hashed as a
-separate fact. Different views serve different purposes:
+The schema format is extensible. The `format` field in the
+oracle config determines how the browser decodes the payload
+after the 32-byte hash prefix:
 
-- A **summary view** for quick browsing
-- A **detail view** for full fact inspection
-- An **operations view** optimized for transaction workflows
-- A **domain-specific view** for a particular application
+| Format | Schema language | Payload encoding |
+|--------|----------------|-----------------|
+| `cddl` | CDDL (RFC 8610) | CBOR |
+| `json-schema` | JSON Schema | JSON (UTF-8) |
 
-View templates are hashed in the trie, so they are verified like
-any other fact. The oracle controls which views are canonical,
-but the process is open: anyone can propose a new view template
-to the oracle. If accepted, the oracle inserts it as a fact — a
-new way of seeing the same data, immediately available and
-verified.
+CDDL schemas are embedded as strings in the oracle config
+JSON. The `document` field is the hash source —
+`blake2b(document_string)` must match the 32-byte prefix in
+fact values.
 
-This enables a community-driven UX evolution: users discover
-better ways to present the data, submit templates, and the oracle
-curates them. Complex applications can ship multiple views for
-different roles or workflows without changing the underlying
-data.
+New formats can be added without protocol changes — just a
+new decoder and a schema document from the oracle.
 
-### View Template Lifecycle
+### Key and Value Structure
 
-```mermaid
-sequenceDiagram
-    participant C as Community
-    participant O as Oracle
-    participant T as Trie
-    participant B as Browser
+For a given schema, both the key and the value payload (bytes
+after the 32-byte hash prefix) must conform to the schema.
+The schema describes the structure of both.
 
-    C->>O: Propose new view template
-    O->>O: Review template
-    O->>T: Insert __view/proposed__ = hash
-    T-->>O: MPF proof
+For example, a CDDL schema for the moog test-run application:
 
-    B->>T: GET __view/* (discover views)
-    T-->>B: list of view template hashes
+```cddl
+fact-key = {
+  type: "test-run",
+  platform: tstr,
+  repository: {
+    organization: tstr,
+    repo: tstr
+  },
+  commitId: tstr,
+  try: uint,
+  requester: tstr
+}
 
-    B->>B: Fetch templates, verify hashes
-    B->>B: User selects view
-
-    Note over B: Same facts, different<br/>rendering — verified
+fact-value = {
+  phase: "pending" / "accepted"
+        / "finished" / "rejected",
+  duration: uint,
+  ? outcome: "success" / "failure" / "unknown",
+  ? url: tstr,
+  ? from: fact-value
+}
 ```
 
-### Schema Format
+### Multiple Schemas
 
-The exact schema format is TBD. Candidates:
+A token can accumulate multiple schemas over time. The oracle
+may update the encoding format, add new fact types, or evolve
+the data structure. Each schema version is a separate document
+with a distinct hash.
 
-- JSON Schema with rendering extensions
-- A minimal custom format (since we only need decoding + display)
-- CIP-100 / JSON-LD alignment for Cardano ecosystem compatibility
+Old facts remain readable because old schemas remain in the
+oracle config. The browser matches each fact's schema hash
+against all known schemas. Schemas should never be removed
+from the oracle config — removing a schema makes older facts
+unreadable by generic clients.
 
 ## MPFS Client
 
@@ -731,14 +708,10 @@ status:
 
 ## Open Questions
 
-1. **Schema format** — JSON Schema + extensions? Custom minimal
-   format? CIP-100 alignment?
-2. **CBOR decoding in PureScript** — which library? FFI to a JS
+1. **CBOR decoding in PureScript** — which library? FFI to a JS
    CBOR library? How much of the Cardano tx structure do we need
    to parse?
-3. **Institutional root protocol** — is there a standard for
+2. **Institutional root protocol** — is there a standard for
    publishing UTXO Merkle roots, or do we define one?
-4. **Multi-token view** — should the explorer support comparing
+3. **Multi-token view** — should the explorer support comparing
    facts across tokens, or is it strictly per-token?
-5. **Schema registry** — could schemas themselves be an MPFS token,
-   creating a self-referential schema registry?
