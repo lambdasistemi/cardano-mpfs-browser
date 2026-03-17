@@ -76,6 +76,11 @@ type Client =
   , retract :: RetractBody -> Aff (Either ClientError Hex)
   , end :: EndBody -> Aff (Either ClientError Hex)
   , submit :: SubmitBody -> Aff (Either ClientError Hex)
+  , getUtxo ::
+      Hex -> Int -> Aff (Either ClientError Hex)
+  , getUtxoProof ::
+      Hex -> Int -> Aff (Either ClientError Hex)
+  , getUtxoRoot :: Aff (Either ClientError Hex)
   }
 
 -- | Create a client closed over a base URL.
@@ -124,6 +129,21 @@ mkClient baseUrl =
       post (baseUrl <> "/tx/end")
   , submit:
       post (baseUrl <> "/tx/submit")
+  , getUtxo: \txId txIx ->
+      get
+        ( baseUrl <> "/utxo/" <> txId
+            <> "/"
+            <> show txIx
+        )
+  , getUtxoProof: \txId txIx ->
+      get
+        ( baseUrl <> "/utxo/" <> txId
+            <> "/"
+            <> show txIx
+            <> "/proof"
+        )
+  , getUtxoRoot:
+      get (baseUrl <> "/utxo/root")
   }
 
 -- Internal
