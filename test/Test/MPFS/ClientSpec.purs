@@ -44,10 +44,10 @@ spec = describe "MPFS Client E2E" do
       Right tokens ->
         tokens `shouldEqual` []
 
-  it "GET /utxo/root returns 404 on empty devnet" do
+  it "GET /utxo/root returns a hash" do
     url <- baseUrl
     let client = mkClient url
     result <- client.getUtxoRoot
     case result of
-      Left _ -> pure unit -- expected: no UTxOs yet
+      Left err -> fail $ show err
       Right _root -> pure unit
