@@ -281,55 +281,46 @@
 <nav aria-label="Schema-Driven Fact Rendering" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#the-problem">
+<a class="md-nav__link" href="#self-describing-facts">
 <span class="md-ellipsis">
       
-        The Problem
+        Self-Describing Facts
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#schema-discovery">
+<a class="md-nav__link" href="#schema-matching">
 <span class="md-ellipsis">
       
-        Schema Discovery
+        Schema Matching
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#schema-and-view-templates">
+<a class="md-nav__link" href="#schema-formats">
 <span class="md-ellipsis">
       
-        Schema and View Templates
+        Schema Formats
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#multiple-views">
+<a class="md-nav__link" href="#key-and-value-structure">
 <span class="md-ellipsis">
       
-        Multiple Views
+        Key and Value Structure
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#view-template-lifecycle">
+<a class="md-nav__link" href="#multiple-schemas">
 <span class="md-ellipsis">
       
-        View Template Lifecycle
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#schema-format">
-<span class="md-ellipsis">
-      
-        Schema Format
+        Multiple Schemas
       
     </span>
 </a>
@@ -717,55 +708,46 @@
 <nav aria-label="Schema-Driven Fact Rendering" class="md-nav">
 <ul class="md-nav__list">
 <li class="md-nav__item">
-<a class="md-nav__link" href="#the-problem">
+<a class="md-nav__link" href="#self-describing-facts">
 <span class="md-ellipsis">
       
-        The Problem
+        Self-Describing Facts
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#schema-discovery">
+<a class="md-nav__link" href="#schema-matching">
 <span class="md-ellipsis">
       
-        Schema Discovery
+        Schema Matching
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#schema-and-view-templates">
+<a class="md-nav__link" href="#schema-formats">
 <span class="md-ellipsis">
       
-        Schema and View Templates
+        Schema Formats
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#multiple-views">
+<a class="md-nav__link" href="#key-and-value-structure">
 <span class="md-ellipsis">
       
-        Multiple Views
+        Key and Value Structure
       
     </span>
 </a>
 </li>
 <li class="md-nav__item">
-<a class="md-nav__link" href="#view-template-lifecycle">
+<a class="md-nav__link" href="#multiple-schemas">
 <span class="md-ellipsis">
       
-        View Template Lifecycle
-      
-    </span>
-</a>
-</li>
-<li class="md-nav__item">
-<a class="md-nav__link" href="#schema-format">
-<span class="md-ellipsis">
-      
-        Schema Format
+        Multiple Schemas
       
     </span>
 </a>
@@ -1176,15 +1158,22 @@ any language that can call C functions.</p>
 provide proofs for anything it claims — if it lies or withholds
 data, the proofs won't verify and the user knows immediately.</p>
 <h3 id="the-oracles-responsibility">The Oracle's Responsibility</h3>
-<p>The oracle (token owner) publishes:</p>
+<p>The oracle (token owner) publishes a configuration document:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"tokenId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"21c5..."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"schemas"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cddl"</span><span class="p">,</span><span class="w"> </span><span class="nt">"document"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"json-schema"</span><span class="p">,</span><span class="w"> </span><span class="nt">"document"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
 <ul>
 <li>The <strong>token ID</strong> — identifies the cage on-chain</li>
-<li>The <strong>schema</strong> — describes how to interpret facts</li>
-<li>The <strong>schema hash</strong> is stored as a fact in the trie itself</li>
+<li>The <strong>schemas</strong> — one or more schema documents with their
+  format, used to decode facts</li>
 </ul>
-<p>By publishing the token ID, the oracle gives users the entry
-point to independently verify everything: the cage UTxO, the
-trie root, the schema hash, and every fact.</p>
+<p>By publishing the token ID and schemas, the oracle gives users
+the entry point to independently verify and interpret everything.</p>
 <h3 id="the-verification-chain">The Verification Chain</h3>
 <p>The application verifies facts through a four-layer chain, where
 each layer is independently provable:</p>
@@ -1254,127 +1243,111 @@ verify:</p>
 selectively lie — it either provides valid proofs or the
 verification fails visibly.</p>
 <h2 id="schema-driven-fact-rendering">Schema-Driven Fact Rendering</h2>
-<h3 id="the-problem">The Problem</h3>
-<p>MPFS stores facts as raw bytestrings. In real applications these
-will be structured data (JSON-LD, CBOR, etc.) but the trie is
-format-agnostic. The frontend needs to know how to interpret
-and render the bytes.</p>
-<h3 id="schema-discovery">Schema Discovery</h3>
-<p>The oracle publishes the token ID and the schema together. The
-schema's hash is stored as a fact in the trie, so the trust chain
-applies to the schema itself — a bogus schema would fail hash
-verification.</p>
+<h3 id="self-describing-facts">Self-Describing Facts</h3>
+<p>MPFS stores facts as raw bytestrings in the trie. The trie is
+format-agnostic — it stores whatever bytes the oracle inserts.
+To enable generic rendering, facts follow a convention: the
+first 32 bytes of the <strong>value</strong> are the blake2b-256 hash of
+the schema document used to encode the rest.</p>
+<div class="highlight"><pre><span></span><code>value = schema_hash (32 bytes) ++ payload
+</code></pre></div>
+<p>The schema hash links the fact to a specific schema document
+published by the oracle. The browser computes the hash of each
+known schema and matches it against the prefix. Facts with
+unknown schema hashes are displayed as raw hex.</p>
+<p>This is a convention, not enforced on-chain. The schema hash
+prefix is what makes facts interpretable by generic clients.</p>
+<h3 id="schema-matching">Schema Matching</h3>
 <pre class="mermaid"><code>sequenceDiagram
     participant O as Oracle
-    participant U as User/Frontend
+    participant B as Browser
     participant API as MPFS API
 
-    Note over O: Publishes: token ID + schema
+    Note over O: Publishes: oracle config&lt;br/&gt;(token ID + schemas)
 
-    U-&gt;&gt;U: Receive token ID and schema from oracle
+    B-&gt;&gt;B: Receive oracle config
+    B-&gt;&gt;B: Hash each schema document
 
-    U-&gt;&gt;API: GET /tokens/:id/facts/__schema__
-    API--&gt;&gt;U: schema_hash + MPF proof
+    B-&gt;&gt;API: GET /tokens/:id/facts/:key
+    API--&gt;&gt;B: value bytes + MPF proof
 
-    U-&gt;&gt;U: Verify MPF proof against cage root
-    U-&gt;&gt;U: Hash schema, compare with fact
-    U-&gt;&gt;U: Schema verified ✓
+    B-&gt;&gt;B: Verify MPF proof
+    B-&gt;&gt;B: Extract first 32 bytes of value
+    B-&gt;&gt;B: Match against known schema hashes
 
-    U-&gt;&gt;API: GET /tokens/:id/facts/:key
-    API--&gt;&gt;U: raw bytes + MPF proof
+    alt Known schema
+        B-&gt;&gt;B: Decode payload with schema
+        B-&gt;&gt;B: Render structured data
+    else Unknown schema
+        B-&gt;&gt;B: Render as hex
+    end</code></pre>
+<h3 id="schema-formats">Schema Formats</h3>
+<p>The schema format is extensible. The <code>format</code> field in the
+oracle config determines how the browser decodes the payload
+after the 32-byte hash prefix:</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Schema language</th>
+<th>Payload encoding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cddl</code></td>
+<td>CDDL (RFC 8610)</td>
+<td>CBOR</td>
+</tr>
+<tr>
+<td><code>json-schema</code></td>
+<td>JSON Schema</td>
+<td>JSON (UTF-8)</td>
+</tr>
+</tbody>
+</table>
+<p>CDDL schemas are embedded as strings in the oracle config
+JSON. The <code>document</code> field is the hash source —
+<code>blake2b(document_string)</code> must match the 32-byte prefix in
+fact values.</p>
+<p>New formats can be added without protocol changes — just a
+new decoder and a schema document from the oracle.</p>
+<h3 id="key-and-value-structure">Key and Value Structure</h3>
+<p>For a given schema, both the key and the value payload (bytes
+after the 32-byte hash prefix) must conform to the schema.
+The schema describes the structure of both.</p>
+<p>For example, a CDDL schema for the moog test-run application:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">fact-key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="s">type</span><span class="p">:</span><span class="w"> </span><span class="s2">"test-run"</span><span class="p">,</span>
+<span class="w">  </span><span class="s">platform</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span><span class="p">,</span>
+<span class="w">  </span><span class="s">repository</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s">organization</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span><span class="p">,</span>
+<span class="w">    </span><span class="s">repo</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="s">commitId</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span><span class="p">,</span>
+<span class="w">  </span><span class="s">try</span><span class="p">:</span><span class="w"> </span><span class="nb">uint</span><span class="p">,</span>
+<span class="w">  </span><span class="s">requester</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span>
+<span class="p">}</span>
 
-    U-&gt;&gt;U: Verify MPF proof
-    U-&gt;&gt;U: Decode bytes using verified schema
-    U-&gt;&gt;U: Render structured fact to user</code></pre>
-<p>The schema is as trustworthy as any other fact in the trie. If
-the oracle updates the schema, the hash fact is updated too, and
-the frontend detects the change on next verification.</p>
-<h3 id="schema-and-view-templates">Schema and View Templates</h3>
-<p>The oracle publishes two kinds of metadata, both hashed into
-the trie as facts:</p>
-<p><strong>Schema</strong> — how to decode fact bytes:</p>
-<ul>
-<li><strong>Encoding</strong> — JSON, CBOR, UTF-8, custom</li>
-<li><strong>Fields</strong> — named fields with types</li>
-</ul>
-<p><strong>View templates</strong> — how to render decoded facts for humans:</p>
-<ul>
-<li><strong>Labels</strong> — display names for fields</li>
-<li><strong>Formatting</strong> — dates, amounts, identifiers</li>
-<li><strong>Layout</strong> — which fields are primary, grouping, ordering</li>
-</ul>
-<p>The schema and the view templates are separate concerns. The
-schema is stable (changing it means changing fact encoding). View
-templates evolve freely — new views can be added without touching
-the schema or existing facts.</p>
-<pre class="mermaid"><code>graph TB
-    subgraph "Trie (hashed facts)"
-        S["__schema__&lt;br/&gt;hash of schema"]
-        V1["__view/summary__&lt;br/&gt;hash of summary template"]
-        V2["__view/detail__&lt;br/&gt;hash of detail template"]
-        V3["__view/ops__&lt;br/&gt;hash of operations template"]
-        F1["fact-key-1&lt;br/&gt;raw bytes"]
-        F2["fact-key-2&lt;br/&gt;raw bytes"]
-    end
-
-    subgraph "Rendering Pipeline"
-        D["Decode&lt;br/&gt;schema → structured data"]
-        R["Render&lt;br/&gt;view template → display"]
-    end
-
-    S -.-&gt;|"verified"| D
-    F1 --&gt; D
-    F2 --&gt; D
-    V1 -.-&gt;|"verified"| R
-    V2 -.-&gt;|"verified"| R
-    V3 -.-&gt;|"verified"| R
-    D --&gt; R</code></pre>
-<h3 id="multiple-views">Multiple Views</h3>
-<p>A token can have multiple view templates, each hashed as a
-separate fact. Different views serve different purposes:</p>
-<ul>
-<li>A <strong>summary view</strong> for quick browsing</li>
-<li>A <strong>detail view</strong> for full fact inspection</li>
-<li>An <strong>operations view</strong> optimized for transaction workflows</li>
-<li>A <strong>domain-specific view</strong> for a particular application</li>
-</ul>
-<p>View templates are hashed in the trie, so they are verified like
-any other fact. The oracle controls which views are canonical,
-but the process is open: anyone can propose a new view template
-to the oracle. If accepted, the oracle inserts it as a fact — a
-new way of seeing the same data, immediately available and
-verified.</p>
-<p>This enables a community-driven UX evolution: users discover
-better ways to present the data, submit templates, and the oracle
-curates them. Complex applications can ship multiple views for
-different roles or workflows without changing the underlying
-data.</p>
-<h3 id="view-template-lifecycle">View Template Lifecycle</h3>
-<pre class="mermaid"><code>sequenceDiagram
-    participant C as Community
-    participant O as Oracle
-    participant T as Trie
-    participant B as Browser
-
-    C-&gt;&gt;O: Propose new view template
-    O-&gt;&gt;O: Review template
-    O-&gt;&gt;T: Insert __view/proposed__ = hash
-    T--&gt;&gt;O: MPF proof
-
-    B-&gt;&gt;T: GET __view/* (discover views)
-    T--&gt;&gt;B: list of view template hashes
-
-    B-&gt;&gt;B: Fetch templates, verify hashes
-    B-&gt;&gt;B: User selects view
-
-    Note over B: Same facts, different&lt;br/&gt;rendering — verified</code></pre>
-<h3 id="schema-format">Schema Format</h3>
-<p>The exact schema format is TBD. Candidates:</p>
-<ul>
-<li>JSON Schema with rendering extensions</li>
-<li>A minimal custom format (since we only need decoding + display)</li>
-<li>CIP-100 / JSON-LD alignment for Cardano ecosystem compatibility</li>
-</ul>
+<span class="nc">fact-value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="s">phase</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s2">"accepted"</span>
+<span class="w">        </span><span class="o">/</span><span class="w"> </span><span class="s2">"finished"</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s2">"rejected"</span><span class="p">,</span>
+<span class="w">  </span><span class="s">duration</span><span class="p">:</span><span class="w"> </span><span class="nb">uint</span><span class="p">,</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="s">outcome</span><span class="p">:</span><span class="w"> </span><span class="s2">"success"</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s2">"failure"</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s2">"unknown"</span><span class="p">,</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="s">url</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span><span class="p">,</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="s">from</span><span class="p">:</span><span class="w"> </span><span class="nc">fact-value</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="multiple-schemas">Multiple Schemas</h3>
+<p>A token can accumulate multiple schemas over time. The oracle
+may update the encoding format, add new fact types, or evolve
+the data structure. Each schema version is a separate document
+with a distinct hash.</p>
+<p>Old facts remain readable because old schemas remain in the
+oracle config. The browser matches each fact's schema hash
+against all known schemas. Schemas should never be removed
+from the oracle config — removing a schema makes older facts
+unreadable by generic clients.</p>
 <h2 id="mpfs-client">MPFS Client</h2>
 <h3 id="transaction-flow">Transaction Flow</h3>
 <p>The client interacts with the cage protocol through the MPFS API.
@@ -1851,8 +1824,6 @@ status:</p>
 </ul>
 <h2 id="open-questions">Open Questions</h2>
 <ol>
-<li><strong>Schema format</strong> — JSON Schema + extensions? Custom minimal
-   format? CIP-100 alignment?</li>
 <li><strong>CBOR decoding in PureScript</strong> — which library? FFI to a JS
    CBOR library? How much of the Cardano tx structure do we need
    to parse?</li>
@@ -1860,8 +1831,6 @@ status:</p>
    publishing UTXO Merkle roots, or do we define one?</li>
 <li><strong>Multi-token view</strong> — should the explorer support comparing
    facts across tokens, or is it strictly per-token?</li>
-<li><strong>Schema registry</strong> — could schemas themselves be an MPFS token,
-   creating a self-referential schema registry?</li>
 </ol>
 </article>
 </div>
