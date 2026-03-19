@@ -4,7 +4,7 @@ MPFS fact explorer and untrusted transaction verifier.
 
 ## Documentation
 
-See the [full documentation](https://lambdasistemi.github.io/mpfs-explorer/).
+See the [full documentation](https://lambdasistemi.github.io/cardano-mpfs-browser/).
 
 ## Quick start
 
