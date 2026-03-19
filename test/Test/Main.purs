@@ -11,6 +11,7 @@ import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
 import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.ProofSpec as ProofSpec
+import Test.MPFS.TxCborSpec as TxCborSpec
 
 main :: Effect Unit
 main = do
@@ -19,6 +20,7 @@ main = do
     specs :: Spec Unit
     specs = do
       ProofSpec.spec
+      TxCborSpec.spec
       case mUrl of
         Nothing -> pure unit
         Just _ -> ClientSpec.spec

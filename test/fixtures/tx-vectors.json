@@ -1,0 +1,54 @@
+{
+    "vectors": [
+        {
+            "cborHex": "84a400d90102818258201111111111111111111111111111111111111111111111111111111111111111000181a300581d70aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01821a001e8480a1581caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa15820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01028201d8185857d87a9fd8799f581ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc5820bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1a001e84801a000493e01a000927c0ffff020009a1581caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa15820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01a0f5f6",
+            "description": "Mint +1 token with StateDatum output",
+            "operation": "boot"
+        },
+        {
+            "cborHex": "84a400d90102818258201111111111111111111111111111111111111111111111111111111111111111000180020009a1581caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa15820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa20a0f5f6",
+            "description": "Mint -1 token (end lifecycle)",
+            "operation": "burn"
+        },
+        {
+            "cborHex": "84a300d90102818258201111111111111111111111111111111111111111111111111111111111111111000181a300581d70aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa011a001e8480028201d8185865d8799fd8799fd8799f5820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaff581ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc43010203d8799f420405ff1a000f42401b0000018bcfe56800ffff0200a0f5f6",
+            "description": "Submit insert request with RequestDatum",
+            "operation": "request-insert"
+        },
+        {
+            "cborHex": "84a300d90102818258201111111111111111111111111111111111111111111111111111111111111111000181a300581d70aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa011a001e8480028201d8185865d8799fd8799fd8799f5820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaff581ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc43010203d87a9f420405ff1a000f42401b0000018bcfe56800ffff0200a0f5f6",
+            "description": "Submit delete request with RequestDatum",
+            "operation": "request-delete"
+        },
+        {
+            "cborHex": "84a300d90102818258201111111111111111111111111111111111111111111111111111111111111111000181a300581d70aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa011a001e8480028201d8185868d8799fd8799fd8799f5820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaff581ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc43010203d87b9f420405420607ff1a000f42401b0000018bcfe56800ffff0200a0f5f6",
+            "description": "Submit update (modify) request with RequestDatum",
+            "operation": "request-update"
+        },
+        {
+            "cborHex": "84a300d90102828258201111111111111111111111111111111111111111111111111111111111111111008258202222222222222222222222222222222222222222222222222222222222222222000181a300581d70aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01821a001e8480a1581caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa15820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01028201d8185857d87a9fd8799f581ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc5820dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd1a001e84801a000493e01a000927c0ffff0200a105a182000082d87b9f80ff820000f5f6",
+            "description": "Process one request: spend state + 1 request input",
+            "operation": "update"
+        },
+        {
+            "cborHex": "84a300d90102838258201111111111111111111111111111111111111111111111111111111111111111008258202222222222222222222222222222222222222222222222222222222222222222008258203333333333333333333333333333333333333333333333333333333333333333000181a300581d70aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01821a001e8480a1581caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa15820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01028201d8185857d87a9fd8799f581ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc5820dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd1a001e84801a000493e01a000927c0ffff0200a105a182000082d87b9f80ff820000f5f6",
+            "description": "Process multiple requests: state + 2 request inputs",
+            "operation": "update-multi"
+        },
+        {
+            "cborHex": "84a300d901028282582011111111111111111111111111111111111111111111111111111111111111110082582022222222222222222222222222222222222222222222222222222222222222220001800200a105a182000082d87c9fd8799f4000ffff820000f5f6",
+            "description": "Retract a pending request",
+            "operation": "retract"
+        },
+        {
+            "cborHex": "84a300d901028182582011111111111111111111111111111111111111111111111111111111111111110001800200a0f5f6",
+            "description": "Plain transaction with no cage content",
+            "operation": "plain"
+        },
+        {
+            "cborHex": "84a400d90102818258201111111111111111111111111111111111111111111111111111111111111111000182a300581d70aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01821a001e8480a1581caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa15820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01028201d8185857d87a9fd8799f581ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc5820bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb1a001e84801a000493e01a000927c0ffffa300581d70aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa011a001e8480028201d8185865d8799fd8799fd8799f5820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaff581ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc43010203d8799f420405ff1a000f42401b0000018bcfe56800ffff020009a1581caaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa15820aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa01a0f5f6",
+            "description": "Boot + insert request in single transaction",
+            "operation": "boot-request"
+        }
+    ]
+}
