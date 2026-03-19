@@ -20,6 +20,8 @@ package:
     - tuples
     - foreign-object
     - foldable-traversable
+    - st
+    - unsafe-coerce
     - transformers
     - ordered-collections
     - console

@@ -4,12 +4,20 @@ module Test.MPFS.TxCborSpec (spec) where
 
 import Prelude
 
-import Data.Array (length)
+import Data.Array (index, length)
+import Data.Maybe (Maybe(..))
 import Foreign.Object as Object
 import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (shouldEqual)
+import Test.Spec.Assertions (shouldEqual, fail)
 import MPFS.Crypto.Hash (hexToBytes)
-import MPFS.Tx.Cbor (decodeTx)
+import MPFS.Tx.Cbor (TxDatum(..), decodeTx)
+import MPFS.Tx.PlutusData
+  ( CageDatum(..)
+  , Operation(..)
+  , SpendRedeemer(..)
+  , interpretDatum
+  , interpretSpendRedeemer
+  )
 
 spec :: Spec Unit
 spec = describe "CBOR Transaction Decoder" do
@@ -71,6 +79,60 @@ spec = describe "CBOR Transaction Decoder" do
     length tx.inputs `shouldEqual` 1
     length tx.outputs `shouldEqual` 2
     Object.size tx.mint `shouldEqual` 1
+
+  describe "MPFS Semantic Interpretation" do
+
+    it "boot tx output has StateDatum" do
+      let
+        tx = decodeTx $ hexToBytes bootHex
+        out = index tx.outputs 0
+      case out of
+        Nothing -> fail "missing output"
+        Just o -> case o.datum of
+          InlineDatum pd -> case interpretDatum pd of
+            Just (StateDatum st) -> do
+              st.maxFee `shouldEqual` 2000000
+              st.processTime `shouldEqual` 300000
+              st.retractTime `shouldEqual` 600000
+            _ -> fail "expected StateDatum"
+          _ -> fail "expected InlineDatum"
+
+    it "request-insert has RequestDatum with Insert op" do
+      let
+        tx = decodeTx $ hexToBytes requestInsertHex
+        out = index tx.outputs 0
+      case out of
+        Nothing -> fail "missing output"
+        Just o -> case o.datum of
+          InlineDatum pd -> case interpretDatum pd of
+            Just (RequestDatum req) ->
+              case req.operation of
+                Insert _ -> pure unit
+                _ -> fail "expected Insert"
+            _ -> fail "expected RequestDatum"
+          _ -> fail "expected InlineDatum"
+
+    it "update tx redeemer is Modify" do
+      let
+        tx = decodeTx $ hexToBytes updateHex
+        red = index tx.redeemers 0
+      case red of
+        Nothing -> fail "missing redeemer"
+        Just r ->
+          case interpretSpendRedeemer r."data" of
+            Just Modify -> pure unit
+            _ -> fail "expected Modify"
+
+    it "retract tx redeemer is Retract" do
+      let
+        tx = decodeTx $ hexToBytes retractHex
+        red = index tx.redeemers 0
+      case red of
+        Nothing -> fail "missing redeemer"
+        Just r ->
+          case interpretSpendRedeemer r."data" of
+            Just (Retract _) -> pure unit
+            _ -> fail "expected Retract"
 
 -- Test vectors from mpfs-tx-vectors
 bootHex :: String
