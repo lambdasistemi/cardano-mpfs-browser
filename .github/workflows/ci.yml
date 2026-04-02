@@ -15,7 +15,7 @@ jobs:
     name: Build Gate
     runs-on: nixos
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: cachix/cachix-action@v15
         with:
           name: paolino
@@ -31,7 +31,7 @@ jobs:
     needs: build-gate
     runs-on: nixos
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: cachix/cachix-action@v15
         with:
@@ -45,7 +45,7 @@ jobs:
     runs-on: nixos
     needs: build
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: cachix/cachix-action@v15
         with:
