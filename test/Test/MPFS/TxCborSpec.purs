@@ -9,8 +9,8 @@ import Data.Maybe (Maybe(..))
 import Foreign.Object as Object
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual, fail)
-import MPFS.Crypto.Hash (hexToBytes)
 import MPFS.Tx.Cbor (TxDatum(..), decodeTx)
+import MPFS.Tx.Cbor.Bytes (hexToBytes)
 import MPFS.Tx.PlutusData
   ( CageDatum(..)
   , Operation(..)

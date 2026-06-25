@@ -2,7 +2,9 @@
 .spago/
 output/
 dist/index.js
+dist/*.wasm
 node_modules/
+src/assets/
 .psci_modules/
 WIP.md
 result

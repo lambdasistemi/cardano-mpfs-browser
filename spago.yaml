@@ -5,6 +5,7 @@ package:
     - prelude
     - effect
     - aff
+    - aff-promise
     - halogen
     - fetch
     - argonaut

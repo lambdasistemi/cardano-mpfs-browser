@@ -18,8 +18,13 @@ opaque proofs handed to the WASM cage reactor. The browser flake **already input
 
 ## Functional requirements
 
-- FR1 — the `mpfs-cage-reactor.wasm` (from `cardano-mpfs-offchain.packages.*.wasm-mpfs-verify`)
-  is bundled as a browser asset and loaded/instantiated (port `Reactor.js`).
+- FR1 — the **`mpfs-verify-reactor.wasm`** (the PURE verifier; `verify_ok`/`verify_error`
+  contract) from `cardano-mpfs-offchain.packages.*.wasm-mpfs-verify` is bundled as a
+  browser asset and loaded/instantiated (port `Reactor.js`). NOT `mpfs-cage-reactor.wasm`
+  — that is the tx-building reactor (needs `cage_config`/`eval_context`) and belongs to
+  #32 (wallet/submit). Both ship from the same `wasm-mpfs-verify` output
+  (`nix/wasm-targets.nix`: `[ mpfs-verify-reactor, mpfs-cage-reactor, cardano-mpfs-cage-tx ]`).
+  See epic ruling A-002.
 - FR2 — proof verification routes through the reactor (port `runCageReactor` / the
   verify op), replacing `decodeAndVerify` / `MPFS/Proof/*`.
 - FR3 — `MPFS/Proof/CSMT.purs`, `MPFS/Proof/MPF*.purs`, `MPFS/Proof/MPF/Merkle.purs`,

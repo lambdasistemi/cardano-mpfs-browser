@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "@noble/hashes": "^2.0.1"
+    "@bjorn3/browser_wasi_shim": "0.4.2"
   }
 }

@@ -3,6 +3,8 @@ module MPFS.Tx.Cbor.Bytes
   ( unsafeIndex
   , slice
   , byteLength
+  , bytesToHex
+  , hexToBytes
   ) where
 
 import Data.ArrayBuffer.Types (Uint8Array)
@@ -17,3 +19,9 @@ foreign import slice
 
 -- | Length of the array in bytes.
 foreign import byteLength :: Uint8Array -> Int
+
+-- | Encode bytes as hex string.
+foreign import bytesToHex :: Uint8Array -> String
+
+-- | Decode hex string to bytes.
+foreign import hexToBytes :: String -> Uint8Array
