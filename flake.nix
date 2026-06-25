@@ -10,14 +10,13 @@
     cardano-mpfs-offchain = {
       url = "github:lambdasistemi/cardano-mpfs-offchain";
     };
-    cardano-mpfs-cage.follows = "cardano-mpfs-offchain/cardano-mpfs-cage";
     cardano-mpfs-onchain.follows = "cardano-mpfs-offchain/cardano-mpfs-onchain";
     cardano-node-clients.follows = "cardano-mpfs-offchain/cardano-node-clients";
     cardano-node.follows = "cardano-mpfs-offchain/cardano-node";
   };
 
   outputs = { self, nixpkgs, purescript-overlay, cardano-mpfs-offchain
-    , cardano-mpfs-cage, cardano-mpfs-onchain, cardano-node-clients, cardano-node }:
+    , cardano-mpfs-onchain, cardano-node-clients, cardano-node }:
     let
       supportedSystems = [ "x86_64-linux" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
@@ -44,10 +43,10 @@
             ] ++ pkgs.lib.optional (devnet-server != null) devnet-server
               ++ pkgs.lib.optional (cardano-node-exe != null) cardano-node-exe;
           };
-        });
+      });
       packages = forAllSystems (system: {
         cage-blueprint = cardano-mpfs-onchain.packages.${system}.default;
-        cage-test-vectors = cardano-mpfs-cage.packages.${system}.cage-test-vectors;
+        wasm-mpfs-verify = cardano-mpfs-offchain.packages.${system}.wasm-mpfs-verify;
         devnet-genesis = cardano-node-clients.packages.${system}.devnet-genesis;
       });
     };

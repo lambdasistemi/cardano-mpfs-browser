@@ -16,7 +16,21 @@ build:
 bundle:
     #!/usr/bin/env bash
     set -euo pipefail
-    spago bundle
+    just prepare-wasm
+    mkdir -p dist
+    esbuild src/bootstrap.js \
+      --bundle \
+      --outfile=dist/deps.js \
+      --format=iife \
+      --platform=browser \
+      --loader:.wasm=file \
+      --asset-names='[name].[hash]' \
+      --public-path=. \
+      --minify
+    spago bundle --module Main --outfile dist/index.js
+    cat dist/deps.js dist/index.js > dist/bundle.js
+    mv dist/bundle.js dist/index.js
+    rm dist/deps.js
 
 # Watch and rebuild
 dev:
@@ -46,12 +60,21 @@ ci:
     just bundle
     just test
 
-# Generate test vectors and run tests
+# Prepare the WASM reactor and run tests
 test:
     #!/usr/bin/env bash
     set -euo pipefail
-    nix run .#cage-test-vectors > test/fixtures/cage-vectors.json
+    just prepare-wasm
     spago test
+
+# Copy the Haskell WASM verifier from the flake input for tests and bundles
+prepare-wasm:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p src/assets
+    wasm_out="$(nix build --fallback --no-link --print-out-paths .#wasm-mpfs-verify)"
+    test -f "$wasm_out/mpfs-verify-reactor.wasm"
+    install -m 644 "$wasm_out/mpfs-verify-reactor.wasm" src/assets/mpfs-verify-reactor.wasm
 
 # E2E tests against devnet server
 e2e blueprint:
@@ -78,6 +101,7 @@ e2e blueprint:
         curl -s "http://localhost:$PORT/status" 2>&1 || true
         exit 1
     fi
+    just prepare-wasm
     MPFS_BASE_URL="http://localhost:$PORT" spago test
 
 # Serve locally
@@ -90,4 +114,4 @@ serve:
 # Clean build artifacts
 clean:
     #!/usr/bin/env bash
-    rm -rf output/ dist/index.js
+    rm -rf output/ dist/index.js dist/*.wasm src/assets

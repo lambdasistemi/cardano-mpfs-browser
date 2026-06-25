@@ -1,86 +1,55 @@
--- | Tests for MPF proof verification against
--- cage test vectors.
+-- | Tests for proof verification through the WASM verify reactor.
 module Test.MPFS.ProofSpec (spec) where
 
 import Prelude
 
+import Data.Either (Either(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import MPFS.Crypto.Hash (hexToBytes, bytesToHex)
-import MPFS.Proof.MPF
-  ( ProofStep(..)
-  , has
-  , including
-  )
+import MPFS.Reactor (parseVerifyOutput, runCageReactor, verifyEnvelope)
 
 spec :: Spec Unit
-spec = describe "MPF Proof Verification" do
+spec = describe "WASM Verify Reactor Verification" do
 
-  it "insert into empty trie" do
-    let
-      key = hexToBytes "6162"
-      value = hexToBytes "6364"
-      proof = []
-      expected =
-        "5774710a4457e50a5a2ff1fe6149398617c895dd3fbd3bd8cac51ecc571f9319"
-      result = including key value proof
-    bytesToHex result `shouldEqual` expected
+  it "runs the reactor and preserves unknown-op verdicts" do
+    result <- runCageReactor unknownOpEnvelope
+    result.exitOk `shouldEqual` true
+    result.stdout `shouldEqual` "unknown_op: frobnicate"
 
-  it "insert creating fork" do
-    -- Leaf step: constructor 2, fields=[skip, key, value]
+  it "parses verify_ok as success" do
     let
-      key = hexToBytes "6b32"
-      value = hexToBytes "7632"
-      proof =
-        [ Leaf
-            { skip: 0
-            , key:
-                hexToBytes
-                  "30e612d85865aaf22de5c95a43c5cbc1907323d74edcc3f2e122c385044dac2b"
-            , value:
-                hexToBytes
-                  "ae11692325525e82337167fcfab34d45d1904ff786e2d4bf4be2d1c4878cd34c"
-            }
-        ]
-      expected =
-        "5a72ccdd24fe693d6c10aaacd4635f5daa94dbd881f3340a985634e7aaed3c7f"
-      result = including key value proof
-    bytesToHex result `shouldEqual` expected
+      parsed =
+        parseVerifyOutput
+          { stdout: "verify_ok"
+          , stderr: ""
+          , exitOk: true
+          }
+    parsed `shouldEqual` Right unit
 
-  it "insert with shared prefix" do
+  it "parses reactor verification errors as failures" do
     let
-      key = hexToBytes "6b62"
-      value = hexToBytes "7662"
-      proof =
-        [ Leaf
-            { skip: 0
-            , key:
-                hexToBytes
-                  "9e3330d3dd6f271cf17f48426f651f7b4e9cd347561c9617110a8bf998eb4930"
-            , value:
-                hexToBytes
-                  "ac5370259669ccdf4639f09317bbb2adaa740a300a5dc98fd51912b1173155b0"
-            }
-        ]
-      expected =
-        "8ba3fb9d4d56aa4d03e3d5481e9e23ea0c87d4e9dee6debd9cf268b462b61f74"
-      result = including key value proof
-    bytesToHex result `shouldEqual` expected
+      parsed =
+        parseVerifyOutput
+          { stdout: "verify_error: root mismatch"
+          , stderr: ""
+          , exitOk: true
+          }
+    parsed `shouldEqual` Left "root mismatch"
 
-  it "inclusion proof for middle key" do
-    let
-      key = hexToBytes "79"
-      value = hexToBytes "32"
-      root =
-        hexToBytes
-          "91db563fdb311ea17481d01600e08179f6393a9c0e0c8cec41ffb9d8eaba9327"
-      proof =
-        [ Branch
-            { skip: 0
-            , neighbors:
-                hexToBytes
-                  "9c7a465e42fff5f33d830117491d1754e12a901d4f0a6ce156f0d1da2a69b66996137bd9a8bdc4452f60cb31222fb2742a3f0b5ef9189188d06221c8153f7dc40eb923b0cbd24df54401d998531feead35a47a99f4deed205de4af81120f97610000000000000000000000000000000000000000000000000000000000000000"
-            }
-        ]
-    has root key value proof
-      `shouldEqual` true
+  it "routes verification envelopes through the reactor" do
+    verdict <- verifyEnvelope unknownOpEnvelope
+    verdict `shouldEqual` Left "unknown_op: frobnicate"
+
+  it "rejects corrupted boot facts proof through the reactor" do
+    verdict <- verifyEnvelope corruptedBootProofEnvelope
+    verdict
+      `shouldEqual`
+        Left "CsmtReplayFailed \"boot.wallet_utxos[0].inclusion_proof\" \"malformed proof CBOR\""
+
+unknownOpEnvelope :: String
+unknownOpEnvelope =
+  "{\"op\":\"frobnicate\",\"trusted_root\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"facts\":{}}"
+
+corruptedBootProofEnvelope :: String
+corruptedBootProofEnvelope =
+  "{\"facts\":{\"protocol_parameters\":{\"cbor\":\"820102\",\"verified\":false},\"snapshot\":{\"chainpoint\":{\"block_id\":\"1111111111111111111111111111111111111111111111111111111111111111\",\"slot\":42},\"utxo_root\":\"4db60d43fa4eca2a2007fd49051b36021b47dfef5af71a2d1fbdbfcfb38c74b6\"},\"wallet_utxos\":[{\"inclusion_proof\":\"00\",\"ref\":{\"tx_id\":\"c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2c2\",\"tx_ix\":2},\"txout_cbor\":\"a2004461646472011a001e8480\"}]},\"op\":\"boot\",\"trusted_root\":\"4db60d43fa4eca2a2007fd49051b36021b47dfef5af71a2d1fbdbfcfb38c74b6\"}"

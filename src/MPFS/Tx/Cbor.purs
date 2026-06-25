@@ -20,14 +20,12 @@ import Control.Monad.ST as ST
 import Control.Monad.ST.Ref (STRef)
 import Control.Monad.ST.Ref as Ref
 import Data.Array (snoc)
-import Data.Array.ST (STArray)
 import Data.Array.ST as STA
 import Data.ArrayBuffer.Types (Uint8Array)
-import Data.Maybe (Maybe(..))
 import Foreign.Object (Object)
 import Foreign.Object as Object
-import MPFS.Crypto.Hash (bytesToHex)
 import MPFS.Tx.Cbor.Bytes as B
+import MPFS.Tx.Cbor.Bytes (bytesToHex)
 import MPFS.Tx.PlutusData (PlutusData(..))
 
 -- -------------------------------------------------------
