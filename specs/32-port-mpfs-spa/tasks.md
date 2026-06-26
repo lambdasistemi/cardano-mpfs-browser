@@ -65,5 +65,5 @@
 
 ## Orchestrator Finalization
 
-- [ ] T032-F1 Verify every slice commit, rerun `./gate.sh` at HEAD, update PR
+- [X] T032-F1 Verify every slice commit, rerun `./gate.sh` at HEAD, update PR
   metadata, and report `READY-FOR-REVIEW <sha>` to the epic orchestrator.
