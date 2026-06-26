@@ -10,6 +10,9 @@ module MPFS.Client.Types
   , StatusResponse
   , TokenState
   , PendingRequest
+  , FactEntry
+  , FactsResponse
+  , FactResponse
   , BootBody
   , InsertBody
   , DeleteBody
@@ -73,6 +76,22 @@ type PendingRequest =
   , value :: Maybe Hex
   , fee :: Number
   , submitted_at :: Number
+  }
+
+-- | @GET /tokens/:id/facts@ element.
+type FactEntry =
+  { key :: Hex
+  , value :: Hex
+  }
+
+-- | @GET /tokens/:id/facts@ response.
+type FactsResponse =
+  { facts :: Array FactEntry
+  }
+
+-- | @GET /tokens/:id/facts/:key@ response.
+type FactResponse =
+  { value :: Hex
   }
 
 -- | @POST /tx/boot@ body.

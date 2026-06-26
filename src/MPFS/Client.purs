@@ -4,6 +4,8 @@
 module MPFS.Client
   ( ClientError(..)
   , Client
+  , decodeFactBody
+  , decodeFactsBody
   , decodeTokensBody
   , mkClient
   ) where
@@ -32,6 +34,9 @@ import MPFS.Client.Types
   ( BootBody
   , DeleteBody
   , EndBody
+  , FactResponse
+  , FactEntry
+  , FactsResponse
   , Hex
   , InsertBody
   , PendingRequest
@@ -71,6 +76,9 @@ type Client =
       TokenId
       -> Hex
       -> Aff (Either ClientError Hex)
+  , getTokenFacts ::
+      TokenId
+      -> Aff (Either ClientError (Array FactEntry))
   , getTokenProof ::
       TokenId
       -> Hex
@@ -121,10 +129,15 @@ mkClient baseUrl =
             <> "/root"
         )
   , getTokenFact: \tokenId key ->
-      get
+      getWith decodeFactBody
         ( baseUrl <> "/tokens/" <> tokenId
             <> "/facts/"
             <> key
+        )
+  , getTokenFacts: \tokenId ->
+      getWith decodeFactsBody
+        ( baseUrl <> "/tokens/" <> tokenId
+            <> "/facts"
         )
   , getTokenProof: \tokenId key ->
       get
@@ -211,6 +224,16 @@ decodeTokensBody body = do
   else
     Left $ DecodeError
       "Cannot derive token ids from tokens.entries[].txout_cbor"
+
+decodeFactsBody :: String -> Either ClientError (Array FactEntry)
+decodeFactsBody body = do
+  response :: FactsResponse <- decodeBody body
+  pure response.facts
+
+decodeFactBody :: String -> Either ClientError Hex
+decodeFactBody body = do
+  response :: FactResponse <- decodeBody body
+  pure response.value
 
 decodeTrustedRootBody :: String -> Either ClientError TrustedRoot
 decodeTrustedRootBody body = do

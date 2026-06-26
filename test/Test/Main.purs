@@ -9,6 +9,7 @@ import Test.Spec (Spec)
 import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
 import Test.AppSpec as AppSpec
+import Test.FactsSpec as FactsSpec
 import Test.MPFS.CageSpec as CageSpec
 import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.ProofSpec as ProofSpec
@@ -24,6 +25,7 @@ main = do
     specs = do
       AppSpec.spec
       CageSpec.spec
+      FactsSpec.spec
       ProofSpec.spec
       TokensSpec.spec
       TxCborSpec.spec

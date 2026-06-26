@@ -12,12 +12,29 @@ import Effect.Exception (error)
 import Node.Process (lookupEnv)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual, fail)
-import MPFS.Client (decodeTokensBody, mkClient)
+import MPFS.Client
+  ( decodeFactBody
+  , decodeFactsBody
+  , decodeTokensBody
+  , mkClient
+  )
 
 bumpedTokensResponseBody :: String
 bumpedTokensResponseBody =
   """
   {"snapshot":{"chainpoint":{"slot":42,"block_id":"1111111111111111111111111111111111111111111111111111111111111111"},"utxo_root":"2222222222222222222222222222222222222222222222222222222222222222"},"tokens":{"entries":[],"completeness_proof":"00"}}
+  """
+
+factsResponseBody :: String
+factsResponseBody =
+  """
+  {"snapshot":{"chainpoint":{"slot":42,"block_id":"1111111111111111111111111111111111111111111111111111111111111111"},"utxo_root":"2222222222222222222222222222222222222222222222222222222222222222"},"state":{},"facts":[{"key":"6b6579","value":"76616c7565"}]}
+  """
+
+factResponseBody :: String
+factResponseBody =
+  """
+  {"snapshot":{"chainpoint":{"slot":42,"block_id":"1111111111111111111111111111111111111111111111111111111111111111"},"utxo_root":"2222222222222222222222222222222222222222222222222222222222222222"},"value":"76616c7565","fact":{}}
   """
 
 baseUrl :: Aff String
@@ -36,6 +53,18 @@ spec = describe "MPFS Client E2E" do
       Left err -> fail $ show err
       Right tokens ->
         tokens `shouldEqual` []
+
+  it "decodes GET /tokens/:id/facts response entries" do
+    case decodeFactsBody factsResponseBody of
+      Left err -> fail $ show err
+      Right facts ->
+        facts `shouldEqual` [ { key: "6b6579", value: "76616c7565" } ]
+
+  it "decodes GET /tokens/:id/facts/:key response value" do
+    case decodeFactBody factResponseBody of
+      Left err -> fail $ show err
+      Right value ->
+        value `shouldEqual` "76616c7565"
 
   it "GET /status returns tip slot" do
     url <- baseUrl
