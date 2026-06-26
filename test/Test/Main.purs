@@ -8,6 +8,7 @@ import Node.Process (lookupEnv)
 import Test.Spec (Spec)
 import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
+import Test.AppWalletSpec as AppWalletSpec
 import Test.AppSpec as AppSpec
 import Test.FactsSpec as FactsSpec
 import Test.MPFS.CageSpec as CageSpec
@@ -24,6 +25,7 @@ main = do
     specs :: Spec Unit
     specs = do
       AppSpec.spec
+      AppWalletSpec.spec
       CageSpec.spec
       FactsSpec.spec
       ProofSpec.spec

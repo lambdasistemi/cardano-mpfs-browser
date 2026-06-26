@@ -15,9 +15,14 @@ import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
 import MPFS.Types (TokenId(..), TrustedRoot(..))
 import MPFS.UI.Remote (Remote(..), remoteStatus)
+import MPFS.Wallet.Cip30 (WalletInfo)
 
 type AppActions action =
-  { loadTokens :: action
+  { loadWallets :: action
+  , connectWallet :: WalletInfo -> action
+  , refreshWallet :: action
+  , disconnectWallet :: action
+  , loadTokens :: action
   , loadFacts :: action
   , lookupFact :: action
   , selectTab :: AppTab -> action
@@ -61,7 +66,7 @@ header state =
     , HH.div
         [ HP.class_ (HH.ClassName "status-row") ]
         [ statusPill "Client" state.baseUrl
-        , statusPill "Wallet" (walletStatusLabel state.walletSession.status)
+        , statusPill "Wallet" (walletSessionLabel state)
         , statusPill "Token" (selectedTokenLabel state.selectedToken)
         ]
     ]
@@ -99,22 +104,24 @@ tabButton toAction activeTab tab =
 
 tabPanel :: forall action m. AppActions action -> AppState -> H.ComponentHTML action () m
 tabPanel actions state = case state.activeTab of
-  ConnectTab -> connectPanel state
+  ConnectTab -> connectPanel actions state
   TokensTab -> tokensPanel actions state
   FactsTab -> factsPanel actions state
   EndTab -> endPanel state
 
-connectPanel :: forall action m. AppState -> H.ComponentHTML action () m
-connectPanel state =
+connectPanel
+  :: forall action m
+   . AppActions action
+  -> AppState
+  -> H.ComponentHTML action () m
+connectPanel actions state =
   panelLayout "Connect" "Wallet session"
-    [ fieldLine "Session" (walletStatusLabel state.walletSession.status)
+    [ fieldLine "Session" (walletSessionLabel state)
     , fieldLine "Network" (maybeText state.walletSession.network)
-    , fieldLine "Address" (maybeText state.walletSession.address)
-    , HH.div
-        [ HP.class_ (HH.ClassName "control-row") ]
-        [ inertButton "Connect wallet"
-        , inertButton "Refresh"
-        ]
+    , fieldLine "Address" (maybeText state.walletSession.selectedAddress)
+    , fieldLine "Balance" (lovelaceText state.walletSession.lovelace)
+    , walletFeedback state.walletSession.feedback
+    , walletControls actions state
     ]
 
 tokensPanel
@@ -184,7 +191,9 @@ endPanel :: forall action m. AppState -> H.ComponentHTML action () m
 endPanel state =
   panelLayout "End" "Cage lifecycle"
     [ fieldLine "Token" (selectedTokenLabel state.selectedToken)
-    , fieldLine "Wallet" (walletStatusLabel state.walletSession.status)
+    , fieldLine "Wallet" (walletSessionLabel state)
+    , fieldLine "Wallet network" (maybeText state.walletSession.network)
+    , fieldLine "Wallet address" (maybeText state.walletSession.selectedAddress)
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
         [ inertButton "End cage"
@@ -262,6 +271,109 @@ tokenRemoteView actions selectedToken = case _ of
         HH.ul
           [ HP.class_ (HH.ClassName "token-list") ]
           (map (tokenRow actions selectedToken) tokens)
+
+walletControls
+  :: forall action m
+   . AppActions action
+  -> AppState
+  -> H.ComponentHTML action () m
+walletControls actions state = case state.walletSession.status of
+  WalletConnected ->
+    HH.div
+      [ HP.class_ (HH.ClassName "control-row") ]
+      [ HH.button
+          [ HP.type_ HP.ButtonButton
+          , HP.class_ (HH.ClassName "primary-button")
+          , HE.onClick \_ -> actions.refreshWallet
+          ]
+          [ HH.text "Refresh wallet" ]
+      , HH.button
+          [ HP.type_ HP.ButtonButton
+          , HP.class_ (HH.ClassName "inert-button")
+          , HE.onClick \_ -> actions.disconnectWallet
+          ]
+          [ HH.text "Disconnect" ]
+      ]
+  _ ->
+    HH.div_
+      [ walletRemoteView actions state.walletSession.status
+          state.walletSession.wallets
+      , HH.div
+          [ HP.class_ (HH.ClassName "control-row") ]
+          [ HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "primary-button")
+              , HP.disabled (state.walletSession.wallets == Loading)
+              , HE.onClick \_ -> actions.loadWallets
+              ]
+              [ HH.text (walletDiscoveryLabel state.walletSession.wallets) ]
+          ]
+      ]
+
+walletRemoteView
+  :: forall action m
+   . AppActions action
+  -> WalletStatus
+  -> Remote (Array WalletInfo)
+  -> H.ComponentHTML action () m
+walletRemoteView actions status = case _ of
+  NotAsked ->
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text "Wallet discovery has not run." ]
+  Loading ->
+    HH.p
+      [ HP.class_ (HH.ClassName "loading-state") ]
+      [ HH.text "Looking for CIP-30 wallets..." ]
+  Failure message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "error-state") ]
+      [ HH.text ("Error discovering wallets: " <> message) ]
+  Success wallets
+    | Array.null wallets ->
+        HH.p
+          [ HP.class_ (HH.ClassName "empty-state") ]
+          [ HH.text "No CIP-30 wallet found." ]
+    | otherwise ->
+        HH.ul
+          [ HP.class_ (HH.ClassName "token-list") ]
+          (map (walletRow actions status) wallets)
+
+walletRow
+  :: forall action m
+   . AppActions action
+  -> WalletStatus
+  -> WalletInfo
+  -> H.ComponentHTML action () m
+walletRow actions status wallet =
+  HH.li
+    [ HP.attr (HH.AttrName "data-wallet") wallet.key ]
+    [ HH.strong_ [ HH.text wallet.name ]
+    , HH.button
+        [ HP.type_ HP.ButtonButton
+        , HP.class_ (HH.ClassName "primary-button")
+        , HP.disabled (status == WalletConnecting)
+        , HE.onClick \_ -> actions.connectWallet wallet
+        ]
+        [ HH.text
+            if status == WalletConnecting then
+              "Connecting"
+            else
+              "Connect"
+        ]
+    ]
+
+walletFeedback
+  :: forall action m
+   . Maybe String
+  -> H.ComponentHTML action () m
+walletFeedback = case _ of
+  Nothing ->
+    HH.text ""
+  Just message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text message ]
 
 tokenStateRemoteView
   :: forall action m
@@ -516,6 +628,13 @@ factsLoadLabel = case _ of
   Failure _ -> "Refresh facts"
   Success _ -> "Refresh facts"
 
+walletDiscoveryLabel :: forall a. Remote a -> String
+walletDiscoveryLabel = case _ of
+  NotAsked -> "Find wallets"
+  Loading -> "Finding wallets"
+  Failure _ -> "Refresh wallets"
+  Success _ -> "Refresh wallets"
+
 remoteIsLoading :: forall a. Remote a -> Boolean
 remoteIsLoading = case _ of
   Loading -> true
@@ -541,6 +660,17 @@ walletStatusLabel = case _ of
   WalletDisconnected -> "Not connected"
   WalletConnecting -> "Connecting"
   WalletConnected -> "Connected"
+
+walletSessionLabel :: AppState -> String
+walletSessionLabel state = case state.walletSession.status, state.walletSession.walletName of
+  WalletConnected, Just name -> "Connected: " <> name
+  WalletConnecting, Just name -> "Connecting: " <> name
+  _, _ -> walletStatusLabel state.walletSession.status
+
+lovelaceText :: Maybe String -> String
+lovelaceText = case _ of
+  Nothing -> "Unavailable"
+  Just value -> value <> " lovelace"
 
 selectedTokenLabel :: Maybe TokenId -> String
 selectedTokenLabel = case _ of
