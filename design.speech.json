@@ -1,0 +1,253 @@
+{
+  "overview": [
+    {"text": "Cardano MPFS Browser is the trusted interface between the user and the MPFS protocol.", "pause": 400},
+    {"text": "It is the boundary where the digital world, cryptographic proofs, on-chain state, and Merkle trees, meets the non-digital world: a human making decisions.", "pause": 500},
+    {"text": "Everything below this layer is verifiable. Proofs are mathematical. Chain state is consensus. The MPFS service is just a data pipe.", "pause": 400},
+    {"text": "But none of that matters if the interface that translates digital facts into human-readable information is wrong.", "pause": 300},
+    {"text": "If this code misrepresents a transaction, the user signs something they didn't intend.", "pause": 300},
+    {"text": "If it misrenders a fact, the user acts on false data.", "pause": 500},
+    {"text": "This is the trust boundary.", "pause": 300},
+    {"text": "This is Web 3: not trustless in the sense that trust disappears, but that trust is relocated, from opaque servers to auditable client code that verifies proofs before presenting anything to the user.", "pause": 600}
+  ],
+  "the-mpfs-application-pattern": [
+    {"text": "Any application built on MPFS, whether a browser, a CLI, or an automated agent, must follow the same pattern.", "pause": 400},
+    {"text": "Step one: Verify. Check proofs for every piece of data received from the untrusted service.", "pause": 400},
+    {"text": "Step two: Interpret. Decode raw bytes into domain meaning using a verified schema.", "pause": 400},
+    {"text": "Step three: Decide. Make a trust decision: sign or reject a transaction.", "pause": 500},
+    {"text": "The difference between applications is only in step three.", "pause": 300},
+    {"text": "A browser presents verified facts to a human, who decides.", "pause": 300},
+    {"text": "An agent applies programmatic logic to verified facts and decides autonomously.", "pause": 300},
+    {"text": "A CLI does the same as the browser, but in a terminal.", "pause": 500},
+    {"text": "The trust architecture is identical. The browser is the reference implementation of this pattern, and the first real MPFS client.", "pause": 300},
+    {"text": "Any domain-specific application built on MPFS, a credential verifier, a supply chain tracker, a registry, replicates this same structure, adding domain logic on top of verified facts.", "pause": 600}
+  ],
+  "mpfs-client-libraries": [
+    {"text": "The verify, interpret, decide machinery is not application-specific. It belongs in a library that any MPFS application can consume.", "pause": 400},
+    {"text": "This repository produces two artifacts.", "pause": 300},
+    {"text": "First: the browser app, the single-page application, which is a consumer of the library.", "pause": 300},
+    {"text": "Second: the JavaScript client library, published to npm, usable by any JavaScript or TypeScript application, in the browser or on Node.js.", "pause": 500},
+    {"text": "The library takes the three user inputs: token ID, schema, API URL, and institutional root source.", "pause": 300},
+    {"text": "It exposes verified facts, decoded transactions, and proof verification.", "pause": 300},
+    {"text": "The consumer supplies the decide step: a human in the browser, business logic in an agent, a prompt in a CLI.", "pause": 500},
+    {"text": "A diagram shows the library architecture. Inputs flow through verify, then interpret, then expose. Consumers, browser, agent, or CLI, receive the verified data.", "pause": 500},
+    {"text": "Beyond JavaScript, we are committed to providing the same trust machinery as native libraries for backend and systems integration.", "pause": 300},
+    {"text": "A native library with a C-compatible ABI, written in Haskell or Rust, will enable MPFS applications in any language that can call C functions.", "pause": 600}
+  ],
+  "this-application": [
+    {"text": "The browser serves two purposes.", "pause": 300},
+    {"text": "First: Fact Explorer. Given an MPFS token, query its facts and render them using a verified schema, with full proof verification at every step.", "pause": 400},
+    {"text": "Second: MPFS Client. Interact with the cage protocol: insert, delete, update. Sign transactions via a CIP-30 wallet, with every unsigned transaction decoded and displayed in human-readable MPFS semantics before signing.", "pause": 600}
+  ],
+  "system-context": [
+    {"text": "A diagram shows the system context. Three zones.", "pause": 400},
+    {"text": "The trusted zone contains the human user, the MPFS browser application, and the CIP-30 wallet.", "pause": 300},
+    {"text": "The untrusted zone contains the MPFS off-chain API and the Cardano node behind it.", "pause": 300},
+    {"text": "The trust anchors are the oracle, which publishes the token ID and schema, and the institutional party, which publishes the UTXO Merkle root.", "pause": 600}
+  ],
+  "what-the-user-needs": [
+    {"text": "To use the application, a user provides exactly three inputs.", "pause": 400},
+    {"text": "First: the Token ID, published by the oracle alongside the schema. The oracle is responsible for making this public.", "pause": 400},
+    {"text": "Second: an MPFS API URL. The address of any MPFS off-chain service. This is untrusted. It is just a data pipe.", "pause": 400},
+    {"text": "Third: an institutional UTXO Merkle root source. A trusted party, such as the Cardano Foundation, that publishes the current UTXO Merkle tree root.", "pause": 500},
+    {"text": "Everything else is provable. The MPFS service is obligated to provide proofs for anything it claims. If it lies or withholds data, the proofs won't verify and the user knows immediately.", "pause": 600}
+  ],
+  "the-oracles-responsibility": [
+    {"text": "The oracle, or token owner, publishes three things.", "pause": 300},
+    {"text": "The token ID, which identifies the cage on-chain.", "pause": 300},
+    {"text": "The schema, which describes how to interpret facts.", "pause": 300},
+    {"text": "The schema hash, which is stored as a fact in the trie itself.", "pause": 400},
+    {"text": "By publishing the token ID, the oracle gives users the entry point to independently verify everything: the cage UTxO, the trie root, the schema hash, and every fact.", "pause": 600}
+  ],
+  "the-verification-chain": [
+    {"text": "The application verifies facts through a four-layer chain, where each layer is independently provable.", "pause": 400},
+    {"text": "A diagram shows the chain from left to right.", "pause": 300},
+    {"text": "Layer one: the institutional root. This proves the UTXO Merkle root is authentic. Published by a known party, such as the Cardano Foundation.", "pause": 400},
+    {"text": "Layer two: the CSMT proof. This proves the cage UTxO exists in the UTXO set. Verified against the institutional root.", "pause": 400},
+    {"text": "Layer three: the cage UTxO. This contains the cage's current trie root. Proved to exist on-chain.", "pause": 400},
+    {"text": "Layer four: the MPF proof. This proves a fact exists in the cage's trie. Verified against the cage's trie root.", "pause": 500},
+    {"text": "No Cardano node is required. The entire chain is verified client-side using cryptographic proofs and a single trusted root.", "pause": 600}
+  ],
+  "what-the-user-trusts": [
+    {"text": "The user trusts four things.", "pause": 300},
+    {"text": "The oracle's published token ID, which is explicit and public.", "pause": 300},
+    {"text": "The institutional root publisher, which is explicit and auditable.", "pause": 300},
+    {"text": "The browser, which runs the verification code.", "pause": 300},
+    {"text": "Nothing else. Not the MPFS off-chain service. Not the API.", "pause": 600}
+  ],
+  "the-mpfs-service-obligation": [
+    {"text": "The off-chain service is untrusted but has a clear contract.", "pause": 300},
+    {"text": "For any data it holds that is committed to the Merkle tree, it must provide the corresponding proof.", "pause": 400},
+    {"text": "The user can always verify.", "pause": 300},
+    {"text": "Is this fact actually in the trie? That's the MPF proof.", "pause": 300},
+    {"text": "Does this trie root match what's on-chain? That's the cage UTxO.", "pause": 300},
+    {"text": "Does this cage UTxO actually exist? That's the CSMT proof.", "pause": 300},
+    {"text": "Is the UTXO set root authentic? That's the institutional root.", "pause": 400},
+    {"text": "If any link breaks, the user sees it. The service cannot selectively lie. It either provides valid proofs, or the verification fails visibly.", "pause": 600}
+  ],
+  "the-problem": [
+    {"text": "MPFS stores facts as raw byte strings. In real applications these will be structured data, such as JSON-LD or CBOR, but the trie is format-agnostic.", "pause": 300},
+    {"text": "The frontend needs to know how to interpret and render the bytes.", "pause": 600}
+  ],
+  "schema-discovery": [
+    {"text": "The oracle publishes the token ID and the schema together.", "pause": 300},
+    {"text": "The schema's hash is stored as a fact in the trie, so the trust chain applies to the schema itself. A bogus schema would fail hash verification.", "pause": 500},
+    {"text": "A sequence diagram shows the flow. The oracle publishes the token ID and schema. The frontend receives them, then queries the API for the schema hash fact with its MPF proof. It verifies the proof, hashes the schema, and compares. If they match, the schema is verified.", "pause": 500},
+    {"text": "Then, for each fact, the frontend queries the API, verifies the MPF proof, decodes the bytes using the verified schema, and renders the structured fact to the user.", "pause": 400},
+    {"text": "The schema is as trustworthy as any other fact in the trie. If the oracle updates the schema, the hash fact is updated too, and the frontend detects the change on next verification.", "pause": 600}
+  ],
+  "schema-and-view-templates": [
+    {"text": "The oracle publishes two kinds of metadata, both hashed into the trie as facts.", "pause": 400},
+    {"text": "The schema defines how to decode fact bytes. It specifies the encoding, such as JSON, CBOR, or UTF-8, and the field definitions with their types.", "pause": 400},
+    {"text": "View templates define how to render decoded facts for humans. They specify labels, formatting for dates and amounts, and layout including which fields are primary and how to group them.", "pause": 500},
+    {"text": "The schema and the view templates are separate concerns. The schema is stable, since changing it means changing fact encoding. View templates evolve freely. New views can be added without touching the schema or existing facts.", "pause": 400},
+    {"text": "A diagram shows the rendering pipeline. Facts flow through the schema for decoding, then through a selected view template for rendering. Both schema and templates are verified from the trie.", "pause": 600}
+  ],
+  "multiple-views": [
+    {"text": "A token can have multiple view templates, each hashed as a separate fact. Different views serve different purposes.", "pause": 400},
+    {"text": "A summary view for quick browsing.", "pause": 300},
+    {"text": "A detail view for full fact inspection.", "pause": 300},
+    {"text": "An operations view optimized for transaction workflows.", "pause": 300},
+    {"text": "A domain-specific view for a particular application.", "pause": 400},
+    {"text": "View templates are hashed in the trie, so they are verified like any other fact. The oracle controls which views are canonical, but the process is open.", "pause": 300},
+    {"text": "Anyone can propose a new view template to the oracle. If accepted, the oracle inserts it as a fact. A new way of seeing the same data, immediately available and verified.", "pause": 500},
+    {"text": "This enables a community-driven UX evolution. Users discover better ways to present the data, submit templates, and the oracle curates them.", "pause": 600}
+  ],
+  "view-template-lifecycle": [
+    {"text": "A sequence diagram shows the lifecycle. A community member proposes a new view template to the oracle. The oracle reviews it and inserts a hash into the trie as a fact.", "pause": 400},
+    {"text": "The browser discovers available views by querying the trie, fetches the templates, verifies their hashes, and lets the user select a view.", "pause": 300},
+    {"text": "Same facts, different rendering. All verified.", "pause": 600}
+  ],
+  "schema-format": [
+    {"text": "The exact schema format is to be determined. Candidates include JSON Schema with rendering extensions, a minimal custom format for decoding and display, and CIP-100 or JSON-LD alignment for Cardano ecosystem compatibility.", "pause": 600}
+  ],
+  "transaction-flow": [
+    {"text": "The client interacts with the cage protocol through the MPFS API. The API builds unsigned transactions. The client decodes them, displays their MPFS semantics in human-readable form, and delegates signing to the user's CIP-30 wallet.", "pause": 500},
+    {"text": "Because the API is untrusted, the client always decodes the unsigned CBOR before requesting a signature. The user sees exactly what they are signing.", "pause": 500},
+    {"text": "A sequence diagram shows the full flow. The user requests an operation. The frontend asks the API to build the transaction. The API returns unsigned CBOR.", "pause": 400},
+    {"text": "The frontend then decodes the CBOR and extracts the transaction inputs. For each input, it queries the API to resolve the full UTxO content and to get a CSMT inclusion proof, verifying each input exists in the UTXO set.", "pause": 500},
+    {"text": "It then parses the MPFS semantics and renders the resolved inputs with their proof status.", "pause": 300},
+    {"text": "The user sees a complete, verified breakdown of the transaction. If they approve, the frontend requests a signature from the CIP-30 wallet, then submits the signed transaction through the API.", "pause": 600}
+  ],
+  "input-resolution-and-verification": [
+    {"text": "The unsigned transaction contains transaction inputs, or TxIns, which are references to UTxOs being spent. Raw TxIns are opaque hashes.", "pause": 400},
+    {"text": "The client resolves each TxIn to its full transaction output content, and verifies it exists in the UTXO set via a CSMT proof.", "pause": 500},
+    {"text": "A diagram shows two inputs being resolved. Each goes from an opaque hash to a full UTxO with its datum, value, address, and a verified CSMT proof.", "pause": 400},
+    {"text": "This is critical. Without resolving and verifying inputs, the user cannot know what the transaction actually spends.", "pause": 300},
+    {"text": "The API could claim a TxIn points to one UTxO while the transaction actually consumes another. The CSMT proof makes this impossible. Each input is independently proven to exist in the UTXO set.", "pause": 600}
+  ],
+  "what-the-frontend-displays": [
+    {"text": "From the decoded transaction and resolved inputs, the frontend presents a table of information.", "pause": 300},
+    {"text": "The inputs, resolved via the API, show the full transaction output content with CSMT proof status.", "pause": 300},
+    {"text": "The cage UTxO from the input datum shows the trie root, owner, and config, verified on-chain.", "pause": 300},
+    {"text": "The operation, extracted from the redeemer, shows whether it's an insert, delete, update, boot, retract, or end.", "pause": 300},
+    {"text": "The key and value from the request datum are decoded via the verified schema.", "pause": 300},
+    {"text": "The fee and addresses are also displayed, with the user's own address highlighted.", "pause": 400},
+    {"text": "If the schema is verified, the key and value are rendered in structured form. Otherwise they are shown as hex with a warning that no verified schema is available.", "pause": 400},
+    {"text": "Every input carries a proof indicator. If any input cannot be verified, the UI warns prominently. The user should not sign a transaction with unverified inputs.", "pause": 600}
+  ],
+  "transaction-signing-state-machine": [
+    {"text": "A state diagram shows the transaction signing flow.", "pause": 300},
+    {"text": "The user selects an operation, submits parameters, and the API returns unsigned CBOR.", "pause": 300},
+    {"text": "The frontend parses the CBOR and extracts MPFS semantics. If decoding fails, the flow stops.", "pause": 300},
+    {"text": "If decoding succeeds, the user reviews the transaction. They can approve or reject.", "pause": 300},
+    {"text": "If approved, the CIP-30 wallet signs. If signing succeeds, the transaction is submitted. If any step fails, the flow ends with an error.", "pause": 600}
+  ],
+  "why-the-server-doesnt-matter": [
+    {"text": "The MPFS off-chain service is a convenience layer. The client independently verifies everything.", "pause": 400},
+    {"text": "Facts are verified via the full proof chain.", "pause": 300},
+    {"text": "Transactions are decoded and displayed before signing.", "pause": 300},
+    {"text": "State is anchored on-chain via cage UTxOs.", "pause": 400},
+    {"text": "The server could lie, omit data, or be compromised. The client catches it because every claim requires a cryptographic proof.", "pause": 300},
+    {"text": "This is the key value proposition: a trusted client that works with any untrusted server.", "pause": 600}
+  ],
+  "connection-flow": [
+    {"text": "A sequence diagram shows the wallet connection flow.", "pause": 300},
+    {"text": "The frontend detects available CIP-30 wallets in the browser, such as Nami, Eternl, or Lace.", "pause": 300},
+    {"text": "The user selects a wallet. The frontend calls enable to connect, then retrieves the user's addresses.", "pause": 600}
+  ],
+  "api-surface-used": [
+    {"text": "The frontend uses four CIP-30 methods.", "pause": 300},
+    {"text": "Enable, to connect to the wallet.", "pause": 300},
+    {"text": "Get used addresses, for transaction building.", "pause": 300},
+    {"text": "Sign transaction, to sign unsigned transactions.", "pause": 300},
+    {"text": "Get network ID, to verify the correct network.", "pause": 400},
+    {"text": "The frontend does not use the wallet's submit transaction method. Submission goes through the MPFS API, which handles chain submission via its node connection.", "pause": 600}
+  ],
+  "state-persistence": [
+    {"text": "The entire application state is serialized to local storage. If the browser tab closes, accidentally or intentionally, reopening restores the exact same view.", "pause": 300},
+    {"text": "Same token, same fact, same pending transaction, same wallet connection.", "pause": 600}
+  ],
+  "what-lives-where": [
+    {"text": "Two storage locations are used.", "pause": 300},
+    {"text": "The URL hash stores navigation: the token, fact key, and current page. This makes views bookmarkable and shareable.", "pause": 400},
+    {"text": "Local storage stores session config: the API URL, root source, connected wallet, verified schemas, and view state. This survives tab close.", "pause": 600}
+  ],
+  "url-structure": [
+    {"text": "The URL hash encodes the current view.", "pause": 300},
+    {"text": "Hash token slash ID navigates to a token detail.", "pause": 300},
+    {"text": "Hash token slash ID slash facts shows the fact list.", "pause": 300},
+    {"text": "Hash token slash ID slash facts slash key shows a specific fact with its proof.", "pause": 300},
+    {"text": "Hash token slash ID slash tx slash insert shows the insert transaction builder.", "pause": 600}
+  ],
+  "recovery-guarantee": [
+    {"text": "The app serializes its full state to local storage on every state change.", "pause": 300},
+    {"text": "On load, it reads local storage first, then the URL hash.", "pause": 300},
+    {"text": "The result: Control W, reopen, identical view. No re-entry of API URL. No wallet reconnection prompt. No lost context.", "pause": 500},
+    {"text": "This is critical for the trust boundary role. The user must always be able to see where they are in a verification or signing flow, even after an interruption.", "pause": 600}
+  ],
+  "token-list-view": [
+    {"text": "Shows all MPFS tokens the API tracks.", "pause": 300},
+    {"text": "Token ID, shown as asset name in hex and decoded if UTF-8.", "pause": 300},
+    {"text": "Owner, shown as payment key hash, converted to bech32 if possible.", "pause": 300},
+    {"text": "Current root, shown as a truncated hash.", "pause": 300},
+    {"text": "Pending requests count.", "pause": 300},
+    {"text": "Phase indicator, showing the process or retract window.", "pause": 600}
+  ],
+  "fact-detail-view": [
+    {"text": "For a single fact, the view shows.", "pause": 300},
+    {"text": "The key, in raw hex plus the schema-decoded rendering.", "pause": 300},
+    {"text": "The value, in raw hex plus the schema-decoded rendering.", "pause": 300},
+    {"text": "The proof status, with three checkmarks when fully verified.", "pause": 300},
+    {"text": "MPF proof valid against cage root.", "pause": 300},
+    {"text": "Cage UTxO exists, verified by CSMT proof.", "pause": 300},
+    {"text": "CSMT root matches the institutional publisher.", "pause": 300},
+    {"text": "Or a warning for partial verification, when the institutional root is not configured.", "pause": 600}
+  ],
+  "proof-inspector": [
+    {"text": "An expandable panel showing the full verification chain.", "pause": 300},
+    {"text": "The institutional root source and value.", "pause": 300},
+    {"text": "The CSMT proof steps, showing the Merkle path.", "pause": 300},
+    {"text": "The cage UTxO details: transaction input, datum, and value.", "pause": 300},
+    {"text": "The MPF proof steps, showing the trie path.", "pause": 300},
+    {"text": "And the final verdict: fully verified, partially verified, or unverified.", "pause": 600}
+  ],
+  "fact-verification-state-machine": [
+    {"text": "Each fact goes through a verification pipeline. The UI reflects the current state with visual indicators.", "pause": 400},
+    {"text": "A state diagram shows the flow. A fact starts in the fetching state, shown as a spinner.", "pause": 300},
+    {"text": "When the API returns bytes and a proof, the MPF proof is checked. If invalid, the state is MPF Failed, shown in red. Data cannot be trusted.", "pause": 400},
+    {"text": "If the MPF proof is valid, the cage UTxO is checked via CSMT proof. If available and verified, the institutional root is checked.", "pause": 300},
+    {"text": "If the root matches, the fact is fully verified, shown in green. Otherwise, it's partially verified, shown in yellow.", "pause": 600}
+  ],
+  "institutional-root-sources": [
+    {"text": "The application needs at least one trusted source for the UTXO Merkle root. This is configurable.", "pause": 400},
+    {"text": "A URL endpoint, where the institutional party publishes the current root at a known URL. This is the simplest option.", "pause": 300},
+    {"text": "An on-chain reference, where the root is published in a datum on-chain. This is self-referential but removes the URL dependency.", "pause": 300},
+    {"text": "Multiple sources, to cross-reference roots from multiple publishers for higher confidence.", "pause": 400},
+    {"text": "The UI shows which root source is active and when it was last updated.", "pause": 600}
+  ],
+  "technology-stack": [
+    {"text": "PureScript with Halogen as the component framework.", "pause": 300},
+    {"text": "Nix flake for a reproducible development environment.", "pause": 300},
+    {"text": "esbuild for bundling, via spago.", "pause": 300},
+    {"text": "MkDocs with Material theme for documentation.", "pause": 300},
+    {"text": "No backend. A static single-page application served from GitHub Pages or alongside the MPFS API.", "pause": 600}
+  ],
+  "open-questions": [
+    {"text": "Five open questions remain.", "pause": 300},
+    {"text": "First: Schema format. JSON Schema with extensions? A custom minimal format? CIP-100 alignment?", "pause": 400},
+    {"text": "Second: CBOR decoding in PureScript. Which library? FFI to a JavaScript CBOR library? How much of the Cardano transaction structure do we need to parse?", "pause": 400},
+    {"text": "Third: Institutional root protocol. Is there a standard for publishing UTXO Merkle roots, or do we define one?", "pause": 400},
+    {"text": "Fourth: Multi-token view. Should the explorer support comparing facts across tokens, or is it strictly per-token?", "pause": 400},
+    {"text": "Fifth: Schema registry. Could schemas themselves be an MPFS token, creating a self-referential schema registry?", "pause": 600}
+  ]
+}
