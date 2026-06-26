@@ -8,6 +8,7 @@ import Node.Process (lookupEnv)
 import Test.Spec (Spec)
 import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
+import Test.AppSpec as AppSpec
 import Test.MPFS.CageSpec as CageSpec
 import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.ProofSpec as ProofSpec
@@ -20,6 +21,7 @@ main = do
   let
     specs :: Spec Unit
     specs = do
+      AppSpec.spec
       CageSpec.spec
       ProofSpec.spec
       TxCborSpec.spec
