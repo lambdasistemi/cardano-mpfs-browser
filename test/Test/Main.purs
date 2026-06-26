@@ -14,6 +14,7 @@ import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.ProofSpec as ProofSpec
 import Test.MPFS.TxCborSpec as TxCborSpec
 import Test.MPFS.WalletSpec as WalletSpec
+import Test.TokensSpec as TokensSpec
 
 main :: Effect Unit
 main = do
@@ -24,6 +25,7 @@ main = do
       AppSpec.spec
       CageSpec.spec
       ProofSpec.spec
+      TokensSpec.spec
       TxCborSpec.spec
       WalletSpec.spec
       case mUrl of

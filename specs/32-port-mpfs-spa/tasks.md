@@ -24,12 +24,12 @@
 
 ## Slice 3 - Tokens Tab Read Path
 
-- [ ] T032-S3 Implement token loading, refresh, empty/error/success states, and
+- [X] T032-S3 Implement token loading, refresh, empty/error/success states, and
   token selection through `MPFS.Client.getTokens`.
-- [ ] T032-S3 Preserve the #36 bumped `/tokens` decoder behavior and add or
+- [X] T032-S3 Preserve the #36 bumped `/tokens` decoder behavior and add or
   extend focused tests where needed.
-- [ ] T032-S3 Wire selected token state from the Tokens tab into the app shell.
-- [ ] T032-S3 Run the focused proof and `./gate.sh`.
+- [X] T032-S3 Wire selected token state from the Tokens tab into the app shell.
+- [X] T032-S3 Run the focused proof and `./gate.sh`.
 
 ## Slice 4 - Facts Tab Read and Verification Path
 

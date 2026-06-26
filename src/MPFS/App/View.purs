@@ -2,6 +2,7 @@ module MPFS.App.View (render) where
 
 import Prelude
 
+import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -10,14 +11,20 @@ import Halogen.HTML.Properties as HP
 import MPFS.App.State (AppState, WalletStatus(..))
 import MPFS.App.Tab (AppTab(..), allTabs, tabLabel, tabSlug)
 import MPFS.Types (TokenId(..))
-import MPFS.UI.Remote (remoteStatus)
+import MPFS.UI.Remote (Remote(..), remoteStatus)
+
+type AppActions action =
+  { loadTokens :: action
+  , selectTab :: AppTab -> action
+  , selectToken :: TokenId -> action
+  }
 
 render
   :: forall action m
-   . (AppTab -> action)
+   . AppActions action
   -> AppState
   -> H.ComponentHTML action () m
-render toAction state =
+render actions state =
   HH.main
     [ HP.class_ (HH.ClassName "app-shell") ]
     [ header state
@@ -25,12 +32,12 @@ render toAction state =
         [ HP.class_ (HH.ClassName "tab-strip")
         , HP.attr (HH.AttrName "aria-label") "MPFS workbench tabs"
         ]
-        (map (tabButton toAction state.activeTab) allTabs)
+        (map (tabButton actions.selectTab state.activeTab) allTabs)
     , HH.section
         [ HP.class_ (HH.ClassName "panel")
         , HP.attr (HH.AttrName "aria-live") "polite"
         ]
-        [ tabPanel state ]
+        [ tabPanel actions state ]
     ]
 
 header :: forall action m. AppState -> H.ComponentHTML action () m
@@ -82,10 +89,10 @@ tabButton toAction activeTab tab =
     else
       [ "tab-button" ]
 
-tabPanel :: forall action m. AppState -> H.ComponentHTML action () m
-tabPanel state = case state.activeTab of
+tabPanel :: forall action m. AppActions action -> AppState -> H.ComponentHTML action () m
+tabPanel actions state = case state.activeTab of
   ConnectTab -> connectPanel state
-  TokensTab -> tokensPanel state
+  TokensTab -> tokensPanel actions state
   FactsTab -> factsPanel state
   EndTab -> endPanel state
 
@@ -102,14 +109,25 @@ connectPanel state =
         ]
     ]
 
-tokensPanel :: forall action m. AppState -> H.ComponentHTML action () m
-tokensPanel state =
+tokensPanel
+  :: forall action m
+   . AppActions action
+  -> AppState
+  -> H.ComponentHTML action () m
+tokensPanel actions state =
   panelLayout "Tokens" "Token registry"
     [ fieldLine "Token list" (remoteStatus state.tokens)
     , fieldLine "Selected token" (selectedTokenLabel state.selectedToken)
+    , tokenRemoteView actions state.selectedToken state.tokens
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
-        [ inertButton "Load tokens"
+        [ HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled (state.tokens == Loading)
+            , HE.onClick \_ -> actions.loadTokens
+            ]
+            [ HH.text (tokenLoadLabel state.tokens) ]
         , inertButton "Register token"
         ]
     ]
@@ -180,6 +198,71 @@ inertButton label =
     , HP.class_ (HH.ClassName "inert-button")
     ]
     [ HH.text label ]
+
+tokenRemoteView
+  :: forall action m
+   . AppActions action
+  -> Maybe TokenId
+  -> Remote (Array TokenId)
+  -> H.ComponentHTML action () m
+tokenRemoteView actions selectedToken = case _ of
+  NotAsked ->
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text "Tokens have not been loaded." ]
+  Loading ->
+    HH.p
+      [ HP.class_ (HH.ClassName "loading-state") ]
+      [ HH.text "Loading tokens..." ]
+  Failure message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "error-state") ]
+      [ HH.text ("Error loading tokens: " <> message) ]
+  Success tokens
+    | Array.null tokens ->
+        HH.p
+          [ HP.class_ (HH.ClassName "empty-state") ]
+          [ HH.text "No tokens registered." ]
+    | otherwise ->
+        HH.ul
+          [ HP.class_ (HH.ClassName "token-list") ]
+          (map (tokenRow actions selectedToken) tokens)
+
+tokenRow
+  :: forall action m
+   . AppActions action
+  -> Maybe TokenId
+  -> TokenId
+  -> H.ComponentHTML action () m
+tokenRow actions selectedToken token@(TokenId tokenId) =
+  HH.li
+    [ HP.attr (HH.AttrName "data-token") tokenId ]
+    [ HH.button
+        [ HP.type_ HP.ButtonButton
+        , HP.classes (map HH.ClassName classes)
+        , HP.attr (HH.AttrName "aria-pressed") pressed
+        , HE.onClick \_ -> actions.selectToken token
+        ]
+        [ HH.text tokenId ]
+    ]
+  where
+  isSelected = selectedToken == Just token
+
+  pressed =
+    if isSelected then "true" else "false"
+
+  classes =
+    if isSelected then
+      [ "token-row", "is-selected" ]
+    else
+      [ "token-row" ]
+
+tokenLoadLabel :: forall a. Remote a -> String
+tokenLoadLabel = case _ of
+  NotAsked -> "Load tokens"
+  Loading -> "Loading tokens"
+  Failure _ -> "Refresh tokens"
+  Success _ -> "Refresh tokens"
 
 walletStatusLabel :: WalletStatus -> String
 walletStatusLabel = case _ of
