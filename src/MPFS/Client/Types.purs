@@ -4,6 +4,9 @@
 module MPFS.Client.Types
   ( Hex
   , TokenId
+  , TokensResponse
+  , TokenSetWitness
+  , TokenUtxoEntry
   , StatusResponse
   , TokenState
   , PendingRequest
@@ -23,6 +26,23 @@ type Hex = String
 
 -- | Hex-encoded token identifier (asset name).
 type TokenId = Hex
+
+-- | @GET /tokens@ response.
+-- The token ids are carried inside each entry's
+-- txout_cbor by the bumped server. The browser client
+-- currently only needs the empty initial set.
+type TokensResponse =
+  { tokens :: TokenSetWitness
+  }
+
+type TokenSetWitness =
+  { entries :: Array TokenUtxoEntry
+  , completeness_proof :: Hex
+  }
+
+type TokenUtxoEntry =
+  { txout_cbor :: Hex
+  }
 
 -- | @GET /status@ response.
 type StatusResponse =

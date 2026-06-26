@@ -4,6 +4,7 @@
 module MPFS.Client
   ( ClientError(..)
   , Client
+  , decodeTokensBody
   , mkClient
   ) where
 
@@ -19,6 +20,7 @@ import Data.Argonaut.Encode.Class
   , encodeJson
   )
 import Data.Argonaut.Parser (jsonParser)
+import Data.Array (null)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Effect.Aff (Aff)
@@ -34,6 +36,7 @@ import MPFS.Client.Types
   , StatusResponse
   , SubmitBody
   , TokenId
+  , TokensResponse
   , TokenState
   , UpdateBody
   )
@@ -89,7 +92,7 @@ mkClient baseUrl =
   { getStatus:
       get (baseUrl <> "/status")
   , getTokens:
-      get (baseUrl <> "/tokens")
+      getWith decodeTokensBody (baseUrl <> "/tokens")
   , getToken: \tokenId ->
       get
         (baseUrl <> "/tokens/" <> tokenId)
@@ -157,16 +160,33 @@ decodeBody body = do
   json <- lmap DecodeError (jsonParser body)
   lmap (show >>> DecodeError) (decodeJson json)
 
+decodeTokensBody :: String -> Either ClientError (Array TokenId)
+decodeTokensBody body = do
+  response :: TokensResponse <- decodeBody body
+  if null response.tokens.entries then
+    pure []
+  else
+    Left $ DecodeError
+      "Cannot derive token ids from tokens.entries[].txout_cbor"
+
 get
   :: forall a
    . DecodeJson a
   => String
   -> Aff (Either ClientError a)
 get url = do
+  getWith decodeBody url
+
+getWith
+  :: forall a
+   . (String -> Either ClientError a)
+  -> String
+  -> Aff (Either ClientError a)
+getWith decoder url = do
   response <- fetch url {}
   body <- response.text
   pure
-    if response.ok then decodeBody body
+    if response.ok then decoder body
     else Left $ HttpError response.status body
 
 post
