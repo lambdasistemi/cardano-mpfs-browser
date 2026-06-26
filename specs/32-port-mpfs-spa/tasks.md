@@ -54,13 +54,13 @@
 
 ## Slice 6 - Write Flow and End Tab
 
-- [ ] T032-S6 Wire register token, insert/update/delete fact, retract request,
+- [X] T032-S6 Wire register token, insert/update/delete fact, retract request,
   reject expired, update token, and end cage actions through the cage reactor.
-- [ ] T032-S6 Sign unsigned transactions with CIP-30, assemble witness sets
+- [X] T032-S6 Sign unsigned transactions with CIP-30, assemble witness sets
   through the reactor, submit signed transactions, and display operation status.
-- [ ] T032-S6 Refresh affected token/fact/request views after submit and finish
+- [X] T032-S6 Refresh affected token/fact/request views after submit and finish
   the End tab owner/destructive-action workflow.
-- [ ] T032-S6 Add focused write-flow tests plus the required e2e proof; run
+- [X] T032-S6 Add focused write-flow tests plus the required e2e proof; run
   `./gate.sh`.
 
 ## Orchestrator Finalization

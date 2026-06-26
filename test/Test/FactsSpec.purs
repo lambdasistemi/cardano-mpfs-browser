@@ -128,6 +128,7 @@ pendingAt submittedAt =
   , value: Just "76616c7565"
   , fee: 0.0
   , submitted_at: submittedAt
+  , request_id: "aaaaaaaa#2"
   }
 
 facts :: Array FactEntry

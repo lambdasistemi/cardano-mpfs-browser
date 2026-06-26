@@ -6,6 +6,7 @@ module MPFS.Client
   , Client
   , decodeFactBody
   , decodeFactsBody
+  , decodeRequestsBody
   , decodeTokensBody
   , mkClient
   ) where
@@ -28,8 +29,10 @@ import Data.Array (null)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 import Effect.Aff (Aff)
 import Fetch (Method(..), fetch)
+import Foreign.Object as Object
 import MPFS.Client.Types
   ( BootBody
   , DeleteBody
@@ -146,7 +149,7 @@ mkClient baseUrl =
             <> key
         )
   , getTokenRequests: \tokenId ->
-      get
+      getWith decodeRequestsBody
         ( baseUrl <> "/tokens/" <> tokenId
             <> "/requests"
         )
@@ -230,6 +233,11 @@ decodeFactsBody body = do
   response :: FactsResponse <- decodeBody body
   pure response.facts
 
+decodeRequestsBody :: String -> Either ClientError (Array PendingRequest)
+decodeRequestsBody body = do
+  json <- lmap DecodeError (jsonParser body)
+  lmap (show >>> DecodeError) (decodeRequests json)
+
 decodeFactBody :: String -> Either ClientError Hex
 decodeFactBody body = do
   response :: FactResponse <- decodeBody body
@@ -260,6 +268,57 @@ decodeTxId :: Json -> Either JsonDecodeError Hex
 decodeTxId json = do
   top <- decodeJson json
   top .: "txId"
+
+decodeRequests :: Json -> Either JsonDecodeError (Array PendingRequest)
+decodeRequests json = do
+  top <- decodeJson json
+  mRequests <- top .:? "requests"
+  case mRequests of
+    Just requests ->
+      traverse decodePendingRequest requests
+    Nothing -> do
+      requests <- decodeJson json
+      traverse decodePendingRequest requests
+
+decodePendingRequest :: Json -> Either JsonDecodeError PendingRequest
+decodePendingRequest json = do
+  request <- decodeJson json
+  token <- request .: "token"
+  owner <- request .: "owner"
+  key <- request .: "key"
+  operation <- request .: "operation"
+  value <- request .:? "value"
+  fee <- request .: "fee"
+  submitted_at <- request .: "submitted_at"
+  request_id <- decodeRequestId request
+  pure
+    { token
+    , owner
+    , key
+    , operation
+    , value
+    , fee
+    , submitted_at
+    , request_id
+    }
+
+decodeRequestId :: Object.Object Json -> Either JsonDecodeError String
+decodeRequestId request = do
+  mSnake <- request .:? "request_id"
+  case mSnake of
+    Just requestId ->
+      pure requestId
+    Nothing -> do
+      mCamel <- request .:? "requestId"
+      case mCamel of
+        Just requestId ->
+          pure requestId
+        Nothing -> do
+          utxo <- request .: "utxo"
+          txIn <- utxo .: "tx_in"
+          txId <- txIn .: "tx_id"
+          txIx <- txIn .: "tx_ix"
+          pure (txId <> "#" <> show (txIx :: Int))
 
 get
   :: forall a
