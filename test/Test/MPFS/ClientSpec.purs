@@ -12,7 +12,13 @@ import Effect.Exception (error)
 import Node.Process (lookupEnv)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual, fail)
-import MPFS.Client (mkClient)
+import MPFS.Client (decodeTokensBody, mkClient)
+
+bumpedTokensResponseBody :: String
+bumpedTokensResponseBody =
+  """
+  {"snapshot":{"chainpoint":{"slot":42,"block_id":"1111111111111111111111111111111111111111111111111111111111111111"},"utxo_root":"2222222222222222222222222222222222222222222222222222222222222222"},"tokens":{"entries":[],"completeness_proof":"00"}}
+  """
 
 baseUrl :: Aff String
 baseUrl = do
@@ -24,6 +30,12 @@ baseUrl = do
 
 spec :: Spec Unit
 spec = describe "MPFS Client E2E" do
+
+  it "decodes bumped GET /tokens response envelope" do
+    case decodeTokensBody bumpedTokensResponseBody of
+      Left err -> fail $ show err
+      Right tokens ->
+        tokens `shouldEqual` []
 
   it "GET /status returns tip slot" do
     url <- baseUrl
