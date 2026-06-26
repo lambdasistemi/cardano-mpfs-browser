@@ -6,13 +6,13 @@ import Prelude
 import Data.Either (Either(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
-import MPFS.Reactor (parseVerifyOutput, runCageReactor, verifyEnvelope)
+import MPFS.Reactor (parseVerifyOutput, runVerifyReactor, verifyEnvelope)
 
 spec :: Spec Unit
 spec = describe "WASM Verify Reactor Verification" do
 
-  it "runs the reactor and preserves unknown-op verdicts" do
-    result <- runCageReactor unknownOpEnvelope
+  it "runs the verify reactor and preserves unknown-op verdicts" do
+    result <- runVerifyReactor unknownOpEnvelope
     result.exitOk `shouldEqual` true
     result.stdout `shouldEqual` "unknown_op: frobnicate"
 

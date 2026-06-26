@@ -1,90 +1,104 @@
 import { WASI, File, OpenFile, ConsoleStdout }
   from "@bjorn3/browser_wasi_shim";
-import reactorWasmAssetUrl from "./assets/mpfs-verify-reactor.wasm";
+import cageReactorWasmAssetUrl from "./assets/mpfs-cage-reactor.wasm";
+import verifyReactorWasmAssetUrl from "./assets/mpfs-verify-reactor.wasm";
 
-const reactorWasmUrl = new URL(
-  reactorWasmAssetUrl,
-  globalThis.document?.baseURI ?? globalThis.location?.href ?? "http://localhost/"
-).toString();
+const cageReactorWasmUrl = assetUrl(cageReactorWasmAssetUrl);
+const verifyReactorWasmUrl = assetUrl(verifyReactorWasmAssetUrl);
 
-let compiledModulePromise = null;
+const cageReactor = wasmReactor(cageReactorWasmUrl, "cage reactor");
+const verifyReactor = wasmReactor(verifyReactorWasmUrl, "verify reactor");
 
-globalThis.runCageReactor = async (stdinText) => {
-  const stdin = new OpenFile(
-    new File(new TextEncoder().encode(stdinText))
-  );
-  const stdoutChunks = [];
-  const stderrChunks = [];
-  const stdout = new ConsoleStdout((chunk) => stdoutChunks.push(chunk));
-  const stderr = new ConsoleStdout((chunk) => stderrChunks.push(chunk));
+globalThis.runCageReactor = (stdinText) => cageReactor(stdinText);
+globalThis.runVerifyReactor = (stdinText) => verifyReactor(stdinText);
 
-  const wasi = new WASI([], [], [stdin, stdout, stderr]);
-  const inst = await instantiateReactor({
-    wasi_snapshot_preview1: wasi.wasiImport,
-  });
+function assetUrl(asset) {
+  return new URL(
+    asset,
+    globalThis.document?.baseURI ?? globalThis.location?.href ?? "http://localhost/"
+  ).toString();
+}
 
-  let exitOk = true;
-  try {
-    wasi.start(inst);
-  } catch (err) {
-    exitOk = false;
-    stderrChunks.push(new TextEncoder().encode(String(err)));
-  }
+function wasmReactor(wasmUrl, label) {
+  let compiledModulePromise = null;
 
-  return {
-    stdout: decodeChunks(stdoutChunks),
-    stderr: decodeChunks(stderrChunks),
-    exitOk,
+  return async (stdinText) => {
+    const stdin = new OpenFile(
+      new File(new TextEncoder().encode(stdinText))
+    );
+    const stdoutChunks = [];
+    const stderrChunks = [];
+    const stdout = new ConsoleStdout((chunk) => stdoutChunks.push(chunk));
+    const stderr = new ConsoleStdout((chunk) => stderrChunks.push(chunk));
+
+    const wasi = new WASI([], [], [stdin, stdout, stderr]);
+    const inst = await instantiateReactor({
+      wasi_snapshot_preview1: wasi.wasiImport,
+    });
+
+    let exitOk = true;
+    try {
+      wasi.start(inst);
+    } catch (err) {
+      exitOk = false;
+      stderrChunks.push(new TextEncoder().encode(String(err)));
+    }
+
+    return {
+      stdout: decodeChunks(stdoutChunks),
+      stderr: decodeChunks(stderrChunks),
+      exitOk,
+    };
   };
-};
 
-async function instantiateReactor(imports) {
-  if (compiledModulePromise !== null) {
+  async function instantiateReactor(imports) {
+    if (compiledModulePromise !== null) {
+      const mod = await compiledModulePromise;
+      return WebAssembly.instantiate(mod, imports);
+    }
+
+    if (WebAssembly.instantiateStreaming) {
+      try {
+        const result = await WebAssembly.instantiateStreaming(
+          fetchReactorWasm(),
+          imports
+        );
+        compiledModulePromise = Promise.resolve(result.module);
+        return result.instance;
+      } catch (_err) {
+        compiledModulePromise = compileReactorWasm();
+        const mod = await compiledModulePromise;
+        return WebAssembly.instantiate(mod, imports);
+      }
+    }
+
+    compiledModulePromise = compileReactorWasm();
     const mod = await compiledModulePromise;
     return WebAssembly.instantiate(mod, imports);
   }
 
-  if (WebAssembly.instantiateStreaming) {
-    try {
-      const result = await WebAssembly.instantiateStreaming(
-        fetchReactorWasm(),
-        imports
+  async function compileReactorWasm() {
+    if (WebAssembly.compileStreaming) {
+      try {
+        return await WebAssembly.compileStreaming(fetchReactorWasm());
+      } catch (_err) {
+        // Fall back for servers that do not serve application/wasm.
+      }
+    }
+
+    const response = await fetchReactorWasm();
+    return WebAssembly.compile(await response.arrayBuffer());
+  }
+
+  async function fetchReactorWasm() {
+    const response = await fetch(wasmUrl);
+    if (!response.ok) {
+      throw new Error(
+        `failed to fetch ${label} wasm: HTTP ${response.status}`
       );
-      compiledModulePromise = Promise.resolve(result.module);
-      return result.instance;
-    } catch (_err) {
-      compiledModulePromise = compileReactorWasm();
-      const mod = await compiledModulePromise;
-      return WebAssembly.instantiate(mod, imports);
     }
+    return response;
   }
-
-  compiledModulePromise = compileReactorWasm();
-  const mod = await compiledModulePromise;
-  return WebAssembly.instantiate(mod, imports);
-}
-
-async function compileReactorWasm() {
-  if (WebAssembly.compileStreaming) {
-    try {
-      return await WebAssembly.compileStreaming(fetchReactorWasm());
-    } catch (_err) {
-      // Fall back for servers that do not serve application/wasm.
-    }
-  }
-
-  const response = await fetchReactorWasm();
-  return WebAssembly.compile(await response.arrayBuffer());
-}
-
-async function fetchReactorWasm() {
-  const response = await fetch(reactorWasmUrl);
-  if (!response.ok) {
-    throw new Error(
-      `failed to fetch reactor wasm: HTTP ${response.status}`
-    );
-  }
-  return response;
 }
 
 function decodeChunks(chunks) {

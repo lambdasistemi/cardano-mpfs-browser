@@ -5,15 +5,15 @@ const dynamicImport = new Function("specifier", "return import(specifier)");
 
 let nodeCompiledModulePromise = null;
 
-export const runCageReactorImpl = (stdinText) => () => {
-  if (typeof globalThis.runCageReactor === "function") {
-    return globalThis.runCageReactor(stdinText);
+export const runVerifyReactorImpl = (stdinText) => () => {
+  if (typeof globalThis.runVerifyReactor === "function") {
+    return globalThis.runVerifyReactor(stdinText);
   }
 
-  return runCageReactorNode(stdinText);
+  return runVerifyReactorNode(stdinText);
 };
 
-async function runCageReactorNode(stdinText) {
+async function runVerifyReactorNode(stdinText) {
   try {
     const wasmPath = await nodeWasmPath();
     const mod = await compileNodeWasm(wasmPath);
@@ -30,8 +30,8 @@ async function runCageReactorNode(stdinText) {
 
 async function nodeWasmPath() {
   const processRef = globalThis.process;
-  if (processRef?.env?.MPFS_REACTOR_WASM) {
-    return processRef.env.MPFS_REACTOR_WASM;
+  if (processRef?.env?.MPFS_VERIFY_REACTOR_WASM) {
+    return processRef.env.MPFS_VERIFY_REACTOR_WASM;
   }
 
   const path = await dynamicImport("node:path");
