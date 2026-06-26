@@ -33,13 +33,13 @@
 
 ## Slice 4 - Facts Tab Read and Verification Path
 
-- [ ] T032-S4 Implement selected-token facts, token state, pending requests, and
+- [X] T032-S4 Implement selected-token facts, token state, pending requests, and
   fact lookup read flows.
-- [ ] T032-S4 Display request phase/status data and user-readable fact values
+- [X] T032-S4 Display request phase/status data and user-readable fact values
   based on the mature SPA behavior.
-- [ ] T032-S4 Route proof-bearing verification through the WASM verify reactor
+- [X] T032-S4 Route proof-bearing verification through the WASM verify reactor
   and render verified/error states.
-- [ ] T032-S4 Cover decoding, phase, and verification helpers with focused tests;
+- [X] T032-S4 Cover decoding, phase, and verification helpers with focused tests;
   run `./gate.sh`.
 
 ## Slice 5 - Connect Tab and Wallet State

@@ -8,15 +8,23 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import MPFS.App.Facts (phaseLabel, requestPhase)
 import MPFS.App.State (AppState, WalletStatus(..))
 import MPFS.App.Tab (AppTab(..), allTabs, tabLabel, tabSlug)
-import MPFS.Types (TokenId(..))
+import MPFS.App.Verification (VerificationStatus(..))
+import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
+import MPFS.Types (TokenId(..), TrustedRoot(..))
 import MPFS.UI.Remote (Remote(..), remoteStatus)
 
 type AppActions action =
   { loadTokens :: action
+  , loadFacts :: action
+  , lookupFact :: action
   , selectTab :: AppTab -> action
   , selectToken :: TokenId -> action
+  , updateFactLookupKey :: String -> action
+  , updateFactProofEnvelope :: String -> action
+  , verifyFactEnvelope :: action
   }
 
 render
@@ -93,7 +101,7 @@ tabPanel :: forall action m. AppActions action -> AppState -> H.ComponentHTML ac
 tabPanel actions state = case state.activeTab of
   ConnectTab -> connectPanel state
   TokensTab -> tokensPanel actions state
-  FactsTab -> factsPanel state
+  FactsTab -> factsPanel actions state
   EndTab -> endPanel state
 
 connectPanel :: forall action m. AppState -> H.ComponentHTML action () m
@@ -132,16 +140,43 @@ tokensPanel actions state =
         ]
     ]
 
-factsPanel :: forall action m. AppState -> H.ComponentHTML action () m
-factsPanel state =
+factsPanel
+  :: forall action m
+   . AppActions action
+  -> AppState
+  -> H.ComponentHTML action () m
+factsPanel actions state =
   panelLayout "Facts" "Selected token facts"
     [ fieldLine "Token" (selectedTokenLabel state.selectedToken)
+    , fieldLine "Token state" (remoteStatus state.tokenState)
+    , fieldLine "Pending requests" (remoteStatus state.pendingRequests)
     , fieldLine "Facts" (remoteStatus state.facts)
     , fieldLine "Trusted root" (remoteStatus state.trustedRoot)
+    , tokenStateRemoteView state.tokenState
+    , trustedRootRemoteView state.trustedRoot
+    , pendingRequestsRemoteView
+        state.requestNowMillis
+        state.tokenState
+        state.pendingRequests
+    , factsRemoteView state.facts
+    , factLookupView actions state
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
-        [ inertButton "Load facts"
-        , inertButton "Verify proof"
+        [ HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled
+                ( state.selectedToken == Nothing
+                    || remoteIsLoading state.facts
+                    || remoteIsLoading state.tokenState
+                    || remoteIsLoading state.pendingRequests
+                )
+            , HE.onClick \_ -> actions.loadFacts
+            ]
+            [ HH.text (factsLoadLabel state.facts) ]
+        , inertButton "Add fact"
+        , inertButton "Update fact"
+        , inertButton "Delete fact"
         ]
     ]
 
@@ -228,6 +263,216 @@ tokenRemoteView actions selectedToken = case _ of
           [ HP.class_ (HH.ClassName "token-list") ]
           (map (tokenRow actions selectedToken) tokens)
 
+tokenStateRemoteView
+  :: forall action m
+   . Remote TokenState
+  -> H.ComponentHTML action () m
+tokenStateRemoteView = case _ of
+  NotAsked ->
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text "Token state has not been loaded." ]
+  Loading ->
+    HH.p
+      [ HP.class_ (HH.ClassName "loading-state") ]
+      [ HH.text "Loading token state..." ]
+  Failure message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "error-state") ]
+      [ HH.text ("Error loading token state: " <> message) ]
+  Success tokenState ->
+    HH.div
+      [ HP.class_ (HH.ClassName "field-group") ]
+      [ fieldLine "Owner" (shortText tokenState.owner)
+      , fieldLine "Root" (shortText tokenState.root)
+      , fieldLine "Max fee" (show tokenState.max_fee)
+      , fieldLine "Process window" (show tokenState.process_time)
+      , fieldLine "Retract window" (show tokenState.retract_time)
+      ]
+
+trustedRootRemoteView
+  :: forall action m
+   . Remote TrustedRoot
+  -> H.ComponentHTML action () m
+trustedRootRemoteView = case _ of
+  NotAsked ->
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text "Trusted root has not been loaded." ]
+  Loading ->
+    HH.p
+      [ HP.class_ (HH.ClassName "loading-state") ]
+      [ HH.text "Loading trusted root..." ]
+  Failure message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "error-state") ]
+      [ HH.text ("Error loading trusted root: " <> message) ]
+  Success (TrustedRoot trustedRoot) ->
+    fieldLine "Trusted root hash" (shortText trustedRoot)
+
+pendingRequestsRemoteView
+  :: forall action m
+   . Number
+  -> Remote TokenState
+  -> Remote (Array PendingRequest)
+  -> H.ComponentHTML action () m
+pendingRequestsRemoteView nowMillis tokenStateRemote = case _ of
+  NotAsked ->
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text "Pending requests have not been loaded." ]
+  Loading ->
+    HH.p
+      [ HP.class_ (HH.ClassName "loading-state") ]
+      [ HH.text "Loading pending requests..." ]
+  Failure message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "error-state") ]
+      [ HH.text ("Error loading pending requests: " <> message) ]
+  Success requests
+    | Array.null requests ->
+        HH.p
+          [ HP.class_ (HH.ClassName "empty-state") ]
+          [ HH.text "No pending requests." ]
+    | otherwise ->
+        case tokenStateRemote of
+          Success tokenState ->
+            HH.ul
+              [ HP.class_ (HH.ClassName "token-list") ]
+              (map (requestRow nowMillis tokenState) requests)
+          _ ->
+            HH.p
+              [ HP.class_ (HH.ClassName "empty-state") ]
+              [ HH.text "Token state is required for request phases." ]
+
+factsRemoteView
+  :: forall action m
+   . Remote (Array FactEntry)
+  -> H.ComponentHTML action () m
+factsRemoteView = case _ of
+  NotAsked ->
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text "Facts have not been loaded." ]
+  Loading ->
+    HH.p
+      [ HP.class_ (HH.ClassName "loading-state") ]
+      [ HH.text "Loading facts..." ]
+  Failure message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "error-state") ]
+      [ HH.text ("Error loading facts: " <> message) ]
+  Success facts
+    | Array.null facts ->
+        HH.p
+          [ HP.class_ (HH.ClassName "empty-state") ]
+          [ HH.text "No facts found." ]
+    | otherwise ->
+        HH.ul
+          [ HP.class_ (HH.ClassName "token-list") ]
+          (map factRow facts)
+
+factLookupView
+  :: forall action m
+   . AppActions action
+  -> AppState
+  -> H.ComponentHTML action () m
+factLookupView actions state =
+  HH.div
+    [ HP.class_ (HH.ClassName "field-group") ]
+    [ HH.div
+        [ HP.class_ (HH.ClassName "control-row") ]
+        [ HH.input
+            [ HP.type_ HP.InputText
+            , HP.value state.factLookup.key
+            , HP.placeholder "Fact key"
+            , HE.onValueInput actions.updateFactLookupKey
+            ]
+        , HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled
+                ( state.selectedToken == Nothing
+                    || state.factLookup.key == ""
+                    || remoteIsLoading state.factLookup.value
+                )
+            , HE.onClick \_ -> actions.lookupFact
+            ]
+            [ HH.text "Look up" ]
+        ]
+    , factLookupRemoteView state.factLookup.value
+    , HH.textarea
+        [ HP.value state.factLookup.proofEnvelope
+        , HP.rows 4
+        , HP.placeholder "Proof envelope"
+        , HE.onValueInput actions.updateFactProofEnvelope
+        ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "control-row") ]
+        [ HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled
+                ( state.factLookup.proofEnvelope == ""
+                    || state.factLookup.verification == VerificationLoading
+                )
+            , HE.onClick \_ -> actions.verifyFactEnvelope
+            ]
+            [ HH.text "Verify proof" ]
+        , fieldLine
+            "Verification"
+            (verificationStatusLabel state.factLookup.verification)
+        ]
+    ]
+
+factLookupRemoteView
+  :: forall action m
+   . Remote String
+  -> H.ComponentHTML action () m
+factLookupRemoteView = case _ of
+  NotAsked ->
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text "No fact lookup has run." ]
+  Loading ->
+    HH.p
+      [ HP.class_ (HH.ClassName "loading-state") ]
+      [ HH.text "Looking up fact..." ]
+  Failure message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "error-state") ]
+      [ HH.text ("Error looking up fact: " <> message) ]
+  Success value ->
+    fieldLine "Lookup value" value
+
+requestRow
+  :: forall action m
+   . Number
+  -> TokenState
+  -> PendingRequest
+  -> H.ComponentHTML action () m
+requestRow nowMillis tokenState request =
+  HH.li
+    [ HP.attr (HH.AttrName "data-request-key") request.key ]
+    [ HH.strong_ [ HH.text request.operation ]
+    , HH.span_ [ HH.text (" key " <> request.key) ]
+    , HH.span_ [ HH.text (" value " <> requestValueText request) ]
+    , HH.span_
+        [ HH.text
+            ( " phase "
+                <> phaseLabel (requestPhase nowMillis tokenState request)
+            )
+        ]
+    ]
+
+factRow :: forall action m. FactEntry -> H.ComponentHTML action () m
+factRow fact =
+  HH.li
+    [ HP.attr (HH.AttrName "data-fact-key") fact.key ]
+    [ HH.strong_ [ HH.text fact.key ]
+    , HH.span_ [ HH.text (" " <> fact.value) ]
+    ]
+
 tokenRow
   :: forall action m
    . AppActions action
@@ -263,6 +508,33 @@ tokenLoadLabel = case _ of
   Loading -> "Loading tokens"
   Failure _ -> "Refresh tokens"
   Success _ -> "Refresh tokens"
+
+factsLoadLabel :: forall a. Remote a -> String
+factsLoadLabel = case _ of
+  NotAsked -> "Load facts"
+  Loading -> "Loading facts"
+  Failure _ -> "Refresh facts"
+  Success _ -> "Refresh facts"
+
+remoteIsLoading :: forall a. Remote a -> Boolean
+remoteIsLoading = case _ of
+  Loading -> true
+  _ -> false
+
+verificationStatusLabel :: VerificationStatus -> String
+verificationStatusLabel = case _ of
+  VerificationNotAsked -> "Not verified"
+  VerificationLoading -> "Verifying"
+  VerificationVerified -> "Verified"
+  VerificationFailed message -> "Error: " <> message
+
+requestValueText :: PendingRequest -> String
+requestValueText request = case request.value of
+  Nothing -> "none"
+  Just value -> value
+
+shortText :: String -> String
+shortText = identity
 
 walletStatusLabel :: WalletStatus -> String
 walletStatusLabel = case _ of

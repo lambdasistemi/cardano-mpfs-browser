@@ -1,0 +1,136 @@
+module Test.FactsSpec (spec) where
+
+import Prelude
+
+import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
+import MPFS.App.Facts
+  ( RequestPhase(..)
+  , failFactLookup
+  , finishFactLookup
+  , finishFactsLoad
+  , finishFactsLoadAt
+  , phaseLabel
+  , requestPhase
+  , startFactLookup
+  , startFactsLoad
+  )
+import MPFS.App.State (defaultState)
+import MPFS.App.Verification
+  ( VerificationStatus(..)
+  , finishVerification
+  , startVerification
+  )
+import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
+import MPFS.Types (TokenId(..))
+import MPFS.UI.Remote (Remote(..))
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (shouldEqual)
+
+spec :: Spec Unit
+spec = describe "MPFS App Facts" do
+  it "marks facts, token state, and pending requests as loading" do
+    let
+      selected = TokenId "token"
+
+      state =
+        defaultState
+          { selectedToken = Just selected
+          , facts = Success facts
+          , tokenState = Success tokenState
+          , pendingRequests = Success [ pendingAt 0.0 ]
+          }
+
+      next = startFactsLoad state
+
+    next.facts `shouldEqual` Loading
+    next.tokenState `shouldEqual` Loading
+    next.pendingRequests `shouldEqual` Loading
+    next.selectedToken `shouldEqual` Just selected
+
+  it "stores loaded token state, pending requests, and facts" do
+    let
+      selected = TokenId "token"
+      request = pendingAt 100.0
+      requestNowMillis = 1234.0
+
+      state = defaultState { selectedToken = Just selected }
+
+      next = finishFactsLoadAt requestNowMillis tokenState [ request ] facts state
+
+    next.tokenState `shouldEqual` Success tokenState
+    next.pendingRequests `shouldEqual` Success [ request ]
+    next.facts `shouldEqual` Success facts
+    next.requestNowMillis `shouldEqual` requestNowMillis
+    next.selectedToken `shouldEqual` Just selected
+
+  it "defaults loaded request time for compatibility" do
+    let
+      next = finishFactsLoad tokenState [] facts defaultState
+
+    next.requestNowMillis `shouldEqual` 0.0
+
+  it "classifies pending request phase from token timing windows" do
+    requestPhase 110.0 tokenState (pendingAt 100.0)
+      `shouldEqual`
+        PhaseProcessable
+    requestPhase 111.0 tokenState (pendingAt 100.0)
+      `shouldEqual`
+        PhaseRetractable
+    requestPhase 130.0 tokenState (pendingAt 100.0)
+      `shouldEqual`
+        PhaseRetractable
+    requestPhase 131.0 tokenState (pendingAt 100.0)
+      `shouldEqual`
+        PhaseExpired
+    phaseLabel PhaseExpired `shouldEqual` "expired"
+
+  it "tracks fact lookup loading, success, and failure" do
+    let
+      loading = startFactLookup "6b6579" defaultState
+      lookedUp = finishFactLookup "76616c7565" loading
+      failed = failFactLookup "not found" loading
+
+    loading.factLookup.key `shouldEqual` "6b6579"
+    loading.factLookup.value `shouldEqual` Loading
+    loading.factLookup.verification `shouldEqual` VerificationNotAsked
+    lookedUp.factLookup.value `shouldEqual` Success "76616c7565"
+    lookedUp.factLookup.verification `shouldEqual` VerificationNotAsked
+    failed.factLookup.value `shouldEqual` Failure "not found"
+
+  it "tracks verification loading and reactor verdicts" do
+    let
+      loading = startVerification defaultState
+      verified = finishVerification (Right unit) loading
+      failed = finishVerification (Left "root mismatch") loading
+
+    loading.factLookup.verification `shouldEqual` VerificationLoading
+    verified.factLookup.verification `shouldEqual` VerificationVerified
+    failed.factLookup.verification
+      `shouldEqual`
+        VerificationFailed "root mismatch"
+
+tokenState :: TokenState
+tokenState =
+  { owner: "owner"
+  , root: "root"
+  , max_fee: 2.0
+  , process_time: 10.0
+  , retract_time: 20.0
+  }
+
+pendingAt :: Number -> PendingRequest
+pendingAt submittedAt =
+  { token: "token"
+  , owner: "owner"
+  , key: "6b6579"
+  , operation: "insert"
+  , value: Just "76616c7565"
+  , fee: 0.0
+  , submitted_at: submittedAt
+  }
+
+facts :: Array FactEntry
+facts =
+  [ { key: "6b6579", value: "76616c7565" }
+  ]
