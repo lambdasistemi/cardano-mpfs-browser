@@ -25,6 +25,7 @@
             "node-buffer",
             "node-child-process",
             "node-process",
+            "nullable",
             "ordered-collections",
             "prelude",
             "st",

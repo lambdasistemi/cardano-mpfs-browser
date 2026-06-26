@@ -2,14 +2,14 @@
 
 ## Slice 1 - Logic Libraries and Cage Reactor Boundary
 
-- [ ] T032-S1 Add browser-native MPFS domain/cage types and helper records
+- [X] T032-S1 Add browser-native MPFS domain/cage types and helper records
   needed by the mature port.
-- [ ] T032-S1 Add cage reactor FFI/parsers for decode, transaction-build, and
+- [X] T032-S1 Add cage reactor FFI/parsers for decode, transaction-build, and
   signed-transaction assembly outputs while preserving the existing verify path.
-- [ ] T032-S1 Add CIP-30 wallet FFI wrappers and pure wallet display helpers.
-- [ ] T032-S1 Extend the existing `MPFS.Client` read/write HTTP boundary for
+- [X] T032-S1 Add CIP-30 wallet FFI wrappers and pure wallet display helpers.
+- [X] T032-S1 Extend the existing `MPFS.Client` read/write HTTP boundary for
   the endpoints needed by the port without duplicating a second client.
-- [ ] T032-S1 Add focused RED/GREEN tests for write envelope construction,
+- [X] T032-S1 Add focused RED/GREEN tests for write envelope construction,
   reactor output parsing, and pure wallet helpers; run `./gate.sh`.
 
 ## Slice 2 - Halogen App Shell and Tab Routing
