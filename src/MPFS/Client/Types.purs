@@ -17,6 +17,9 @@ module MPFS.Client.Types
   , RetractBody
   , EndBody
   , SubmitBody
+  , RejectBody
+  , RequestUpdateBody
+  , UpdateRootBody
   ) where
 
 import Data.Maybe (Maybe)
@@ -87,6 +90,16 @@ type InsertBody =
 type DeleteBody =
   { token :: TokenId
   , key :: Hex
+  , value :: Hex
+  , address :: Hex
+  }
+
+-- | @POST /facts/request/update@ body.
+type RequestUpdateBody =
+  { token :: TokenId
+  , key :: Hex
+  , old_value :: Hex
+  , new_value :: Hex
   , address :: Hex
   }
 
@@ -106,6 +119,20 @@ type RetractBody =
 -- | @POST /tx/end@ body.
 type EndBody =
   { token :: TokenId
+  , address :: Hex
+  }
+
+-- | @POST /facts/reject@ body.
+type RejectBody =
+  { token :: TokenId
+  , requests :: Array String
+  , address :: Hex
+  }
+
+-- | @POST /facts/update@ body.
+type UpdateRootBody =
+  { token :: TokenId
+  , requests :: Array String
   , address :: Hex
   }
 

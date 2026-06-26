@@ -4,14 +4,15 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Node.Process (lookupEnv)
 import Test.Spec (Spec)
 import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
+import Test.MPFS.CageSpec as CageSpec
 import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.ProofSpec as ProofSpec
 import Test.MPFS.TxCborSpec as TxCborSpec
+import Test.MPFS.WalletSpec as WalletSpec
 
 main :: Effect Unit
 main = do
@@ -19,8 +20,10 @@ main = do
   let
     specs :: Spec Unit
     specs = do
+      CageSpec.spec
       ProofSpec.spec
       TxCborSpec.spec
+      WalletSpec.spec
       case mUrl of
         Nothing -> pure unit
         Just _ -> ClientSpec.spec

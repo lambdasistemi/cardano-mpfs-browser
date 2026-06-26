@@ -10,11 +10,13 @@ module MPFS.Client
 
 import Prelude
 
-import Data.Argonaut.Core (stringify)
+import Data.Argonaut.Core (Json, stringify)
 import Data.Argonaut.Decode.Class
   ( class DecodeJson
   , decodeJson
   )
+import Data.Argonaut.Decode.Combinators ((.:), (.:?))
+import Data.Argonaut.Decode.Error (JsonDecodeError)
 import Data.Argonaut.Encode.Class
   ( class EncodeJson
   , encodeJson
@@ -23,6 +25,7 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Array (null)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Fetch (Method(..), fetch)
 import MPFS.Client.Types
@@ -32,14 +35,18 @@ import MPFS.Client.Types
   , Hex
   , InsertBody
   , PendingRequest
+  , RejectBody
   , RetractBody
+  , RequestUpdateBody
   , StatusResponse
   , SubmitBody
   , TokenId
   , TokensResponse
   , TokenState
   , UpdateBody
+  , UpdateRootBody
   )
+import MPFS.Types (TrustedRoot(..))
 
 -- | Client error: HTTP or JSON decoding failure.
 data ClientError
@@ -79,6 +86,18 @@ type Client =
   , retract :: RetractBody -> Aff (Either ClientError Hex)
   , end :: EndBody -> Aff (Either ClientError Hex)
   , submit :: SubmitBody -> Aff (Either ClientError Hex)
+  , getTrustedRoot :: Aff (Either ClientError TrustedRoot)
+  , getEvalContext :: Aff (Either ClientError Json)
+  , postBootFacts :: BootBody -> Aff (Either ClientError Json)
+  , postInsertFacts :: InsertBody -> Aff (Either ClientError Json)
+  , postUpdateFacts :: RequestUpdateBody -> Aff (Either ClientError Json)
+  , postDeleteFacts :: DeleteBody -> Aff (Either ClientError Json)
+  , postRetractFacts ::
+      { utxo :: String, address :: Hex } -> Aff (Either ClientError Json)
+  , postRejectFacts :: RejectBody -> Aff (Either ClientError Json)
+  , postEndFacts :: EndBody -> Aff (Either ClientError Json)
+  , postUpdateRootFacts :: UpdateRootBody -> Aff (Either ClientError Json)
+  , submitSignedTx :: Hex -> Aff (Either ClientError Hex)
   , getUtxo ::
       Hex -> Int -> Aff (Either ClientError Hex)
   , getUtxoProof ::
@@ -132,6 +151,30 @@ mkClient baseUrl =
       post (baseUrl <> "/tx/end")
   , submit:
       post (baseUrl <> "/tx/submit")
+  , getTrustedRoot:
+      getWith decodeTrustedRootBody (baseUrl <> "/status")
+  , getEvalContext:
+      getJson (baseUrl <> "/eval-context")
+  , postBootFacts:
+      postJson (baseUrl <> "/facts/boot")
+  , postInsertFacts:
+      postJson (baseUrl <> "/facts/request/insert")
+  , postUpdateFacts:
+      postJson (baseUrl <> "/facts/request/update")
+  , postDeleteFacts:
+      postJson (baseUrl <> "/facts/request/delete")
+  , postRetractFacts:
+      postJson (baseUrl <> "/facts/retract")
+  , postRejectFacts:
+      postJson (baseUrl <> "/facts/reject")
+  , postEndFacts:
+      postJson (baseUrl <> "/facts/end")
+  , postUpdateRootFacts:
+      postJson (baseUrl <> "/facts/update")
+  , submitSignedTx: \signedTxCbor ->
+      postWith decodeTxIdBody
+        (baseUrl <> "/submit")
+        { signedTxCbor }
   , getUtxo: \txId txIx ->
       get
         ( baseUrl <> "/utxo/" <> txId
@@ -169,6 +212,32 @@ decodeTokensBody body = do
     Left $ DecodeError
       "Cannot derive token ids from tokens.entries[].txout_cbor"
 
+decodeTrustedRootBody :: String -> Either ClientError TrustedRoot
+decodeTrustedRootBody body = do
+  json <- lmap DecodeError (jsonParser body)
+  lmap (show >>> DecodeError) (decodeTrustedRoot json)
+
+decodeTrustedRoot :: Json -> Either JsonDecodeError TrustedRoot
+decodeTrustedRoot json = do
+  top <- decodeJson json
+  mRoot <- top .:? "utxo_root"
+  case mRoot of
+    Just root -> pure (TrustedRoot root)
+    Nothing -> do
+      snapshot <- top .: "snapshot"
+      root <- snapshot .: "utxo_root"
+      pure (TrustedRoot root)
+
+decodeTxIdBody :: String -> Either ClientError Hex
+decodeTxIdBody body = do
+  json <- lmap DecodeError (jsonParser body)
+  lmap (show >>> DecodeError) (decodeTxId json)
+
+decodeTxId :: Json -> Either JsonDecodeError Hex
+decodeTxId json = do
+  top <- decodeJson json
+  top .: "txId"
+
 get
   :: forall a
    . DecodeJson a
@@ -189,6 +258,12 @@ getWith decoder url = do
     if response.ok then decoder body
     else Left $ HttpError response.status body
 
+getJson :: String -> Aff (Either ClientError Json)
+getJson = getWith decodeJsonBody
+
+decodeJsonBody :: String -> Either ClientError Json
+decodeJsonBody = jsonParser >>> lmap DecodeError
+
 post
   :: forall req a
    . EncodeJson req
@@ -197,6 +272,16 @@ post
   -> req
   -> Aff (Either ClientError a)
 post url reqBody = do
+  postWith decodeBody url reqBody
+
+postWith
+  :: forall req a
+   . EncodeJson req
+  => (String -> Either ClientError a)
+  -> String
+  -> req
+  -> Aff (Either ClientError a)
+postWith decoder url reqBody = do
   response <- fetch url
     { method: POST
     , body: stringify (encodeJson reqBody)
@@ -205,5 +290,13 @@ post url reqBody = do
     }
   body <- response.text
   pure
-    if response.ok then decodeBody body
+    if response.ok then decoder body
     else Left $ HttpError response.status body
+
+postJson
+  :: forall req
+   . EncodeJson req
+  => String
+  -> req
+  -> Aff (Either ClientError Json)
+postJson = postWith decodeJsonBody
