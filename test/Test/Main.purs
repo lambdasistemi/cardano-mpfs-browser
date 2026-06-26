@@ -10,6 +10,7 @@ import Test.Spec.Reporter (consoleReporter)
 import Test.Spec.Runner.Node (runSpecAndExitProcess)
 import Test.AppWalletSpec as AppWalletSpec
 import Test.AppSpec as AppSpec
+import Test.AppWriteSpec as AppWriteSpec
 import Test.FactsSpec as FactsSpec
 import Test.MPFS.CageSpec as CageSpec
 import Test.MPFS.ClientSpec as ClientSpec
@@ -26,6 +27,7 @@ main = do
     specs = do
       AppSpec.spec
       AppWalletSpec.spec
+      AppWriteSpec.spec
       CageSpec.spec
       FactsSpec.spec
       ProofSpec.spec

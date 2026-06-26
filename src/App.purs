@@ -2,6 +2,7 @@ module App where
 
 import Prelude
 
+import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.DateTime.Instant as Instant
@@ -13,6 +14,7 @@ import Effect.Class (liftEffect)
 import Effect.Now as Now
 import Halogen as H
 import Halogen.Subscription as HS
+import MPFS.App.Config as AppConfig
 import MPFS.App.Facts as Facts
 import MPFS.App.State (AppState, WalletStatus(..), defaultState, selectTab)
 import MPFS.App.Tab (AppTab)
@@ -20,9 +22,22 @@ import MPFS.App.Tokens as Tokens
 import MPFS.App.Verification as Verification
 import MPFS.App.View as View
 import MPFS.App.Wallet as Wallet
+import MPFS.App.Write as Write
+import MPFS.App.Write (WriteStatus(..))
+import MPFS.Cage (CageResult)
+import MPFS.Cage.Wasm as CageWasm
 import MPFS.Client as Client
 import MPFS.Client.Types as ClientTypes
-import MPFS.Types (TokenId(..))
+import MPFS.Types
+  ( CageConfig
+  , Key(..)
+  , RequestId
+  , TokenId(..)
+  , UnsignedTxCbor(..)
+  , Value(..)
+  , WalletAddr(..)
+  , cageErrorMessage
+  )
 import MPFS.Wallet.Cip30 as Cip30
 
 data Action
@@ -35,6 +50,22 @@ data Action
   | LoadTokens
   | SelectToken TokenId
   | LoadFacts
+  | RegisterToken
+  | UpdateInsertKey String
+  | UpdateInsertValue String
+  | SubmitInsertFact
+  | UpdateUpdateKey String
+  | UpdateUpdateOldValue String
+  | UpdateUpdateNewValue String
+  | SubmitUpdateFact
+  | UpdateDeleteKey String
+  | UpdateDeleteValue String
+  | SubmitDeleteFact
+  | ToggleRequestSelection RequestId
+  | RetractRequest RequestId
+  | RejectExpired
+  | UpdateToken
+  | EndCage
   | UpdateFactLookupKey String
   | LookupFact
   | UpdateFactProofEnvelope String
@@ -54,6 +85,22 @@ component =
           , loadTokens: LoadTokens
           , selectToken: SelectToken
           , loadFacts: LoadFacts
+          , registerToken: RegisterToken
+          , updateInsertKey: UpdateInsertKey
+          , updateInsertValue: UpdateInsertValue
+          , submitInsertFact: SubmitInsertFact
+          , updateUpdateKey: UpdateUpdateKey
+          , updateUpdateOldValue: UpdateUpdateOldValue
+          , updateUpdateNewValue: UpdateUpdateNewValue
+          , submitUpdateFact: SubmitUpdateFact
+          , updateDeleteKey: UpdateDeleteKey
+          , updateDeleteValue: UpdateDeleteValue
+          , submitDeleteFact: SubmitDeleteFact
+          , toggleRequestSelection: ToggleRequestSelection
+          , retractRequest: RetractRequest
+          , rejectExpired: RejectExpired
+          , updateToken: UpdateToken
+          , endCage: EndCage
           , updateFactLookupKey: UpdateFactLookupKey
           , lookupFact: LookupFact
           , updateFactProofEnvelope: UpdateFactProofEnvelope
@@ -150,7 +197,8 @@ handleAction = case _ of
         H.modify_ (Tokens.finishTokenLoad (fromClientTokenIds tokenIds))
 
   SelectToken token ->
-    H.modify_ (Tokens.selectToken token)
+    H.modify_ \state ->
+      (Tokens.selectToken token state) { selectedRequestIds = [] }
 
   LoadFacts -> do
     state <- H.get
@@ -185,6 +233,120 @@ handleAction = case _ of
             H.modify_ (Facts.failFactsLoad (show error))
           _, _, _, Left error ->
             H.modify_ (Facts.failFactsLoad (show error))
+
+  RegisterToken ->
+    runWriteOperation Write.WriteRegisterToken \client address cfg _state ->
+      Right $ (CageWasm.wasmCageHelpers client).registerToken address cfg
+
+  UpdateInsertKey key ->
+    H.modify_ (Write.setInsertKey key)
+
+  UpdateInsertValue value ->
+    H.modify_ (Write.setInsertValue value)
+
+  SubmitInsertFact ->
+    runWriteOperation Write.WriteInsertFact \client address cfg state ->
+      withSelectedToken state \token ->
+        Right
+          ( (CageWasm.wasmCageHelpers client).insertFact
+              address
+              cfg
+              token
+              (Key state.writeForms.insertKey)
+              (Value state.writeForms.insertValue)
+          )
+
+  UpdateUpdateKey key ->
+    H.modify_ (Write.setUpdateKey key)
+
+  UpdateUpdateOldValue value ->
+    H.modify_ (Write.setUpdateOldValue value)
+
+  UpdateUpdateNewValue value ->
+    H.modify_ (Write.setUpdateNewValue value)
+
+  SubmitUpdateFact ->
+    runWriteOperation Write.WriteUpdateFact \client address cfg state ->
+      withSelectedToken state \token ->
+        Right
+          ( (CageWasm.wasmCageHelpers client).updateFact
+              address
+              cfg
+              token
+              (Key state.writeForms.updateKey)
+              (Value state.writeForms.updateOldValue)
+              (Value state.writeForms.updateNewValue)
+          )
+
+  UpdateDeleteKey key ->
+    H.modify_ (Write.setDeleteKey key)
+
+  UpdateDeleteValue value ->
+    H.modify_ (Write.setDeleteValue value)
+
+  SubmitDeleteFact ->
+    runWriteOperation Write.WriteDeleteFact \client address cfg state ->
+      withSelectedToken state \token ->
+        Right
+          ( (CageWasm.wasmCageHelpers client).deleteFact
+              address
+              cfg
+              token
+              (Key state.writeForms.deleteKey)
+              (Value state.writeForms.deleteValue)
+          )
+
+  ToggleRequestSelection requestId ->
+    H.modify_ (Write.toggleRequestSelection requestId)
+
+  RetractRequest requestId ->
+    runWriteOperation Write.WriteRetractRequest \client address cfg state ->
+      withSelectedToken state \token ->
+        Right
+          ( (CageWasm.wasmCageHelpers client).retractRequest
+              address
+              cfg
+              token
+              requestId
+          )
+
+  RejectExpired ->
+    runWriteOperation Write.WriteRejectExpired \client address cfg state ->
+      withSelectedToken state \token ->
+        if Array.null state.selectedRequestIds then
+          Left "Select at least one expired request."
+        else
+          Right
+            ( (CageWasm.wasmCageHelpers client).rejectExpired
+                address
+                cfg
+                token
+                state.selectedRequestIds
+            )
+
+  UpdateToken ->
+    runWriteOperation Write.WriteUpdateToken \client address cfg state ->
+      withSelectedToken state \token ->
+        if Array.null state.selectedRequestIds then
+          Left "Select at least one processable request."
+        else
+          Right
+            ( (CageWasm.wasmCageHelpers client).updateToken
+                address
+                cfg
+                token
+                state.selectedRequestIds
+            )
+
+  EndCage ->
+    runWriteOperation Write.WriteEndCage \client address cfg state ->
+      withSelectedToken state \token ->
+        Right
+          ( (CageWasm.wasmCageHelpers client).endCage
+              address
+              cfg
+              token
+          )
 
   UpdateFactLookupKey key ->
     H.modify_ (Facts.setFactLookupKey key)
@@ -269,3 +431,108 @@ subscribeWalletChanges
 subscribeWalletChanges api =
   H.subscribe $ HS.makeEmitter \push -> do
     Cip30.subscribeAccountChanges api (push RefreshWallet)
+
+type BuildWrite =
+  Client.Client
+  -> WalletAddr
+  -> CageConfig
+  -> AppState
+  -> Either String CageResult
+
+runWriteOperation
+  :: forall slots output m
+   . MonadAff m
+  => Write.WriteOperation
+  -> BuildWrite
+  -> H.HalogenM AppState Action slots output m Unit
+runWriteOperation operation buildWrite = do
+  state <- H.get
+  case Write.validatePrerequisites operation state of
+    Left message ->
+      H.modify_ (Write.failWrite message)
+    Right _ ->
+      case state.walletSession.api, state.walletSession.selectedAddress of
+        Just api, Just address ->
+          case
+            buildWrite
+              (Client.mkClient state.baseUrl)
+              (WalletAddr address)
+              AppConfig.defaultCageConfig
+              state
+            of
+            Left message ->
+              H.modify_ (Write.failWrite message)
+            Right build ->
+              runWritePipeline operation api (Client.mkClient state.baseUrl) build
+        _, _ ->
+          H.modify_ (Write.failWrite "Connect a wallet first.")
+
+runWritePipeline
+  :: forall slots output m
+   . MonadAff m
+  => Write.WriteOperation
+  -> Cip30.WalletApi
+  -> Client.Client
+  -> CageResult
+  -> H.HalogenM AppState Action slots output m Unit
+runWritePipeline operation api client build = do
+  initial <- H.get
+  H.modify_ _ { writeStatus = WriteBuilding }
+  built <- liftAff build
+  case built of
+    Left err ->
+      H.modify_ (Write.failWrite (cageErrorMessage err))
+    Right unsigned@(UnsignedTxCbor unsignedHex) -> do
+      H.modify_ _ { writeStatus = WriteBuilt unsigned }
+      H.modify_ _ { writeStatus = WriteSigning unsigned }
+      signed <- liftAff $ attempt (Cip30.signTx api unsignedHex true)
+      case signed of
+        Left _ ->
+          H.modify_ (Write.failWrite "Wallet signing failed or was declined.")
+        Right witnessSet -> do
+          H.modify_ _ { writeStatus = WriteAssembling unsigned witnessSet }
+          assembled <- liftAff (CageWasm.assembleTx unsignedHex witnessSet)
+          case assembled of
+            Left err ->
+              H.modify_ (Write.failWrite (cageErrorMessage err))
+            Right signedTx -> do
+              H.modify_ _ { writeStatus = WriteSubmitting unsigned witnessSet signedTx }
+              submitted <- liftAff (client.submitSignedTx signedTx)
+              case submitted of
+                Left error ->
+                  H.modify_ (Write.failWrite (show error))
+                Right txId -> do
+                  let
+                    keepToken =
+                      case operation of
+                        Write.WriteEndCage -> Nothing
+                        _ -> initial.selectedToken
+                  H.modify_ \current ->
+                    current
+                      { writeStatus =
+                          Write.submittedWrite unsigned witnessSet signedTx txId
+                      , selectedToken = keepToken
+                      , selectedRequestIds = []
+                      }
+                  refreshAfterSubmit keepToken
+
+refreshAfterSubmit
+  :: forall slots output m
+   . MonadAff m
+  => Maybe TokenId
+  -> H.HalogenM AppState Action slots output m Unit
+refreshAfterSubmit mToken = do
+  handleAction LoadTokens
+  case mToken of
+    Nothing ->
+      pure unit
+    Just _ ->
+      handleAction LoadFacts
+
+withSelectedToken
+  :: AppState
+  -> (TokenId -> Either String CageResult)
+  -> Either String CageResult
+withSelectedToken state f = case state.selectedToken of
+  Nothing -> Left "Select a token first."
+  Just token -> f token

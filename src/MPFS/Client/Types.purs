@@ -76,6 +76,7 @@ type PendingRequest =
   , value :: Maybe Hex
   , fee :: Number
   , submitted_at :: Number
+  , request_id :: String
   }
 
 -- | @GET /tokens/:id/facts@ element.

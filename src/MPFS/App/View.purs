@@ -12,8 +12,10 @@ import MPFS.App.Facts (phaseLabel, requestPhase)
 import MPFS.App.State (AppState, WalletStatus(..))
 import MPFS.App.Tab (AppTab(..), allTabs, tabLabel, tabSlug)
 import MPFS.App.Verification (VerificationStatus(..))
+import MPFS.App.Write as Write
+import MPFS.App.Write (WriteStatus(..))
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
-import MPFS.Types (TokenId(..), TrustedRoot(..))
+import MPFS.Types (RequestId, TokenId(..), TrustedRoot(..))
 import MPFS.UI.Remote (Remote(..), remoteStatus)
 import MPFS.Wallet.Cip30 (WalletInfo)
 
@@ -24,6 +26,22 @@ type AppActions action =
   , disconnectWallet :: action
   , loadTokens :: action
   , loadFacts :: action
+  , registerToken :: action
+  , updateInsertKey :: String -> action
+  , updateInsertValue :: String -> action
+  , submitInsertFact :: action
+  , updateUpdateKey :: String -> action
+  , updateUpdateOldValue :: String -> action
+  , updateUpdateNewValue :: String -> action
+  , submitUpdateFact :: action
+  , updateDeleteKey :: String -> action
+  , updateDeleteValue :: String -> action
+  , submitDeleteFact :: action
+  , toggleRequestSelection :: RequestId -> action
+  , retractRequest :: RequestId -> action
+  , rejectExpired :: action
+  , updateToken :: action
+  , endCage :: action
   , lookupFact :: action
   , selectTab :: AppTab -> action
   , selectToken :: TokenId -> action
@@ -107,7 +125,7 @@ tabPanel actions state = case state.activeTab of
   ConnectTab -> connectPanel actions state
   TokensTab -> tokensPanel actions state
   FactsTab -> factsPanel actions state
-  EndTab -> endPanel state
+  EndTab -> endPanel actions state
 
 connectPanel
   :: forall action m
@@ -134,6 +152,7 @@ tokensPanel actions state =
     [ fieldLine "Token list" (remoteStatus state.tokens)
     , fieldLine "Selected token" (selectedTokenLabel state.selectedToken)
     , tokenRemoteView actions state.selectedToken state.tokens
+    , writeStatusView state.writeStatus
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
         [ HH.button
@@ -143,7 +162,13 @@ tokensPanel actions state =
             , HE.onClick \_ -> actions.loadTokens
             ]
             [ HH.text (tokenLoadLabel state.tokens) ]
-        , inertButton "Register token"
+        , HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled (not (canWriteWithoutToken state))
+            , HE.onClick \_ -> actions.registerToken
+            ]
+            [ HH.text "Register token" ]
         ]
     ]
 
@@ -162,11 +187,15 @@ factsPanel actions state =
     , tokenStateRemoteView state.tokenState
     , trustedRootRemoteView state.trustedRoot
     , pendingRequestsRemoteView
+        actions
         state.requestNowMillis
         state.tokenState
+        state.selectedRequestIds
         state.pendingRequests
     , factsRemoteView state.facts
     , factLookupView actions state
+    , factWriteForms actions state
+    , writeStatusView state.writeStatus
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
         [ HH.button
@@ -181,22 +210,40 @@ factsPanel actions state =
             , HE.onClick \_ -> actions.loadFacts
             ]
             [ HH.text (factsLoadLabel state.facts) ]
-        , inertButton "Add fact"
-        , inertButton "Update fact"
-        , inertButton "Delete fact"
+        , HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled (not (canWriteSelected state))
+            , HE.onClick \_ -> actions.updateToken
+            ]
+            [ HH.text "Process selected" ]
+        , HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "inert-button")
+            , HP.disabled (not (canWriteSelected state))
+            , HE.onClick \_ -> actions.rejectExpired
+            ]
+            [ HH.text "Reject expired" ]
         ]
     ]
 
-endPanel :: forall action m. AppState -> H.ComponentHTML action () m
-endPanel state =
+endPanel :: forall action m. AppActions action -> AppState -> H.ComponentHTML action () m
+endPanel actions state =
   panelLayout "End" "Cage lifecycle"
     [ fieldLine "Token" (selectedTokenLabel state.selectedToken)
     , fieldLine "Wallet" (walletSessionLabel state)
     , fieldLine "Wallet network" (maybeText state.walletSession.network)
     , fieldLine "Wallet address" (maybeText state.walletSession.selectedAddress)
+    , writeStatusView state.writeStatus
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
-        [ inertButton "End cage"
+        [ HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled (not (canWriteSelected state))
+            , HE.onClick \_ -> actions.endCage
+            ]
+            [ HH.text "End cage" ]
         ]
     ]
 
@@ -233,15 +280,6 @@ statusPill label value =
     [ HH.span_ [ HH.text label ]
     , HH.strong_ [ HH.text value ]
     ]
-
-inertButton :: forall action m. String -> H.ComponentHTML action () m
-inertButton label =
-  HH.button
-    [ HP.type_ HP.ButtonButton
-    , HP.disabled true
-    , HP.class_ (HH.ClassName "inert-button")
-    ]
-    [ HH.text label ]
 
 tokenRemoteView
   :: forall action m
@@ -424,11 +462,13 @@ trustedRootRemoteView = case _ of
 
 pendingRequestsRemoteView
   :: forall action m
-   . Number
+   . AppActions action
+  -> Number
   -> Remote TokenState
+  -> Array RequestId
   -> Remote (Array PendingRequest)
   -> H.ComponentHTML action () m
-pendingRequestsRemoteView nowMillis tokenStateRemote = case _ of
+pendingRequestsRemoteView actions nowMillis tokenStateRemote selectedRequestIds = case _ of
   NotAsked ->
     HH.p
       [ HP.class_ (HH.ClassName "empty-state") ]
@@ -451,7 +491,7 @@ pendingRequestsRemoteView nowMillis tokenStateRemote = case _ of
           Success tokenState ->
             HH.ul
               [ HP.class_ (HH.ClassName "token-list") ]
-              (map (requestRow nowMillis tokenState) requests)
+              (map (requestRow actions nowMillis tokenState selectedRequestIds) requests)
           _ ->
             HH.p
               [ HP.class_ (HH.ClassName "empty-state") ]
@@ -537,6 +577,101 @@ factLookupView actions state =
         ]
     ]
 
+factWriteForms
+  :: forall action m
+   . AppActions action
+  -> AppState
+  -> H.ComponentHTML action () m
+factWriteForms actions state =
+  HH.div
+    [ HP.class_ (HH.ClassName "field-group") ]
+    [ HH.div
+        [ HP.class_ (HH.ClassName "control-row") ]
+        [ HH.input
+            [ HP.type_ HP.InputText
+            , HP.value state.writeForms.insertKey
+            , HP.placeholder "Insert key"
+            , HE.onValueInput actions.updateInsertKey
+            ]
+        , HH.input
+            [ HP.type_ HP.InputText
+            , HP.value state.writeForms.insertValue
+            , HP.placeholder "Insert value"
+            , HE.onValueInput actions.updateInsertValue
+            ]
+        , HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled
+                ( not (canWriteSelected state)
+                    || state.writeForms.insertKey == ""
+                    || state.writeForms.insertValue == ""
+                )
+            , HE.onClick \_ -> actions.submitInsertFact
+            ]
+            [ HH.text "Insert fact" ]
+        ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "control-row") ]
+        [ HH.input
+            [ HP.type_ HP.InputText
+            , HP.value state.writeForms.updateKey
+            , HP.placeholder "Update key"
+            , HE.onValueInput actions.updateUpdateKey
+            ]
+        , HH.input
+            [ HP.type_ HP.InputText
+            , HP.value state.writeForms.updateOldValue
+            , HP.placeholder "Old value"
+            , HE.onValueInput actions.updateUpdateOldValue
+            ]
+        , HH.input
+            [ HP.type_ HP.InputText
+            , HP.value state.writeForms.updateNewValue
+            , HP.placeholder "New value"
+            , HE.onValueInput actions.updateUpdateNewValue
+            ]
+        , HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled
+                ( not (canWriteSelected state)
+                    || state.writeForms.updateKey == ""
+                    || state.writeForms.updateOldValue == ""
+                    || state.writeForms.updateNewValue == ""
+                )
+            , HE.onClick \_ -> actions.submitUpdateFact
+            ]
+            [ HH.text "Update fact" ]
+        ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "control-row") ]
+        [ HH.input
+            [ HP.type_ HP.InputText
+            , HP.value state.writeForms.deleteKey
+            , HP.placeholder "Delete key"
+            , HE.onValueInput actions.updateDeleteKey
+            ]
+        , HH.input
+            [ HP.type_ HP.InputText
+            , HP.value state.writeForms.deleteValue
+            , HP.placeholder "Delete value"
+            , HE.onValueInput actions.updateDeleteValue
+            ]
+        , HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.class_ (HH.ClassName "primary-button")
+            , HP.disabled
+                ( not (canWriteSelected state)
+                    || state.writeForms.deleteKey == ""
+                    || state.writeForms.deleteValue == ""
+                )
+            , HE.onClick \_ -> actions.submitDeleteFact
+            ]
+            [ HH.text "Delete fact" ]
+        ]
+    ]
+
 factLookupRemoteView
   :: forall action m
    . Remote String
@@ -559,23 +694,50 @@ factLookupRemoteView = case _ of
 
 requestRow
   :: forall action m
-   . Number
+   . AppActions action
+  -> Number
   -> TokenState
+  -> Array RequestId
   -> PendingRequest
   -> H.ComponentHTML action () m
-requestRow nowMillis tokenState request =
+requestRow actions nowMillis tokenState selectedRequestIds request =
   HH.li
     [ HP.attr (HH.AttrName "data-request-key") request.key ]
-    [ HH.strong_ [ HH.text request.operation ]
-    , HH.span_ [ HH.text (" key " <> request.key) ]
-    , HH.span_ [ HH.text (" value " <> requestValueText request) ]
-    , HH.span_
-        [ HH.text
-            ( " phase "
-                <> phaseLabel (requestPhase nowMillis tokenState request)
-            )
-        ]
-    ]
+    ( [ HH.strong_ [ HH.text request.operation ]
+      , HH.span_ [ HH.text (" key " <> request.key) ]
+      , HH.span_ [ HH.text (" value " <> requestValueText request) ]
+      , HH.span_
+          [ HH.text
+              ( " phase "
+                  <> phaseLabel (requestPhase nowMillis tokenState request)
+              )
+          ]
+      ]
+        <> requestControls
+    )
+  where
+  requestControls = case Write.requestIdOf request of
+    Nothing ->
+      [ HH.span_ [ HH.text " missing request id" ] ]
+    Just requestId ->
+      [ HH.button
+          [ HP.type_ HP.ButtonButton
+          , HP.class_ (HH.ClassName "inert-button")
+          , HE.onClick \_ -> actions.toggleRequestSelection requestId
+          ]
+          [ HH.text
+              if Array.elem requestId selectedRequestIds then
+                "Selected"
+              else
+                "Select"
+          ]
+      , HH.button
+          [ HP.type_ HP.ButtonButton
+          , HP.class_ (HH.ClassName "inert-button")
+          , HE.onClick \_ -> actions.retractRequest requestId
+          ]
+          [ HH.text "Retract" ]
+      ]
 
 factRow :: forall action m. FactEntry -> H.ComponentHTML action () m
 factRow fact =
@@ -639,6 +801,44 @@ remoteIsLoading :: forall a. Remote a -> Boolean
 remoteIsLoading = case _ of
   Loading -> true
   _ -> false
+
+writeStatusView :: forall action m. WriteStatus -> H.ComponentHTML action () m
+writeStatusView = case _ of
+  WriteIdle ->
+    HH.text ""
+  WriteBuilding ->
+    HH.p [ HP.class_ (HH.ClassName "loading-state") ] [ HH.text "Building transaction..." ]
+  WriteBuilt _ ->
+    HH.p [ HP.class_ (HH.ClassName "loading-state") ] [ HH.text "Unsigned transaction built." ]
+  WriteSigning _ ->
+    HH.p [ HP.class_ (HH.ClassName "loading-state") ] [ HH.text "Waiting for wallet signature..." ]
+  WriteAssembling _ _ ->
+    HH.p [ HP.class_ (HH.ClassName "loading-state") ] [ HH.text "Assembling signed transaction..." ]
+  WriteSubmitting _ _ _ ->
+    HH.p [ HP.class_ (HH.ClassName "loading-state") ] [ HH.text "Submitting transaction..." ]
+  WriteSubmitted _ _ _ txId ->
+    HH.p [ HP.class_ (HH.ClassName "empty-state") ] [ HH.text ("Submitted transaction " <> txId) ]
+  WriteFailed message ->
+    HH.p [ HP.class_ (HH.ClassName "error-state") ] [ HH.text message ]
+
+writeBusy :: WriteStatus -> Boolean
+writeBusy = case _ of
+  WriteBuilding -> true
+  WriteBuilt _ -> true
+  WriteSigning _ -> true
+  WriteAssembling _ _ -> true
+  WriteSubmitting _ _ _ -> true
+  _ -> false
+
+canWriteWithoutToken :: AppState -> Boolean
+canWriteWithoutToken state =
+  state.walletSession.status == WalletConnected
+    && state.walletSession.selectedAddress /= Nothing
+    && not (writeBusy state.writeStatus)
+
+canWriteSelected :: AppState -> Boolean
+canWriteSelected state =
+  canWriteWithoutToken state && state.selectedToken /= Nothing
 
 verificationStatusLabel :: VerificationStatus -> String
 verificationStatusLabel = case _ of

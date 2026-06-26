@@ -13,8 +13,9 @@ import Data.Maybe (Maybe(..))
 import Halogen.Query.HalogenM (SubscriptionId)
 import MPFS.App.Tab (AppTab, defaultTab)
 import MPFS.App.Verification (VerificationStatus(..))
+import MPFS.App.Write as Write
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
-import MPFS.Types (TokenId, TrustedRoot)
+import MPFS.Types (RequestId, TokenId, TrustedRoot)
 import MPFS.UI.Remote (Remote(..))
 import MPFS.Wallet.Cip30 (WalletApi, WalletInfo)
 
@@ -65,6 +66,9 @@ type AppState =
   , trustedRoot :: Remote TrustedRoot
   , requestNowMillis :: Number
   , factLookup :: FactLookup
+  , writeStatus :: Write.WriteStatus
+  , writeForms :: Write.WriteForms
+  , selectedRequestIds :: Array RequestId
   , walletSession :: WalletSession
   }
 
@@ -85,6 +89,9 @@ defaultState =
       , proofEnvelope: ""
       , verification: VerificationNotAsked
       }
+  , writeStatus: Write.WriteIdle
+  , writeForms: Write.initialWriteForms
+  , selectedRequestIds: []
   , walletSession:
       { status: WalletDisconnected
       , wallets: NotAsked
