@@ -2,14 +2,14 @@
 
 ## Slice 1 - Dedicated Pure Verify Reactor Boundary
 
-- [ ] T033-S1 Rename/expose the pure verifier bridge so proof verification calls
+- [X] T033-S1 Rename/expose the pure verifier bridge so proof verification calls
   a verify-specific runner backed by `mpfs-verify-reactor.wasm`, and update
   `src/bootstrap.js`, `src/MPFS/Reactor.{purs,js}`,
   `src/MPFS/App/Verification.purs`, and focused proof tests accordingly.
-- [ ] T033-S1 Separate the cage transaction reactor boundary from the verify
+- [X] T033-S1 Separate the cage transaction reactor boundary from the verify
   bridge in `src/MPFS/Cage/Reactor.{purs,js}` and related asset preparation,
   preserving write-flow parser behavior and keeping cage tests green.
-- [ ] T033-S1 Add RED/GREEN proof coverage for `verify_ok` and `verify_error`
+- [X] T033-S1 Add RED/GREEN proof coverage for `verify_ok` and `verify_error`
   through the dedicated verify boundary, then run `./gate.sh`.
 
 ## Slice 2 - csmt-utxo Second Oracle

@@ -1,7 +1,7 @@
 -- | Stdin/stdout bridge to the Haskell WASM verify reactor.
 module MPFS.Reactor
   ( ReactorResult
-  , runCageReactor
+  , runVerifyReactor
   , verifyEnvelope
   , parseVerifyOutput
   ) where
@@ -24,13 +24,13 @@ type ReactorResult =
   , exitOk :: Boolean
   }
 
-foreign import runCageReactorImpl :: String -> Effect (Promise ReactorResult)
+foreign import runVerifyReactorImpl :: String -> Effect (Promise ReactorResult)
 
-runCageReactor :: String -> Aff ReactorResult
-runCageReactor = toAffE <<< runCageReactorImpl
+runVerifyReactor :: String -> Aff ReactorResult
+runVerifyReactor = toAffE <<< runVerifyReactorImpl
 
 verifyEnvelope :: String -> Aff (Either String Unit)
-verifyEnvelope envelope = parseVerifyOutput <$> runCageReactor envelope
+verifyEnvelope envelope = parseVerifyOutput <$> runVerifyReactor envelope
 
 parseVerifyOutput :: ReactorResult -> Either String Unit
 parseVerifyOutput result

@@ -60,20 +60,22 @@ ci:
     just bundle
     just test
 
-# Prepare the WASM reactor and run tests
+# Prepare the WASM reactors and run tests
 test:
     #!/usr/bin/env bash
     set -euo pipefail
     just prepare-wasm
     spago test
 
-# Copy the Haskell WASM verifier from the flake input for tests and bundles
+# Copy the Haskell WASM reactors from the flake input for tests and bundles
 prepare-wasm:
     #!/usr/bin/env bash
     set -euo pipefail
     mkdir -p src/assets
     wasm_out="$(nix build --fallback --no-link --print-out-paths .#wasm-mpfs-verify)"
+    test -f "$wasm_out/mpfs-cage-reactor.wasm"
     test -f "$wasm_out/mpfs-verify-reactor.wasm"
+    install -m 644 "$wasm_out/mpfs-cage-reactor.wasm" src/assets/mpfs-cage-reactor.wasm
     install -m 644 "$wasm_out/mpfs-verify-reactor.wasm" src/assets/mpfs-verify-reactor.wasm
 
 # E2E tests against devnet server
