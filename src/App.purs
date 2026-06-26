@@ -3,24 +3,24 @@ module App where
 import Prelude
 
 import Halogen as H
-import Halogen.HTML as HH
+import MPFS.App.State (AppState, defaultState, selectTab)
+import MPFS.App.Tab (AppTab)
+import MPFS.App.View as View
 
-type State = {}
+data Action = SelectTab AppTab
 
 component :: forall q i o m. H.Component q i o m
 component =
   H.mkComponent
-    { initialState: const {}
-    , render
-    , eval: H.mkEval H.defaultEval
+    { initialState: const defaultState
+    , render: View.render SelectTab
+    , eval: H.mkEval H.defaultEval { handleAction = handleAction }
     }
 
-render :: forall m. State -> H.ComponentHTML Void () m
-render _ =
-  HH.div_
-    [ HH.h1_ [ HH.text "MPFS Explorer" ]
-    , HH.p_
-        [ HH.text
-            "Fact explorer and transaction verifier"
-        ]
-    ]
+handleAction
+  :: forall slots output m
+   . Action
+  -> H.HalogenM AppState Action slots output m Unit
+handleAction = case _ of
+  SelectTab tab ->
+    H.modify_ (selectTab tab)

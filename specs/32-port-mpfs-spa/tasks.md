@@ -14,13 +14,13 @@
 
 ## Slice 2 - Halogen App Shell and Tab Routing
 
-- [ ] T032-S2 Replace the placeholder app with a Halogen shell containing
+- [X] T032-S2 Replace the placeholder app with a Halogen shell containing
   Connect, Tokens, Facts, and End navigation.
-- [ ] T032-S2 Add top-level app state for active tab, selected token, client
+- [X] T032-S2 Add top-level app state for active tab, selected token, client
   config, remote values, and wallet session state.
-- [ ] T032-S2 Add empty but real tab panels and static styling for a usable
+- [X] T032-S2 Add empty but real tab panels and static styling for a usable
   browser workbench.
-- [ ] T032-S2 Add focused render/navigation proof and run `./gate.sh`.
+- [X] T032-S2 Add focused render/navigation proof and run `./gate.sh`.
 
 ## Slice 3 - Tokens Tab Read Path
 
