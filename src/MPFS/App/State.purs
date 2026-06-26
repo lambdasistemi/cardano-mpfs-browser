@@ -10,11 +10,13 @@ module MPFS.App.State
 import Prelude
 
 import Data.Maybe (Maybe(..))
+import Halogen.Query.HalogenM (SubscriptionId)
 import MPFS.App.Tab (AppTab, defaultTab)
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
 import MPFS.Types (TokenId, TrustedRoot)
 import MPFS.UI.Remote (Remote(..))
+import MPFS.Wallet.Cip30 (WalletApi, WalletInfo)
 
 data WalletStatus
   = WalletDisconnected
@@ -31,9 +33,18 @@ instance Show WalletStatus where
 
 type WalletSession =
   { status :: WalletStatus
+  , wallets :: Remote (Array WalletInfo)
+  , walletKey :: Maybe String
   , walletName :: Maybe String
+  , networkId :: Maybe Int
   , network :: Maybe String
-  , address :: Maybe String
+  , selectedAddress :: Maybe String
+  , changeAddress :: Maybe String
+  , usedAddresses :: Array String
+  , lovelace :: Maybe String
+  , feedback :: Maybe String
+  , api :: Maybe WalletApi
+  , subscriptionId :: Maybe SubscriptionId
   }
 
 type FactLookup =
@@ -76,9 +87,18 @@ defaultState =
       }
   , walletSession:
       { status: WalletDisconnected
+      , wallets: NotAsked
+      , walletKey: Nothing
       , walletName: Nothing
+      , networkId: Nothing
       , network: Nothing
-      , address: Nothing
+      , selectedAddress: Nothing
+      , changeAddress: Nothing
+      , usedAddresses: []
+      , lovelace: Nothing
+      , feedback: Nothing
+      , api: Nothing
+      , subscriptionId: Nothing
       }
   }
 

@@ -44,12 +44,12 @@
 
 ## Slice 5 - Connect Tab and Wallet State
 
-- [ ] T032-S5 Implement CIP-30 wallet discovery, enable, refresh, disconnect,
+- [X] T032-S5 Implement CIP-30 wallet discovery, enable, refresh, disconnect,
   and connected wallet display.
-- [ ] T032-S5 Read network, used/change addresses, and balance; reject
+- [X] T032-S5 Read network, used/change addresses, and balance; reject
   unsupported networks with clear UI feedback.
-- [ ] T032-S5 Propagate wallet state to the app shell for later write actions.
-- [ ] T032-S5 Add focused pure/FFI-fake wallet tests where practical and run
+- [X] T032-S5 Propagate wallet state to the app shell for later write actions.
+- [X] T032-S5 Add focused pure/FFI-fake wallet tests where practical and run
   `./gate.sh`.
 
 ## Slice 6 - Write Flow and End Tab
