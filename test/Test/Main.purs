@@ -16,6 +16,7 @@ import Test.MPFS.CageSpec as CageSpec
 import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.ProofSpec as ProofSpec
 import Test.MPFS.TxCborSpec as TxCborSpec
+import Test.MPFS.VerifyE2ESpec as VerifyE2ESpec
 import Test.MPFS.WalletSpec as WalletSpec
 import Test.TokensSpec as TokensSpec
 
@@ -36,5 +37,7 @@ main = do
       WalletSpec.spec
       case mUrl of
         Nothing -> pure unit
-        Just _ -> ClientSpec.spec
+        Just _ -> do
+          ClientSpec.spec
+          VerifyE2ESpec.spec
   runSpecAndExitProcess [ consoleReporter ] specs
