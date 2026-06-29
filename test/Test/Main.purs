@@ -43,9 +43,9 @@ main = do
       TokensSpec.spec
       TxCborSpec.spec
       WalletSpec.spec
+      ClientSpec.spec mUrl
       case mUrl of
         Nothing -> pure unit
         Just _ -> do
-          ClientSpec.spec
           VerifyE2ESpec.spec
   runSpecAndExitProcess [ consoleReporter ] specs

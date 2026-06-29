@@ -25,7 +25,6 @@ import Data.Argonaut.Encode.Class
   , encodeJson
   )
 import Data.Argonaut.Parser (jsonParser)
-import Data.Array (null)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -50,10 +49,13 @@ import MPFS.Client.Types
   , SubmitBody
   , TokenId
   , TokensResponse
+  , TokenUtxoEntry
   , TokenState
   , UpdateBody
   , UpdateRootBody
   )
+import MPFS.Tx.Cbor (decodeTxOutput)
+import MPFS.Tx.Cbor.Bytes (hexToBytes)
 import MPFS.Types (TrustedRoot(..))
 
 -- | Client error: HTTP or JSON decoding failure.
@@ -222,11 +224,26 @@ decodeBody body = do
 decodeTokensBody :: String -> Either ClientError (Array TokenId)
 decodeTokensBody body = do
   response :: TokensResponse <- decodeBody body
-  if null response.tokens.entries then
-    pure []
-  else
-    Left $ DecodeError
-      "Cannot derive token ids from tokens.entries[].txout_cbor"
+  traverse tokenIdFromEntry response.tokens.entries
+
+tokenIdFromEntry :: TokenUtxoEntry -> Either ClientError TokenId
+tokenIdFromEntry entry =
+  case tokenIdsFromEntry entry of
+    [ tokenId ] ->
+      pure tokenId
+    [] ->
+      Left $ DecodeError
+        "Cannot derive token id from tokens.entries[].txout_cbor: no assets"
+    _ ->
+      Left $ DecodeError
+        "Cannot derive token id from tokens.entries[].txout_cbor: multiple assets"
+
+tokenIdsFromEntry :: TokenUtxoEntry -> Array TokenId
+tokenIdsFromEntry entry =
+  let
+    txOut = decodeTxOutput (hexToBytes entry.txout_cbor)
+  in
+    Object.values txOut.value.assets >>= Object.keys
 
 decodeFactsBody :: String -> Either ClientError (Array FactEntry)
 decodeFactsBody body = do
