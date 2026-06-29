@@ -17,13 +17,13 @@
 
 ## Slice 2 - Live Boundary Smoke
 
-- [ ] T044-S2 Add an operator smoke against `https://umpfs.plutimus.com/tokens`
+- [X] T044-S2 Add an operator smoke against `https://umpfs.plutimus.com/tokens`
   that decodes through the real `MPFS.Client` path and asserts at least one token
   id.
-- [ ] T044-S2 Add the corresponding `just` recipe or script entry point.
-- [ ] T044-S2 Make the backend pointer in operator-facing docs/recipes use
+- [X] T044-S2 Add the corresponding `just` recipe or script entry point.
+- [X] T044-S2 Make the backend pointer in operator-facing docs/recipes use
   `umpfs.plutimus.com`, not stale `mpfs.plutimus.com`.
-- [ ] T044-S2 Run the focused live smoke and commit one bisect-safe slice with
+- [X] T044-S2 Run the focused live smoke and commit one bisect-safe slice with
   `Tasks: T044-S2`.
 
 ## Orchestrator Finalization
