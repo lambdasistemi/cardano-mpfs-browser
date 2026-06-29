@@ -3,6 +3,7 @@
 -- Uint8Array access uses JS FFI (3 functions).
 module MPFS.Tx.Cbor
   ( decodeTx
+  , decodeTxOutput
   , decodePlutusData
   , RawTx
   , TxInput
@@ -566,3 +567,9 @@ decodeTx bytes = ST.run do
     , redeemers
     , isValid
     }
+
+decodeTxOutput :: Uint8Array -> TxOutput
+decodeTxOutput bytes = ST.run do
+  offset <- Ref.new 0
+  let r = { bytes, offset }
+  readOutput r

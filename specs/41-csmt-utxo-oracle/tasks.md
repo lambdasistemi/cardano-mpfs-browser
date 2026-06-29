@@ -32,15 +32,15 @@
 
 ## Slice 3 - Cross-Check Verdict
 
-- [ ] T041-S3 Add second-oracle verdict logic for outputRef -> proof/root ->
+- [X] T041-S3 Add second-oracle verdict logic for outputRef -> proof/root ->
   WASM inclusion check -> attested datum facts-root comparison.
-- [ ] T041-S3 Decode or extract the MPFS facts root from the attested `txOut`
+- [X] T041-S3 Decode or extract the MPFS facts root from the attested `txOut`
   datum using existing CBOR/Plutus-data helpers where possible.
-- [ ] T041-S3 Cover verified, mismatch, unavailable, missing-root, and verifier
+- [X] T041-S3 Cover verified, mismatch, unavailable, missing-root, and verifier
   false paths with deterministic fixtures.
-- [ ] T041-S3 Escalate a Q-file if the selected token outputRef or stable
+- [X] T041-S3 Escalate a Q-file if the selected token outputRef or stable
   MPFS-token fixture is not available from current project artifacts.
-- [ ] T041-S3 Run the focused verdict tests and `./gate.sh`, then commit the
+- [X] T041-S3 Run the focused verdict tests and `./gate.sh`, then commit the
   slice.
 
 ## Slice 4 - UI Wiring

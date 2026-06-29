@@ -17,6 +17,7 @@ import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.ProofSpec as ProofSpec
 import Test.MPFS.SecondOracleCsmtVerifySpec as SecondOracleCsmtVerifySpec
 import Test.MPFS.SecondOracleClientSpec as SecondOracleClientSpec
+import Test.MPFS.SecondOracleSpec as SecondOracleSpec
 import Test.MPFS.TxCborSpec as TxCborSpec
 import Test.MPFS.VerifyE2ESpec as VerifyE2ESpec
 import Test.MPFS.WalletSpec as WalletSpec
@@ -36,6 +37,7 @@ main = do
       ProofSpec.spec
       SecondOracleClientSpec.spec
       SecondOracleCsmtVerifySpec.spec
+      SecondOracleSpec.spec
       TokensSpec.spec
       TxCborSpec.spec
       WalletSpec.spec

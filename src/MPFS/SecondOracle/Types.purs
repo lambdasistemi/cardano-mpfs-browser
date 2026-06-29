@@ -10,7 +10,11 @@ module MPFS.SecondOracle.Types
   , OutputRef
   , MerkleRootEntry
   , ProofResponse
+  , SecondOracleUnavailable(..)
+  , SecondOracleVerdict(..)
   ) where
+
+import Prelude
 
 -- | Hex-encoded bytestring.
 type Hex = String
@@ -49,3 +53,51 @@ type ProofResponse =
   , proof :: ProofCbor
   , txOut :: AttestedTxOut
   }
+
+data SecondOracleUnavailable
+  = MerkleRootsUnavailable String
+  | ProofUnavailable String
+
+derive instance Eq SecondOracleUnavailable
+
+instance Show SecondOracleUnavailable where
+  show (MerkleRootsUnavailable message) =
+    "(MerkleRootsUnavailable " <> show message <> ")"
+  show (ProofUnavailable message) =
+    "(ProofUnavailable " <> show message <> ")"
+
+data SecondOracleVerdict
+  = SecondOracleVerified
+      { chainPoint :: ChainPoint
+      , merkleRoot :: MerkleRoot
+      , factsRoot :: Hex
+      }
+  | SecondOracleMismatch
+      { chainPoint :: ChainPoint
+      , merkleRoot :: MerkleRoot
+      , expectedFactsRoot :: Hex
+      , attestedFactsRoot :: Hex
+      }
+  | SecondOracleVerifierFalse
+      { chainPoint :: ChainPoint
+      , merkleRoot :: MerkleRoot
+      }
+  | SecondOracleMissingRoot ChainPoint
+  | SecondOracleMalformedDatum String
+  | SecondOracleUnavailable SecondOracleUnavailable
+
+derive instance Eq SecondOracleVerdict
+
+instance Show SecondOracleVerdict where
+  show (SecondOracleVerified verdict) =
+    "(SecondOracleVerified " <> show verdict <> ")"
+  show (SecondOracleMismatch verdict) =
+    "(SecondOracleMismatch " <> show verdict <> ")"
+  show (SecondOracleVerifierFalse verdict) =
+    "(SecondOracleVerifierFalse " <> show verdict <> ")"
+  show (SecondOracleMissingRoot chainPoint) =
+    "(SecondOracleMissingRoot " <> show chainPoint <> ")"
+  show (SecondOracleMalformedDatum message) =
+    "(SecondOracleMalformedDatum " <> show message <> ")"
+  show (SecondOracleUnavailable unavailable) =
+    "(SecondOracleUnavailable " <> show unavailable <> ")"
