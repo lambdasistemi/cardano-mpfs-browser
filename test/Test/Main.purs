@@ -16,6 +16,7 @@ import Test.MPFS.CageSpec as CageSpec
 import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.ProofSpec as ProofSpec
 import Test.MPFS.SecondOracleCsmtVerifySpec as SecondOracleCsmtVerifySpec
+import Test.MPFS.SecondOracleClientSpec as SecondOracleClientSpec
 import Test.MPFS.TxCborSpec as TxCborSpec
 import Test.MPFS.VerifyE2ESpec as VerifyE2ESpec
 import Test.MPFS.WalletSpec as WalletSpec
@@ -33,6 +34,7 @@ main = do
       CageSpec.spec
       FactsSpec.spec
       ProofSpec.spec
+      SecondOracleClientSpec.spec
       SecondOracleCsmtVerifySpec.spec
       TokensSpec.spec
       TxCborSpec.spec
