@@ -23,10 +23,11 @@ import Control.Monad.ST.Ref as Ref
 import Data.Array (snoc)
 import Data.Array.ST as STA
 import Data.ArrayBuffer.Types (Uint8Array)
+import Data.Int (toNumber)
 import Foreign.Object (Object)
 import Foreign.Object as Object
 import MPFS.Tx.Cbor.Bytes as B
-import MPFS.Tx.Cbor.Bytes (bytesToHex)
+import MPFS.Tx.Cbor.Bytes (bytesToHex, hexToBytes)
 import MPFS.Tx.PlutusData (PlutusData(..))
 
 -- -------------------------------------------------------
@@ -69,6 +70,30 @@ readArgument r 27 = do
 readArgument _ 31 = pure (-1)
 readArgument _ _ = pure 0
 
+readArgumentNumber :: forall h. ReaderST h -> Int -> ST h Number
+readArgumentNumber _ info | info < 24 = pure $ toNumber info
+readArgumentNumber r 24 = toNumber <$> readByte r
+readArgumentNumber r 25 = do
+  hi <- readByte r
+  lo <- readByte r
+  pure $ toNumber hi * 256.0 + toNumber lo
+readArgumentNumber r 26 = do
+  b0 <- readByte r
+  b1 <- readByte r
+  b2 <- readByte r
+  b3 <- readByte r
+  pure
+    $ toNumber b0 * 16777216.0
+        + toNumber b1 * 65536.0
+        + toNumber b2 * 256.0
+        + toNumber b3
+readArgumentNumber r 27 = do
+  hi <- readArgumentNumber r 26
+  lo <- readArgumentNumber r 26
+  pure $ hi * 4294967296.0 + lo
+readArgumentNumber _ 31 = pure (-1.0)
+readArgumentNumber _ _ = pure 0.0
+
 readHeader
   :: forall h. ReaderST h -> ST h { major :: Int, arg :: Int }
 readHeader r = do
@@ -76,6 +101,15 @@ readHeader r = do
   let major = b `shr` 5
   let info = b `and` 31
   arg <- readArgument r info
+  pure { major, arg }
+
+readHeaderNumber
+  :: forall h. ReaderST h -> ST h { major :: Int, arg :: Number }
+readHeaderNumber r = do
+  b <- readByte r
+  let major = b `shr` 5
+  let info = b `and` 31
+  arg <- readArgumentNumber r info
   pure { major, arg }
 
 shr :: Int -> Int -> Int
@@ -98,12 +132,31 @@ readInt r = do
   { major, arg } <- readHeader r
   if major == 1 then pure (-1 - arg) else pure arg
 
+readPlutusInt :: forall h. ReaderST h -> ST h Number
+readPlutusInt r = do
+  { major, arg } <- readHeaderNumber r
+  if major == 1 then pure (-1.0 - arg) else pure arg
+
 readBytes :: forall h. ReaderST h -> ST h Uint8Array
 readBytes r = do
   { arg } <- readHeader r
-  o <- Ref.read r.offset
-  void $ Ref.write (o + arg) r.offset
-  pure $ B.slice r.bytes o (o + arg)
+  if arg == -1 then
+    hexToBytes <$> readIndefiniteBytesHex r ""
+  else do
+    o <- Ref.read r.offset
+    void $ Ref.write (o + arg) r.offset
+    pure $ B.slice r.bytes o (o + arg)
+
+readIndefiniteBytesHex
+  :: forall h. ReaderST h -> String -> ST h String
+readIndefiniteBytesHex r acc = do
+  b <- peekByte r
+  if b == 0xff then do
+    void $ readByte r
+    pure acc
+  else do
+    chunk <- readBytesHex r
+    readIndefiniteBytesHex r (acc <> chunk)
 
 readBytesHex :: forall h. ReaderST h -> ST h String
 readBytesHex r = bytesToHex <$> readBytes r
@@ -133,11 +186,15 @@ skip r = do
     0 -> pure unit
     1 -> pure unit
     2 -> do
-      o <- Ref.read r.offset
-      void $ Ref.write (o + arg) r.offset
+      if arg == -1 then skipUntilBreak r
+      else do
+        o <- Ref.read r.offset
+        void $ Ref.write (o + arg) r.offset
     3 -> do
-      o <- Ref.read r.offset
-      void $ Ref.write (o + arg) r.offset
+      if arg == -1 then skipUntilBreak r
+      else do
+        o <- Ref.read r.offset
+        void $ Ref.write (o + arg) r.offset
     4 ->
       if arg == -1 then skipUntilBreak r
       else skipN r arg
@@ -189,10 +246,10 @@ readPlutusData r = do
       fields <- readPlutusFields r
       pure $ Constr constrIdx fields
     0 -> do
-      n <- readUint r
+      n <- readPlutusInt r
       pure $ PInt n
     1 -> do
-      n <- readInt r
+      n <- readPlutusInt r
       pure $ PInt n
     2 -> do
       hex <- readBytesHex r
@@ -207,7 +264,7 @@ readPlutusData r = do
       pure $ PMap entries
     _ -> do
       skip r
-      pure $ PInt 0
+      pure $ PInt 0.0
 
 readPlutusFields
   :: forall h. ReaderST h -> ST h (Array PlutusData)

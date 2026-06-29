@@ -33,18 +33,20 @@
 
 ## Slice 3 - Align Real Read-Flow Decoders
 
-- [ ] T044-S3 Copy real token state, facts, root, and requests fixtures into
+- [X] T044-S3 Copy real token state, facts, root, and requests fixtures into
   `test/fixtures/`.
-- [ ] T044-S3 Add RED tests for `/tokens/:id`, `/tokens/:id/facts`,
+- [X] T044-S3 Add RED tests for `/tokens/:id`, `/tokens/:id/facts`,
   `/tokens/:id/root`, and `/tokens/:id/requests` using real non-empty/live
   response shapes.
-- [ ] T044-S3 Decode token state from `state.utxo.tx_out` inline datum using the
+- [X] T044-S3 Decode token state from `state.utxo.tx_out` inline datum using the
   existing TxOut and Plutus datum decoders.
-- [ ] T044-S3 Align pending request decoding with the real `umpfs` response
+- [X] T044-S3 Align pending request decoding with the real `umpfs` response
   shape.
-- [ ] T044-S3 Extend the live smoke to exercise tokens → token state → facts →
+- [X] T044-S3 Add CBOR/Plutus decoder coverage needed by the real request UTxO
+  datum, including indefinite byte strings and 64-bit Plutus integer values.
+- [X] T044-S3 Extend the live smoke to exercise tokens → token state → facts →
   root → requests against `https://umpfs.plutimus.com`.
-- [ ] T044-S3 Run the focused test and live smoke commands, then commit one
+- [X] T044-S3 Run the focused test and live smoke commands, then commit one
   bisect-safe slice with `Tasks: T044-S3`.
 
 ## Orchestrator Finalization After A-002
