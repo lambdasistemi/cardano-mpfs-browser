@@ -1,4 +1,7 @@
-module MPFS.App.View (render) where
+module MPFS.App.View
+  ( render
+  , secondOracleStatusLabel
+  ) where
 
 import Prelude
 
@@ -15,6 +18,10 @@ import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.App.Write as Write
 import MPFS.App.Write (WriteStatus(..))
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
+import MPFS.SecondOracle.Types
+  ( SecondOracleUnavailable(..)
+  , SecondOracleVerdict(..)
+  )
 import MPFS.Types (RequestId, TokenId(..), TrustedRoot(..))
 import MPFS.UI.Remote (Remote(..), remoteStatus)
 import MPFS.Wallet.Cip30 (WalletInfo)
@@ -184,6 +191,7 @@ factsPanel actions state =
     , fieldLine "Pending requests" (remoteStatus state.pendingRequests)
     , fieldLine "Facts" (remoteStatus state.facts)
     , fieldLine "Trusted root" (remoteStatus state.trustedRoot)
+    , fieldLine "Second oracle" (secondOracleStatusLabel state.secondOracle)
     , tokenStateRemoteView state.tokenState
     , trustedRootRemoteView state.trustedRoot
     , pendingRequestsRemoteView
@@ -846,6 +854,33 @@ verificationStatusLabel = case _ of
   VerificationLoading -> "Verifying"
   VerificationVerified -> "Verified"
   VerificationFailed message -> "Error: " <> message
+
+secondOracleStatusLabel :: Remote SecondOracleVerdict -> String
+secondOracleStatusLabel = case _ of
+  NotAsked -> "Not checked"
+  Loading -> "Checking second oracle"
+  Failure message -> message
+  Success verdict -> secondOracleVerdictLabel verdict
+
+secondOracleVerdictLabel :: SecondOracleVerdict -> String
+secondOracleVerdictLabel = case _ of
+  SecondOracleVerified _ ->
+    "Verified"
+  SecondOracleMismatch _ ->
+    "Mismatch"
+  SecondOracleVerifierFalse _ ->
+    "Verifier rejected inclusion proof"
+  SecondOracleMissingRoot _ ->
+    "Merkle root missing"
+  SecondOracleMalformedDatum message ->
+    "Malformed datum: " <> message
+  SecondOracleUnavailable unavailable ->
+    "Oracle unavailable: " <> secondOracleUnavailableMessage unavailable
+
+secondOracleUnavailableMessage :: SecondOracleUnavailable -> String
+secondOracleUnavailableMessage = case _ of
+  MerkleRootsUnavailable message -> message
+  ProofUnavailable message -> message
 
 requestValueText :: PendingRequest -> String
 requestValueText request = case request.value of

@@ -1,15 +1,19 @@
 module MPFS.App.Facts
   ( RequestPhase(..)
+  , failSecondOracleCheck
   , failFactLookup
   , failFactsLoad
+  , finishSecondOracleCheck
   , finishFactLookup
   , finishFactsLoad
   , finishFactsLoadAt
   , finishFactsLoadWithRootAt
   , phaseLabel
   , requestPhase
+  , resetSecondOracle
   , setFactLookupKey
   , setFactProofEnvelope
+  , startSecondOracleCheck
   , startFactLookup
   , startFactsLoad
   ) where
@@ -19,6 +23,7 @@ import Prelude
 import MPFS.App.State (AppState)
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
+import MPFS.SecondOracle.Types (SecondOracleVerdict)
 import MPFS.Types (TrustedRoot)
 import MPFS.UI.Remote (Remote(..))
 
@@ -42,6 +47,7 @@ startFactsLoad state =
     , tokenState = Loading
     , pendingRequests = Loading
     , trustedRoot = Loading
+    , secondOracle = Loading
     }
 
 finishFactsLoad
@@ -87,7 +93,24 @@ failFactsLoad message state =
     , tokenState = Failure message
     , pendingRequests = Failure message
     , trustedRoot = Failure message
+    , secondOracle = Failure message
     }
+
+resetSecondOracle :: AppState -> AppState
+resetSecondOracle state =
+  state { secondOracle = NotAsked }
+
+startSecondOracleCheck :: AppState -> AppState
+startSecondOracleCheck state =
+  state { secondOracle = Loading }
+
+finishSecondOracleCheck :: SecondOracleVerdict -> AppState -> AppState
+finishSecondOracleCheck verdict state =
+  state { secondOracle = Success verdict }
+
+failSecondOracleCheck :: String -> AppState -> AppState
+failSecondOracleCheck message state =
+  state { secondOracle = Failure message }
 
 requestPhase :: Number -> TokenState -> PendingRequest -> RequestPhase
 requestPhase nowMillis tokenState request =

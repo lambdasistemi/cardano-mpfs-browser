@@ -15,6 +15,7 @@ import MPFS.App.Tab (AppTab, defaultTab)
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.App.Write as Write
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
+import MPFS.SecondOracle.Types (SecondOracleVerdict)
 import MPFS.Types (RequestId, TokenId, TrustedRoot)
 import MPFS.UI.Remote (Remote(..))
 import MPFS.Wallet.Cip30 (WalletApi, WalletInfo)
@@ -64,6 +65,7 @@ type AppState =
   , tokenState :: Remote TokenState
   , pendingRequests :: Remote (Array PendingRequest)
   , trustedRoot :: Remote TrustedRoot
+  , secondOracle :: Remote SecondOracleVerdict
   , requestNowMillis :: Number
   , factLookup :: FactLookup
   , writeStatus :: Write.WriteStatus
@@ -82,6 +84,7 @@ defaultState =
   , tokenState: NotAsked
   , pendingRequests: NotAsked
   , trustedRoot: NotAsked
+  , secondOracle: NotAsked
   , requestNowMillis: 0.0
   , factLookup:
       { key: ""

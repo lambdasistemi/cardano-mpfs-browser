@@ -21,6 +21,7 @@ import Test.MPFS.SecondOracleSpec as SecondOracleSpec
 import Test.MPFS.TxCborSpec as TxCborSpec
 import Test.MPFS.VerifyE2ESpec as VerifyE2ESpec
 import Test.MPFS.WalletSpec as WalletSpec
+import Test.SecondOracleAppSpec as SecondOracleAppSpec
 import Test.TokensSpec as TokensSpec
 
 main :: Effect Unit
@@ -37,6 +38,7 @@ main = do
       ProofSpec.spec
       SecondOracleClientSpec.spec
       SecondOracleCsmtVerifySpec.spec
+      SecondOracleAppSpec.spec
       SecondOracleSpec.spec
       TokensSpec.spec
       TxCborSpec.spec
