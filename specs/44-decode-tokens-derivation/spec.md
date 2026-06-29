@@ -54,3 +54,31 @@ ticket.
 - `./gate.sh` runs lint, `just ci`, the devnet e2e recipe, and the live `umpfs`
   token smoke.
 - The PR body names the live smoke artifact and closes #44 under parent #34.
+
+## A-002 Correction: Read Flow Must Match Real UMPFS
+
+The first branch walk proved token listing works, but "Load facts" still failed
+against live `umpfs` with `Decode error: (AtKey "max_fee" MissingValue)`. The
+current offchain API returns token state as raw UTxO:
+
+```json
+{"snapshot": {...}, "state": {"utxo": {"tx_in": {...}, "tx_out": "..."}}}
+```
+
+The state fields are in the inline datum inside `utxo.tx_out`; the API does not
+emit JSON `max_fee`, `process_time`, or `retract_time`. This ticket therefore
+also requires the browser read flow to decode real `/tokens/:id` and
+`/tokens/:id/...` responses end to end:
+
+- `/tokens/:id`: decode `state.utxo.tx_out` inline datum into `TokenState`.
+- `/tokens/:id/facts`: keep real `facts` decoding and include a real fixture so
+  the state envelope cannot hide drift.
+- `/tokens/:id/root`: continue decoding the real quoted root response.
+- `/tokens/:id/requests`: decode the real response shape using live request UTxO
+  data, not a fictional fixture-only contract.
+
+Required real fixtures:
+
+- `/tmp/mpfs44/ticket/answers/real-umpfs-token-state.json`
+- `/tmp/mpfs44/ticket/answers/real-umpfs-facts.json`
+- live-captured root and requests fixtures for the same real token.
