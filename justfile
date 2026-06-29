@@ -67,6 +67,12 @@ test:
     just prepare-wasm
     spago test
 
+# Live smoke against https://umpfs.plutimus.com/tokens
+smoke-umpfs-tokens:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    bash scripts/smoke-umpfs-tokens.sh
+
 # Copy the Haskell WASM reactors from the flake input for tests and bundles
 prepare-wasm:
     #!/usr/bin/env bash
