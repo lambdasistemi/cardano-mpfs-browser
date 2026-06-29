@@ -2,17 +2,17 @@
 
 ## Slice 1 - Decode Real Token Entries
 
-- [ ] T044-S1 Copy the real two-entry `umpfs` fixture into
+- [X] T044-S1 Copy the real two-entry `umpfs` fixture into
   `test/fixtures/real-umpfs-tokens.json`.
-- [ ] T044-S1 Add a RED fixture assertion that decodes the real response and
+- [X] T044-S1 Add a RED fixture assertion that decodes the real response and
   expects token ids
   `976821dbd0922f93cda689da92a6faf1894c8151bc86d6c8f725ec089aaacbc6` and
   `98207724b0ea59b96c0eba16cb09e91da10f8bdc54ad36da4a2e40104a59a32b`.
-- [ ] T044-S1 Ensure that assertion runs under `just ci`, not only when
+- [X] T044-S1 Ensure that assertion runs under `just ci`, not only when
   `MPFS_BASE_URL` is set.
-- [ ] T044-S1 Implement `decodeTokensBody` by decoding each `txout_cbor` TxOut
+- [X] T044-S1 Implement `decodeTokensBody` by decoding each `txout_cbor` TxOut
   and deriving the token id from the cage asset name.
-- [ ] T044-S1 Run the focused test command and commit one bisect-safe slice with
+- [X] T044-S1 Run the focused test command and commit one bisect-safe slice with
   `Tasks: T044-S1`.
 
 ## Slice 2 - Live Boundary Smoke
