@@ -7,6 +7,7 @@ module MPFS.Client.Types
   , TokensResponse
   , TokenSetWitness
   , TokenUtxoEntry
+  , TokenOutputRef
   , StatusResponse
   , TokenState
   , PendingRequest
@@ -50,6 +51,11 @@ type TokenUtxoEntry =
   { txout_cbor :: Hex
   }
 
+type TokenOutputRef =
+  { tx_id :: Hex
+  , tx_ix :: Int
+  }
+
 -- | @GET /status@ response.
 type StatusResponse =
   { tip_slot :: Number
@@ -65,6 +71,7 @@ type TokenState =
   , max_fee :: Number
   , process_time :: Number
   , retract_time :: Number
+  , current_output_ref :: Maybe TokenOutputRef
   }
 
 -- | @GET /tokens/:id/requests@ element.

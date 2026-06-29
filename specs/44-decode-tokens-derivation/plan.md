@@ -208,6 +208,7 @@ Owned files:
 - `test/Test/MPFS/LiveTokensSmoke.purs`
 - `test/Test/SecondOracleAppSpec.purs`
 - `test/Test/MPFS/SecondOracleSpec.purs`
+- `test/Test/FactsSpec.purs`
 - `test/fixtures/real-umpfs-token-state.json`
 
 Forbidden scope:

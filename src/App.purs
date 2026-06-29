@@ -42,6 +42,7 @@ import MPFS.Types
   , WalletAddr(..)
   , cageErrorMessage
   )
+import MPFS.UI.Remote (Remote(..))
 import MPFS.Wallet.Cip30 as Cip30
 
 data Action
@@ -401,8 +402,18 @@ fromAppTokenId :: TokenId -> ClientTypes.TokenId
 fromAppTokenId (TokenId tokenId) = tokenId
 
 selectedTokenOutputRef :: AppState -> Maybe OutputRef
-selectedTokenOutputRef _ =
-  Nothing
+selectedTokenOutputRef state =
+  case state.tokenState of
+    Success tokenState ->
+      map tokenOutputRefToSecondOracle tokenState.current_output_ref
+    _ ->
+      Nothing
+
+tokenOutputRefToSecondOracle :: ClientTypes.TokenOutputRef -> OutputRef
+tokenOutputRefToSecondOracle ref =
+  { txId: ref.tx_id
+  , txIx: ref.tx_ix
+  }
 
 runSecondOracleCheck
   :: forall slots output m

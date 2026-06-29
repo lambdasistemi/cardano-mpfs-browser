@@ -56,19 +56,19 @@
 
 ## Slice 4 - Reach Real Second Oracle
 
-- [ ] T044-S4 Preserve the selected token's current output reference from
+- [X] T044-S4 Preserve the selected token's current output reference from
   `/tokens/:id` `state.utxo.tx_in` in decoded token state.
-- [ ] T044-S4 Implement `selectedTokenOutputRef` from loaded token state so it
+- [X] T044-S4 Implement `selectedTokenOutputRef` from loaded token state so it
   no longer returns `Nothing` after a real token load.
-- [ ] T044-S4 Add RED/GREEN app and client tests that fail on the
+- [X] T044-S4 Add RED/GREEN app and client tests that fail on the
   `selectedTokenOutputRef _ = Nothing` stub and assert the real fixture output
   reference.
-- [ ] T044-S4 Add a real-data second-oracle proof that uses the selected
+- [X] T044-S4 Add a real-data second-oracle proof that uses the selected
   token's output reference with `utxo-csmt.plutimus.com` proof/roots and the
   real WASM verifier to produce a concrete verdict.
-- [ ] T044-S4 Extend the live smoke to exercise tokens → token state → facts →
+- [X] T044-S4 Extend the live smoke to exercise tokens → token state → facts →
   root → requests → second oracle.
-- [ ] T044-S4 Run the focused test and live smoke commands, then commit one
+- [X] T044-S4 Run the focused test and live smoke commands, then commit one
   bisect-safe slice with `Tasks: T044-S4`.
 
 ## Orchestrator Finalization After A-003

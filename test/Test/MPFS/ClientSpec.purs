@@ -4,11 +4,13 @@ module Test.MPFS.ClientSpec (spec) where
 
 import Prelude
 
+import App as App
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
+import MPFS.App.State (defaultState)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff as FS
 import Test.Spec (Spec, describe, it)
@@ -22,6 +24,8 @@ import MPFS.Client
   , decodeTokenRootBody
   , mkClient
   )
+import MPFS.SecondOracle.Types (OutputRef)
+import MPFS.UI.Remote (Remote(..))
 
 bumpedTokensResponseBody :: String
 bumpedTokensResponseBody =
@@ -93,7 +97,22 @@ spec mBaseUrl = describe "MPFS Client" do
           , max_fee: 1000000.0
           , process_time: 5000.0
           , retract_time: 5000.0
+          , current_output_ref:
+              Just
+                { tx_id: "729cbe4218a27bd2dd74517cbe7612537eede47bfc9bc8d4d0d45824479ec5ba"
+                , tx_ix: 0
+                }
           }
+
+  it "preserves real GET /tokens/:id state.utxo.tx_in for selected-token oracle checks" do
+    body <- FS.readTextFile UTF8 realTokenStateFixturePath
+    case decodeTokenBody body of
+      Left err -> fail $ show err
+      Right tokenState -> do
+        let
+          state = defaultState { tokenState = Success tokenState }
+
+        App.selectedTokenOutputRef state `shouldEqual` Just realTokenOutputRef
 
   it "decodes GET /tokens/:id/facts response entries" do
     case decodeFactsBody factsResponseBody of
@@ -176,3 +195,9 @@ spec mBaseUrl = describe "MPFS Client" do
         case result of
           Left err -> fail $ show err
           Right _root -> pure unit
+
+realTokenOutputRef :: OutputRef
+realTokenOutputRef =
+  { txId: "729cbe4218a27bd2dd74517cbe7612537eede47bfc9bc8d4d0d45824479ec5ba"
+  , txIx: 0
+  }
