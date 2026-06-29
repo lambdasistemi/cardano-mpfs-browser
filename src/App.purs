@@ -28,6 +28,10 @@ import MPFS.Cage (CageResult)
 import MPFS.Cage.Wasm as CageWasm
 import MPFS.Client as Client
 import MPFS.Client.Types as ClientTypes
+import MPFS.SecondOracle as SecondOracle
+import MPFS.SecondOracle.Client as SecondOracleClient
+import MPFS.SecondOracle.CsmtVerify as CsmtVerify
+import MPFS.SecondOracle.Types (OutputRef)
 import MPFS.Types
   ( CageConfig
   , Key(..)
@@ -198,7 +202,8 @@ handleAction = case _ of
 
   SelectToken token ->
     H.modify_ \state ->
-      (Tokens.selectToken token state) { selectedRequestIds = [] }
+      Facts.resetSecondOracle
+        ((Tokens.selectToken token state) { selectedRequestIds = [] })
 
   LoadFacts -> do
     state <- H.get
@@ -225,6 +230,7 @@ handleAction = case _ of
                   facts
                   trustedRoot
               )
+            runSecondOracleCheck tokenState.root
           Left error, _, _, _ ->
             H.modify_ (Facts.failFactsLoad (show error))
           _, Left error, _, _ ->
@@ -393,6 +399,35 @@ fromClientTokenIds = map TokenId
 
 fromAppTokenId :: TokenId -> ClientTypes.TokenId
 fromAppTokenId (TokenId tokenId) = tokenId
+
+selectedTokenOutputRef :: AppState -> Maybe OutputRef
+selectedTokenOutputRef _ =
+  Nothing
+
+runSecondOracleCheck
+  :: forall slots output m
+   . MonadAff m
+  => String
+  -> H.HalogenM AppState Action slots output m Unit
+runSecondOracleCheck factsRoot = do
+  state <- H.get
+  case selectedTokenOutputRef state of
+    Nothing ->
+      H.modify_ (Facts.failSecondOracleCheck "Output reference unavailable")
+    Just outputRef -> do
+      H.modify_ Facts.startSecondOracleCheck
+      verdict <- liftAff
+        (SecondOracle.checkOutputRef secondOracleDeps outputRef factsRoot)
+      H.modify_ (Facts.finishSecondOracleCheck verdict)
+
+secondOracleDeps :: SecondOracle.SecondOracleDeps
+secondOracleDeps =
+  { getMerkleRoots: client.getMerkleRoots
+  , getProof: client.getProof
+  , verifyInclusion: CsmtVerify.verifyInclusion
+  }
+  where
+  client = SecondOracleClient.defaultClient
 
 currentTimeMillis :: forall m. MonadAff m => m Number
 currentTimeMillis = do

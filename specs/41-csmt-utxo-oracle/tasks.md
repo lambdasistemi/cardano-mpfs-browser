@@ -45,19 +45,19 @@
 
 ## Slice 4 - UI Wiring
 
-- [ ] T041-S4 Extend app state/actions with a second-oracle status and reset
+- [X] T041-S4 Extend app state/actions with a second-oracle status and reset
   behavior on token/facts changes.
-- [ ] T041-S4 Run the second-oracle check from the Facts load flow when the
+- [X] T041-S4 Run the second-oracle check from the Facts load flow when the
   selected token outputRef and root are available.
-- [ ] T041-S4 Render verified, mismatch, and unavailable/failure indicators in
+- [X] T041-S4 Render verified, mismatch, and unavailable/failure indicators in
   the Facts panel without changing unrelated layout.
-- [ ] T041-S4 Add focused app/view coverage or a documented frontend smoke for
+- [X] T041-S4 Add focused app/view coverage or a documented frontend smoke for
   the new indicator.
-- [ ] T041-S4 Run the focused UI tests and `./gate.sh`, then commit the slice.
+- [X] T041-S4 Run the focused UI tests and `./gate.sh`, then commit the slice.
 
 ## Orchestrator Finalization
 
-- [ ] T041-F1 Verify all slice commits and task amendments, update draft PR
+- [X] T041-F1 Verify all slice commits and task amendments, update draft PR
   metadata with `Closes #41`, parent `#34`, and the live csmt-utxo smoke
   follow-up, run the final gate, and report `READY-FOR-REVIEW <sha>` to the
   epic via STATUS.md.

@@ -6,12 +6,17 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import MPFS.App.Facts
   ( RequestPhase(..)
+  , failSecondOracleCheck
   , failFactLookup
+  , finishSecondOracleCheck
   , finishFactLookup
   , finishFactsLoad
   , finishFactsLoadAt
+  , finishFactsLoadWithRootAt
   , phaseLabel
   , requestPhase
+  , resetSecondOracle
+  , startSecondOracleCheck
   , startFactLookup
   , startFactsLoad
   )
@@ -22,13 +27,17 @@ import MPFS.App.Verification
   , startVerification
   )
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
-import MPFS.Types (TokenId(..))
+import MPFS.SecondOracle.Types (SecondOracleVerdict(..))
+import MPFS.Types (TokenId(..), TrustedRoot(..))
 import MPFS.UI.Remote (Remote(..))
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
 spec :: Spec Unit
 spec = describe "MPFS App Facts" do
+  it "defaults the second oracle status to not asked" do
+    defaultState.secondOracle `shouldEqual` NotAsked
+
   it "marks facts, token state, and pending requests as loading" do
     let
       selected = TokenId "token"
@@ -46,7 +55,16 @@ spec = describe "MPFS App Facts" do
     next.facts `shouldEqual` Loading
     next.tokenState `shouldEqual` Loading
     next.pendingRequests `shouldEqual` Loading
+    next.trustedRoot `shouldEqual` Loading
+    next.secondOracle `shouldEqual` Loading
     next.selectedToken `shouldEqual` Just selected
+
+  it "resets second oracle state when token-dependent facts change" do
+    let
+      checked = defaultState { secondOracle = Success verifiedVerdict }
+      resetState = resetSecondOracle checked
+
+    resetState.secondOracle `shouldEqual` NotAsked
 
   it "stores loaded token state, pending requests, and facts" do
     let
@@ -63,6 +81,21 @@ spec = describe "MPFS App Facts" do
     next.facts `shouldEqual` Success facts
     next.requestNowMillis `shouldEqual` requestNowMillis
     next.selectedToken `shouldEqual` Just selected
+
+  it "keeps second oracle pending until the facts load action checks it" do
+    let
+      state = defaultState { secondOracle = Loading }
+
+      next =
+        finishFactsLoadWithRootAt
+          1234.0
+          tokenState
+          []
+          facts
+          trustedRoot
+          state
+
+    next.secondOracle `shouldEqual` Loading
 
   it "defaults loaded request time for compatibility" do
     let
@@ -110,6 +143,19 @@ spec = describe "MPFS App Facts" do
       `shouldEqual`
         VerificationFailed "root mismatch"
 
+  it "tracks second oracle loading, verdicts, and local unavailable messages" do
+    let
+      loading = startSecondOracleCheck defaultState
+      checked = finishSecondOracleCheck verifiedVerdict loading
+      unavailable =
+        failSecondOracleCheck "Output reference unavailable" checked
+
+    loading.secondOracle `shouldEqual` Loading
+    checked.secondOracle `shouldEqual` Success verifiedVerdict
+    unavailable.secondOracle
+      `shouldEqual`
+        Failure "Output reference unavailable"
+
 tokenState :: TokenState
 tokenState =
   { owner: "owner"
@@ -135,3 +181,14 @@ facts :: Array FactEntry
 facts =
   [ { key: "6b6579", value: "76616c7565" }
   ]
+
+trustedRoot :: TrustedRoot
+trustedRoot = TrustedRoot "trusted-root"
+
+verifiedVerdict :: SecondOracleVerdict
+verifiedVerdict =
+  SecondOracleVerified
+    { chainPoint: { slotNo: 42, blockHash: "block-hash" }
+    , merkleRoot: "merkle-root"
+    , factsRoot: "root"
+    }
