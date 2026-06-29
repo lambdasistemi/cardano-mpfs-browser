@@ -1,0 +1,1862 @@
+
+<!DOCTYPE html>
+
+<html class="no-js" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<link href="https://lambdasistemi.github.io/cardano-mpfs-browser/design/" rel="canonical"/>
+<link href=".." rel="prev"/>
+<link href="../assets/images/favicon.png" rel="icon"/>
+<meta content="mkdocs-1.6.1, mkdocs-material-9.7.0" name="generator"/>
+<title>Design - Cardano MPFS Browser</title>
+<link href="../assets/stylesheets/main.618322db.min.css" rel="stylesheet"/>
+<link href="../assets/stylesheets/palette.ab4e12ef.min.css" rel="stylesheet"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&amp;display=fallback" rel="stylesheet"/>
+<style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+<script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+</head>
+<body data-md-color-accent="indigo" data-md-color-primary="indigo" data-md-color-scheme="slate" dir="ltr">
+<input autocomplete="off" class="md-toggle" data-md-toggle="drawer" id="__drawer" type="checkbox"/>
+<input autocomplete="off" class="md-toggle" data-md-toggle="search" id="__search" type="checkbox"/>
+<label class="md-overlay" for="__drawer"></label>
+<div data-md-component="skip">
+<a class="md-skip" href="#design">
+          Skip to content
+        </a>
+</div>
+<div data-md-component="announce">
+</div>
+<header class="md-header md-header--shadow" data-md-component="header">
+<nav aria-label="Header" class="md-header__inner md-grid">
+<a aria-label="Cardano MPFS Browser" class="md-header__button md-logo" data-md-component="logo" href=".." title="Cardano MPFS Browser">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+<label class="md-header__button md-icon" for="__drawer">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"></path></svg>
+</label>
+<div class="md-header__title" data-md-component="header-title">
+<div class="md-header__ellipsis">
+<div class="md-header__topic">
+<span class="md-ellipsis">
+            Cardano MPFS Browser
+          </span>
+</div>
+<div class="md-header__topic" data-md-component="header-topic">
+<span class="md-ellipsis">
+            
+              Design
+            
+          </span>
+</div>
+</div>
+</div>
+<form class="md-header__option" data-md-component="palette">
+<input aria-hidden="true" class="md-option" data-md-color-accent="indigo" data-md-color-media="" data-md-color-primary="indigo" data-md-color-scheme="slate" id="__palette_0" name="__palette" type="radio"/>
+</form>
+<script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+<label class="md-header__button md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+</label>
+<div class="md-search" data-md-component="search" role="dialog">
+<label class="md-search__overlay" for="__search"></label>
+<div class="md-search__inner" role="search">
+<form class="md-search__form" name="search">
+<input aria-label="Search" autocapitalize="off" autocomplete="off" autocorrect="off" class="md-search__input" data-md-component="search-query" name="query" placeholder="Search" required="" spellcheck="false" type="text"/>
+<label class="md-search__icon md-icon" for="__search">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"></path></svg>
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"></path></svg>
+</label>
+<nav aria-label="Search" class="md-search__options">
+<button aria-label="Clear" class="md-search__icon md-icon" tabindex="-1" title="Clear" type="reset">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+</button>
+</nav>
+</form>
+<div class="md-search__output">
+<div class="md-search__scrollwrap" data-md-scrollfix="" tabindex="0">
+<div class="md-search-result" data-md-component="search-result">
+<div class="md-search-result__meta">
+            Initializing search
+          </div>
+<ol class="md-search-result__list" role="presentation"></ol>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="md-header__source">
+<a class="md-source" data-md-component="source" href="https://github.com/lambdasistemi/cardano-mpfs-browser" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+</div>
+<div class="md-source__repository">
+    lambdasistemi/cardano-mpfs-browser
+  </div>
+</a>
+</div>
+</nav>
+</header>
+<div class="md-container" data-md-component="container">
+<main class="md-main" data-md-component="main">
+<div class="md-main__inner md-grid">
+<div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Navigation" class="md-nav md-nav--primary" data-md-level="0">
+<label class="md-nav__title" for="__drawer">
+<a aria-label="Cardano MPFS Browser" class="md-nav__button md-logo" data-md-component="logo" href=".." title="Cardano MPFS Browser">
+<svg viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"></path></svg>
+</a>
+    Cardano MPFS Browser
+  </label>
+<div class="md-nav__source">
+<a class="md-source" data-md-component="source" href="https://github.com/lambdasistemi/cardano-mpfs-browser" title="Go to repository">
+<div class="md-source__icon md-icon">
+<svg viewbox="0 0 448 512" xmlns="http://www.w3.org/2000/svg"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"></path></svg>
+</div>
+<div class="md-source__repository">
+    lambdasistemi/cardano-mpfs-browser
+  </div>
+</a>
+</div>
+<ul class="md-nav__list" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="..">
+<span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+</a>
+</li>
+<li class="md-nav__item md-nav__item--active">
+<input class="md-nav__toggle md-toggle" id="__toc" type="checkbox"/>
+<label class="md-nav__link md-nav__link--active" for="__toc">
+<span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+<span class="md-nav__icon md-icon"></span>
+</label>
+<a class="md-nav__link md-nav__link--active" href="./">
+<span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+</a>
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#overview">
+<span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-mpfs-application-pattern">
+<span class="md-ellipsis">
+      
+        The MPFS Application Pattern
+      
+    </span>
+</a>
+<nav aria-label="The MPFS Application Pattern" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mpfs-client-libraries">
+<span class="md-ellipsis">
+      
+        MPFS Client Libraries
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#this-application">
+<span class="md-ellipsis">
+      
+        This Application
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trust-model">
+<span class="md-ellipsis">
+      
+        Trust Model
+      
+    </span>
+</a>
+<nav aria-label="Trust Model" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#system-context">
+<span class="md-ellipsis">
+      
+        System Context
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-the-user-needs">
+<span class="md-ellipsis">
+      
+        What the User Needs
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-oracles-responsibility">
+<span class="md-ellipsis">
+      
+        The Oracle's Responsibility
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-verification-chain">
+<span class="md-ellipsis">
+      
+        The Verification Chain
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-the-user-trusts">
+<span class="md-ellipsis">
+      
+        What the User Trusts
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-mpfs-service-obligation">
+<span class="md-ellipsis">
+      
+        The MPFS Service Obligation
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#schema-driven-fact-rendering">
+<span class="md-ellipsis">
+      
+        Schema-Driven Fact Rendering
+      
+    </span>
+</a>
+<nav aria-label="Schema-Driven Fact Rendering" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#self-describing-facts">
+<span class="md-ellipsis">
+      
+        Self-Describing Facts
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#schema-matching">
+<span class="md-ellipsis">
+      
+        Schema Matching
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#schema-formats">
+<span class="md-ellipsis">
+      
+        Schema Formats
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#key-and-value-structure">
+<span class="md-ellipsis">
+      
+        Key and Value Structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#multiple-schemas">
+<span class="md-ellipsis">
+      
+        Multiple Schemas
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mpfs-client">
+<span class="md-ellipsis">
+      
+        MPFS Client
+      
+    </span>
+</a>
+<nav aria-label="MPFS Client" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#transaction-flow">
+<span class="md-ellipsis">
+      
+        Transaction Flow
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#input-resolution-and-verification">
+<span class="md-ellipsis">
+      
+        Input Resolution and Verification
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-the-frontend-displays">
+<span class="md-ellipsis">
+      
+        What the Frontend Displays
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#transaction-signing-state-machine">
+<span class="md-ellipsis">
+      
+        Transaction Signing State Machine
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#why-the-server-doesnt-matter">
+<span class="md-ellipsis">
+      
+        Why the Server Doesn't Matter
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cip-30-wallet-integration">
+<span class="md-ellipsis">
+      
+        CIP-30 Wallet Integration
+      
+    </span>
+</a>
+<nav aria-label="CIP-30 Wallet Integration" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#connection-flow">
+<span class="md-ellipsis">
+      
+        Connection Flow
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#api-surface-used">
+<span class="md-ellipsis">
+      
+        API Surface Used
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#state-persistence">
+<span class="md-ellipsis">
+      
+        State Persistence
+      
+    </span>
+</a>
+<nav aria-label="State Persistence" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-lives-where">
+<span class="md-ellipsis">
+      
+        What Lives Where
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#url-structure">
+<span class="md-ellipsis">
+      
+        URL Structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#recovery-guarantee">
+<span class="md-ellipsis">
+      
+        Recovery Guarantee
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#application-structure">
+<span class="md-ellipsis">
+      
+        Application Structure
+      
+    </span>
+</a>
+<nav aria-label="Application Structure" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pages">
+<span class="md-ellipsis">
+      
+        Pages
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#token-list-view">
+<span class="md-ellipsis">
+      
+        Token List View
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#fact-detail-view">
+<span class="md-ellipsis">
+      
+        Fact Detail View
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#proof-inspector">
+<span class="md-ellipsis">
+      
+        Proof Inspector
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#fact-verification-state-machine">
+<span class="md-ellipsis">
+      
+        Fact Verification State Machine
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#institutional-root-sources">
+<span class="md-ellipsis">
+      
+        Institutional Root Sources
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#api-dependency">
+<span class="md-ellipsis">
+      
+        API Dependency
+      
+    </span>
+</a>
+<nav aria-label="API Dependency" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#available-pr-108">
+<span class="md-ellipsis">
+      
+        Available (PR #108)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#needed-issue-117">
+<span class="md-ellipsis">
+      
+        Needed (issue #117)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#technology-stack">
+<span class="md-ellipsis">
+      
+        Technology Stack
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#open-questions">
+<span class="md-ellipsis">
+      
+        Open Questions
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc">
+<div class="md-sidebar__scrollwrap">
+<div class="md-sidebar__inner">
+<nav aria-label="Table of contents" class="md-nav md-nav--secondary">
+<label class="md-nav__title" for="__toc">
+<span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+<ul class="md-nav__list" data-md-component="toc" data-md-scrollfix="">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#overview">
+<span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-mpfs-application-pattern">
+<span class="md-ellipsis">
+      
+        The MPFS Application Pattern
+      
+    </span>
+</a>
+<nav aria-label="The MPFS Application Pattern" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mpfs-client-libraries">
+<span class="md-ellipsis">
+      
+        MPFS Client Libraries
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#this-application">
+<span class="md-ellipsis">
+      
+        This Application
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#trust-model">
+<span class="md-ellipsis">
+      
+        Trust Model
+      
+    </span>
+</a>
+<nav aria-label="Trust Model" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#system-context">
+<span class="md-ellipsis">
+      
+        System Context
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-the-user-needs">
+<span class="md-ellipsis">
+      
+        What the User Needs
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-oracles-responsibility">
+<span class="md-ellipsis">
+      
+        The Oracle's Responsibility
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-verification-chain">
+<span class="md-ellipsis">
+      
+        The Verification Chain
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-the-user-trusts">
+<span class="md-ellipsis">
+      
+        What the User Trusts
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#the-mpfs-service-obligation">
+<span class="md-ellipsis">
+      
+        The MPFS Service Obligation
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#schema-driven-fact-rendering">
+<span class="md-ellipsis">
+      
+        Schema-Driven Fact Rendering
+      
+    </span>
+</a>
+<nav aria-label="Schema-Driven Fact Rendering" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#self-describing-facts">
+<span class="md-ellipsis">
+      
+        Self-Describing Facts
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#schema-matching">
+<span class="md-ellipsis">
+      
+        Schema Matching
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#schema-formats">
+<span class="md-ellipsis">
+      
+        Schema Formats
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#key-and-value-structure">
+<span class="md-ellipsis">
+      
+        Key and Value Structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#multiple-schemas">
+<span class="md-ellipsis">
+      
+        Multiple Schemas
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#mpfs-client">
+<span class="md-ellipsis">
+      
+        MPFS Client
+      
+    </span>
+</a>
+<nav aria-label="MPFS Client" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#transaction-flow">
+<span class="md-ellipsis">
+      
+        Transaction Flow
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#input-resolution-and-verification">
+<span class="md-ellipsis">
+      
+        Input Resolution and Verification
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-the-frontend-displays">
+<span class="md-ellipsis">
+      
+        What the Frontend Displays
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#transaction-signing-state-machine">
+<span class="md-ellipsis">
+      
+        Transaction Signing State Machine
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#why-the-server-doesnt-matter">
+<span class="md-ellipsis">
+      
+        Why the Server Doesn't Matter
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#cip-30-wallet-integration">
+<span class="md-ellipsis">
+      
+        CIP-30 Wallet Integration
+      
+    </span>
+</a>
+<nav aria-label="CIP-30 Wallet Integration" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#connection-flow">
+<span class="md-ellipsis">
+      
+        Connection Flow
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#api-surface-used">
+<span class="md-ellipsis">
+      
+        API Surface Used
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#state-persistence">
+<span class="md-ellipsis">
+      
+        State Persistence
+      
+    </span>
+</a>
+<nav aria-label="State Persistence" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#what-lives-where">
+<span class="md-ellipsis">
+      
+        What Lives Where
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#url-structure">
+<span class="md-ellipsis">
+      
+        URL Structure
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#recovery-guarantee">
+<span class="md-ellipsis">
+      
+        Recovery Guarantee
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#application-structure">
+<span class="md-ellipsis">
+      
+        Application Structure
+      
+    </span>
+</a>
+<nav aria-label="Application Structure" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#pages">
+<span class="md-ellipsis">
+      
+        Pages
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#token-list-view">
+<span class="md-ellipsis">
+      
+        Token List View
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#fact-detail-view">
+<span class="md-ellipsis">
+      
+        Fact Detail View
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#proof-inspector">
+<span class="md-ellipsis">
+      
+        Proof Inspector
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#fact-verification-state-machine">
+<span class="md-ellipsis">
+      
+        Fact Verification State Machine
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#institutional-root-sources">
+<span class="md-ellipsis">
+      
+        Institutional Root Sources
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#api-dependency">
+<span class="md-ellipsis">
+      
+        API Dependency
+      
+    </span>
+</a>
+<nav aria-label="API Dependency" class="md-nav">
+<ul class="md-nav__list">
+<li class="md-nav__item">
+<a class="md-nav__link" href="#available-pr-108">
+<span class="md-ellipsis">
+      
+        Available (PR #108)
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#needed-issue-117">
+<span class="md-ellipsis">
+      
+        Needed (issue #117)
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#technology-stack">
+<span class="md-ellipsis">
+      
+        Technology Stack
+      
+    </span>
+</a>
+</li>
+<li class="md-nav__item">
+<a class="md-nav__link" href="#open-questions">
+<span class="md-ellipsis">
+      
+        Open Questions
+      
+    </span>
+</a>
+</li>
+</ul>
+</nav>
+</div>
+</div>
+</div>
+<div class="md-content" data-md-component="content">
+<article class="md-content__inner md-typeset">
+<h1 id="design">Design</h1>
+<h2 id="overview">Overview</h2>
+<p>Cardano MPFS Browser is the <strong>trusted interface</strong> between the user
+and the MPFS protocol. It is the boundary where the digital world
+(cryptographic proofs, on-chain state, Merkle trees) meets the
+non-digital world (a human making decisions).</p>
+<p>Everything below this layer is verifiable: proofs are mathematical,
+chain state is consensus, the MPFS service is just a data pipe.
+But none of that matters if the interface that translates digital
+facts into human-readable information is wrong. If this code
+misrepresents a transaction, the user signs something they didn't
+intend. If it misrenders a fact, the user acts on false data.</p>
+<p>This is the trust boundary. This is Web3: not "trustless" in the
+sense that trust disappears, but that trust is <strong>relocated</strong> —
+from opaque servers to auditable client code that verifies proofs
+before presenting anything to the user.</p>
+<h2 id="the-mpfs-application-pattern">The MPFS Application Pattern</h2>
+<p>Any application built on MPFS — whether a browser, a CLI, or an
+automated agent — must follow the same pattern:</p>
+<ol>
+<li><strong>Verify</strong> — check proofs for every piece of data received
+   from the untrusted service</li>
+<li><strong>Interpret</strong> — decode raw bytes into domain meaning using
+   a verified schema</li>
+<li><strong>Decide</strong> — make a trust decision (sign or reject a
+   transaction)</li>
+</ol>
+<p>The difference between applications is only in step 3:</p>
+<ul>
+<li>A <strong>browser</strong> presents verified facts to a human, who decides</li>
+<li>An <strong>agent</strong> applies programmatic logic to verified facts and
+  decides autonomously</li>
+<li>A <strong>CLI</strong> does the same as the browser, but in a terminal</li>
+</ul>
+<p>The trust architecture is identical. The browser is the
+<strong>reference implementation</strong> of this pattern — and the first
+real MPFS client. Any domain-specific application built on MPFS
+(a credential verifier, a supply chain tracker, a registry)
+replicates this same structure, adding domain logic on top of
+verified facts.</p>
+<h3 id="mpfs-client-libraries">MPFS Client Libraries</h3>
+<p>The verify–interpret–decide machinery is not application-specific.
+It belongs in a library that any MPFS application can consume.
+This repository produces two artifacts:</p>
+<ol>
+<li><strong>The browser app</strong> — the SPA, a consumer of the library</li>
+<li><strong>The JS client library</strong> — published to npm, usable by any
+   JavaScript/TypeScript application (browser or Node.js)</li>
+</ol>
+<p>The library takes the three user inputs (token ID, schema, API
+URL + institutional root source) and exposes verified facts,
+decoded transactions, and proof verification. The consumer
+supplies the "decide" step — a human in the browser, business
+logic in an agent, a prompt in a CLI.</p>
+<pre class="mermaid"><code>graph TB
+    subgraph "MPFS Client Library"
+        IN["Inputs&lt;br/&gt;token ID, schema,&lt;br/&gt;API URL, root source"]
+        V["Verify&lt;br/&gt;check proofs"]
+        I["Interpret&lt;br/&gt;apply schema"]
+        E["Expose&lt;br/&gt;verified data +&lt;br/&gt;decoded transactions"]
+
+        IN --&gt; V --&gt; I --&gt; E
+    end
+
+    subgraph "Consumer (the decide step)"
+        B["Browser&lt;br/&gt;show to human"]
+        A["Agent&lt;br/&gt;apply logic"]
+        C["CLI&lt;br/&gt;print to terminal"]
+    end
+
+    E --&gt; B
+    E --&gt; A
+    E --&gt; C</code></pre>
+<p>Beyond JavaScript, we are committed to providing the same
+trust machinery as native libraries for backend and systems
+integration:</p>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Language</th>
+<th>Target</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JS/npm</td>
+<td>PureScript → JS</td>
+<td>Browser, Node.js</td>
+</tr>
+<tr>
+<td>Native (C ABI)</td>
+<td>Haskell or Rust</td>
+<td>C, C++, Python, Go, any FFI</td>
+</tr>
+</tbody>
+</table>
+<p>The native library exposes the same verify–interpret–decide
+interface via C-compatible FFI, enabling MPFS applications in
+any language that can call C functions.</p>
+<h3 id="this-application">This Application</h3>
+<p>The browser serves two purposes:</p>
+<ol>
+<li><strong>Fact Explorer</strong> — given an MPFS token, query its facts and
+   render them using a verified schema, with full proof
+   verification at every step</li>
+<li><strong>MPFS Client</strong> — interact with the cage protocol (insert,
+   delete, update) and sign transactions via a CIP-30 wallet,
+   with every unsigned transaction decoded and displayed in
+   human-readable MPFS semantics before signing</li>
+</ol>
+<h2 id="trust-model">Trust Model</h2>
+<h3 id="system-context">System Context</h3>
+<pre class="mermaid"><code>graph TB
+    subgraph "Trusted"
+        User["Human User"]
+        Browser["MPFS Browser&lt;br/&gt;(this application)"]
+        Wallet["CIP-30 Wallet&lt;br/&gt;(Nami, Eternl, Lace)"]
+    end
+
+    subgraph "Untrusted"
+        API["MPFS Off-Chain API&lt;br/&gt;(data pipe)"]
+        Node["Cardano Node&lt;br/&gt;(behind API)"]
+    end
+
+    subgraph "Trust Anchors"
+        Oracle["Oracle&lt;br/&gt;(publishes token ID +&lt;br/&gt;schema)"]
+        Inst["Institutional Party&lt;br/&gt;(publishes UTXO&lt;br/&gt;Merkle root)"]
+    end
+
+    Oracle --&gt;|"token ID + schema"| User
+    Inst --&gt;|"UTXO root"| Browser
+    User &lt;--&gt;|"view facts,&lt;br/&gt;approve txs"| Browser
+    Browser &lt;--&gt;|"query facts,&lt;br/&gt;get proofs,&lt;br/&gt;build txs"| API
+    Browser &lt;--&gt;|"sign txs"| Wallet
+    API &lt;--&gt; Node</code></pre>
+<h3 id="what-the-user-needs">What the User Needs</h3>
+<p>To use the application, a user provides exactly three inputs:</p>
+<ol>
+<li><strong>Token ID</strong> — published by the oracle (token owner) alongside
+   the schema. The oracle is responsible for making this public.</li>
+<li><strong>MPFS API URL</strong> — the address of any MPFS off-chain service.
+   This is <strong>untrusted</strong> — it is just a data pipe.</li>
+<li><strong>Institutional UTXO Merkle root source</strong> — a trusted party
+   (e.g. Cardano Foundation) that publishes the current UTXO
+   Merkle tree root.</li>
+</ol>
+<p>Everything else is provable. The MPFS service is <strong>obligated</strong> to
+provide proofs for anything it claims — if it lies or withholds
+data, the proofs won't verify and the user knows immediately.</p>
+<h3 id="the-oracles-responsibility">The Oracle's Responsibility</h3>
+<p>The oracle (token owner) publishes a configuration document:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">"tokenId"</span><span class="p">:</span><span class="w"> </span><span class="s2">"21c5..."</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"schemas"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"cddl"</span><span class="p">,</span><span class="w"> </span><span class="nt">"document"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">"format"</span><span class="p">:</span><span class="w"> </span><span class="s2">"json-schema"</span><span class="p">,</span><span class="w"> </span><span class="nt">"document"</span><span class="p">:</span><span class="w"> </span><span class="s2">"..."</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<ul>
+<li>The <strong>token ID</strong> — identifies the cage on-chain</li>
+<li>The <strong>schemas</strong> — one or more schema documents with their
+  format, used to decode facts</li>
+</ul>
+<p>By publishing the token ID and schemas, the oracle gives users
+the entry point to independently verify and interpret everything.</p>
+<h3 id="the-verification-chain">The Verification Chain</h3>
+<p>The application verifies facts through a four-layer chain, where
+each layer is independently provable:</p>
+<pre class="mermaid"><code>graph LR
+    IR["Institutional Root&lt;br/&gt;(trusted anchor)"]
+    CP["CSMT Proof&lt;br/&gt;(UTxO existence)"]
+    CU["Cage UTxO&lt;br/&gt;(on-chain state)"]
+    MP["MPF Proof&lt;br/&gt;(trie inclusion)"]
+    F["Fact&lt;br/&gt;(key-value)"]
+
+    IR -- "root matches?" --&gt; CP
+    CP -- "UTxO exists?" --&gt; CU
+    CU -- "trie root" --&gt; MP
+    MP -- "fact exists?" --&gt; F</code></pre>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>What it proves</th>
+<th>Trust source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Institutional Root</td>
+<td>The UTXO Merkle root is authentic</td>
+<td>Published by a known party (e.g. Cardano Foundation)</td>
+</tr>
+<tr>
+<td>CSMT Proof</td>
+<td>The cage UTxO exists in the UTXO set</td>
+<td>Verified against institutional root</td>
+</tr>
+<tr>
+<td>Cage UTxO</td>
+<td>The cage's current trie root</td>
+<td>Proved to exist on-chain</td>
+</tr>
+<tr>
+<td>MPF Proof</td>
+<td>A fact exists in the cage's trie</td>
+<td>Verified against cage's trie root</td>
+</tr>
+</tbody>
+</table>
+<p><strong>No Cardano node is required.</strong> The entire chain is verified
+client-side using cryptographic proofs and a single trusted root.</p>
+<h3 id="what-the-user-trusts">What the User Trusts</h3>
+<ul>
+<li>The oracle's published token ID (explicit, public)</li>
+<li>The institutional root publisher (explicit, auditable)</li>
+<li>The browser (runs the verification code)</li>
+<li><strong>Nothing else</strong> — not the MPFS off-chain service, not the API</li>
+</ul>
+<h3 id="the-mpfs-service-obligation">The MPFS Service Obligation</h3>
+<p>The off-chain service is untrusted but has a clear contract: for
+any data it holds that is committed to the Merkle tree, it
+<strong>must</strong> provide the corresponding proof. The user can always
+verify:</p>
+<ul>
+<li>Is this fact actually in the trie? (MPF proof)</li>
+<li>Does this trie root match what's on-chain? (cage UTxO)</li>
+<li>Does this cage UTxO actually exist? (CSMT proof)</li>
+<li>Is the UTXO set root authentic? (institutional root)</li>
+</ul>
+<p>If any link breaks, the user sees it. The service cannot
+selectively lie — it either provides valid proofs or the
+verification fails visibly.</p>
+<h2 id="schema-driven-fact-rendering">Schema-Driven Fact Rendering</h2>
+<h3 id="self-describing-facts">Self-Describing Facts</h3>
+<p>MPFS stores facts as raw bytestrings in the trie. The trie is
+format-agnostic — it stores whatever bytes the oracle inserts.
+To enable generic rendering, facts follow a convention: the
+first 32 bytes of the <strong>value</strong> are the blake2b-256 hash of
+the schema document used to encode the rest.</p>
+<div class="highlight"><pre><span></span><code>value = schema_hash (32 bytes) ++ payload
+</code></pre></div>
+<p>The schema hash links the fact to a specific schema document
+published by the oracle. The browser computes the hash of each
+known schema and matches it against the prefix. Facts with
+unknown schema hashes are displayed as raw hex.</p>
+<p>This is a convention, not enforced on-chain. The schema hash
+prefix is what makes facts interpretable by generic clients.</p>
+<h3 id="schema-matching">Schema Matching</h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant O as Oracle
+    participant B as Browser
+    participant API as MPFS API
+
+    Note over O: Publishes: oracle config&lt;br/&gt;(token ID + schemas)
+
+    B-&gt;&gt;B: Receive oracle config
+    B-&gt;&gt;B: Hash each schema document
+
+    B-&gt;&gt;API: GET /tokens/:id/facts/:key
+    API--&gt;&gt;B: value bytes + MPF proof
+
+    B-&gt;&gt;B: Verify MPF proof
+    B-&gt;&gt;B: Extract first 32 bytes of value
+    B-&gt;&gt;B: Match against known schema hashes
+
+    alt Known schema
+        B-&gt;&gt;B: Decode payload with schema
+        B-&gt;&gt;B: Render structured data
+    else Unknown schema
+        B-&gt;&gt;B: Render as hex
+    end</code></pre>
+<h3 id="schema-formats">Schema Formats</h3>
+<p>The schema format is extensible. The <code>format</code> field in the
+oracle config determines how the browser decodes the payload
+after the 32-byte hash prefix:</p>
+<table>
+<thead>
+<tr>
+<th>Format</th>
+<th>Schema language</th>
+<th>Payload encoding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cddl</code></td>
+<td>CDDL (RFC 8610)</td>
+<td>CBOR</td>
+</tr>
+<tr>
+<td><code>json-schema</code></td>
+<td>JSON Schema</td>
+<td>JSON (UTF-8)</td>
+</tr>
+</tbody>
+</table>
+<p>CDDL schemas are embedded as strings in the oracle config
+JSON. The <code>document</code> field is the hash source —
+<code>blake2b(document_string)</code> must match the 32-byte prefix in
+fact values.</p>
+<p>New formats can be added without protocol changes — just a
+new decoder and a schema document from the oracle.</p>
+<h3 id="key-and-value-structure">Key and Value Structure</h3>
+<p>For a given schema, both the key and the value payload (bytes
+after the 32-byte hash prefix) must conform to the schema.
+The schema describes the structure of both.</p>
+<p>For example, a CDDL schema for the moog test-run application:</p>
+<div class="highlight"><pre><span></span><code><span class="nc">fact-key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="s">type</span><span class="p">:</span><span class="w"> </span><span class="s2">"test-run"</span><span class="p">,</span>
+<span class="w">  </span><span class="s">platform</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span><span class="p">,</span>
+<span class="w">  </span><span class="s">repository</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s">organization</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span><span class="p">,</span>
+<span class="w">    </span><span class="s">repo</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="s">commitId</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span><span class="p">,</span>
+<span class="w">  </span><span class="s">try</span><span class="p">:</span><span class="w"> </span><span class="nb">uint</span><span class="p">,</span>
+<span class="w">  </span><span class="s">requester</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span>
+<span class="p">}</span>
+
+<span class="nc">fact-value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="s">phase</span><span class="p">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s2">"accepted"</span>
+<span class="w">        </span><span class="o">/</span><span class="w"> </span><span class="s2">"finished"</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s2">"rejected"</span><span class="p">,</span>
+<span class="w">  </span><span class="s">duration</span><span class="p">:</span><span class="w"> </span><span class="nb">uint</span><span class="p">,</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="s">outcome</span><span class="p">:</span><span class="w"> </span><span class="s2">"success"</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s2">"failure"</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s2">"unknown"</span><span class="p">,</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="s">url</span><span class="p">:</span><span class="w"> </span><span class="nb">tstr</span><span class="p">,</span>
+<span class="w">  </span><span class="o">?</span><span class="w"> </span><span class="s">from</span><span class="p">:</span><span class="w"> </span><span class="nc">fact-value</span>
+<span class="p">}</span>
+</code></pre></div>
+<h3 id="multiple-schemas">Multiple Schemas</h3>
+<p>A token can accumulate multiple schemas over time. The oracle
+may update the encoding format, add new fact types, or evolve
+the data structure. Each schema version is a separate document
+with a distinct hash.</p>
+<p>Old facts remain readable because old schemas remain in the
+oracle config. The browser matches each fact's schema hash
+against all known schemas. Schemas should never be removed
+from the oracle config — removing a schema makes older facts
+unreadable by generic clients.</p>
+<h2 id="mpfs-client">MPFS Client</h2>
+<h3 id="transaction-flow">Transaction Flow</h3>
+<p>The client interacts with the cage protocol through the MPFS API.
+The API builds unsigned transactions; the client decodes them,
+displays their MPFS semantics in human-readable form, and
+delegates signing to the user's CIP-30 wallet.</p>
+<p>Because the API is untrusted, the client always decodes the
+unsigned CBOR before requesting a signature — the user sees
+exactly what they are signing.</p>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as User
+    participant FE as Frontend
+    participant API as MPFS API
+    participant W as CIP-30 Wallet
+
+    U-&gt;&gt;FE: "Insert fact X=Y into token T"
+    FE-&gt;&gt;API: POST /tx/request/insert {token, key, value, address}
+    API--&gt;&gt;FE: unsigned tx (CBOR hex)
+
+    FE-&gt;&gt;FE: Decode CBOR, extract TxIns
+
+    loop For each TxIn
+        FE-&gt;&gt;API: GET /utxo/:txin
+        API--&gt;&gt;FE: TxOut (datum, value, address)
+        FE-&gt;&gt;API: GET /utxo/:txin/proof
+        API--&gt;&gt;FE: CSMT inclusion proof
+        FE-&gt;&gt;FE: Verify TxIn exists in UTXO set
+    end
+
+    FE-&gt;&gt;FE: Parse MPFS semantics from tx body
+    FE-&gt;&gt;FE: Render resolved inputs with proof status
+
+    FE-&gt;&gt;U: Display verified transaction
+    Note over FE,U: Inputs (verified on-chain):&lt;br/&gt;• Cage UTxO root=abc... ✓&lt;br/&gt;Operation:&lt;br/&gt;• Insert key "X" = value "Y"&lt;br/&gt;• Fee: 1.5 ADA
+
+    U-&gt;&gt;FE: "Approve"
+    FE-&gt;&gt;W: api.signTx(unsignedTx)
+    W--&gt;&gt;FE: signed tx
+
+    FE-&gt;&gt;API: POST /tx/submit {signed tx}
+    API--&gt;&gt;FE: TxId
+    FE-&gt;&gt;U: "Submitted: tx abc123..."</code></pre>
+<h3 id="input-resolution-and-verification">Input Resolution and Verification</h3>
+<p>The unsigned transaction contains TxIns — references to UTxOs
+being spent. Raw TxIns are opaque hashes. The client <strong>resolves</strong>
+each TxIn to its full TxOut content and <strong>verifies</strong> it exists
+in the UTXO set via a CSMT proof.</p>
+<pre class="mermaid"><code>graph LR
+    subgraph "Unsigned Tx"
+        TI1["TxIn #1&lt;br/&gt;(hash)"]
+        TI2["TxIn #2&lt;br/&gt;(hash)"]
+    end
+
+    subgraph "Resolved + Verified"
+        TO1["TxOut #1&lt;br/&gt;cage UTxO&lt;br/&gt;root: abc...&lt;br/&gt;value: 5 ADA&lt;br/&gt;✓ CSMT proof"]
+        TO2["TxOut #2&lt;br/&gt;user UTxO&lt;br/&gt;addr: addr1...&lt;br/&gt;value: 10 ADA&lt;br/&gt;✓ CSMT proof"]
+    end
+
+    TI1 --&gt;|"GET /utxo/:txin&lt;br/&gt;+ proof"| TO1
+    TI2 --&gt;|"GET /utxo/:txin&lt;br/&gt;+ proof"| TO2</code></pre>
+<p>This is critical: without resolving and verifying inputs, the
+user cannot know what the transaction actually spends. The API
+could claim a TxIn points to one UTxO while the transaction
+actually consumes another. The CSMT proof makes this impossible
+— each input is independently proven to exist in the UTXO set.</p>
+<h3 id="what-the-frontend-displays">What the Frontend Displays</h3>
+<p>From the decoded transaction and resolved inputs, the frontend
+presents:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Source</th>
+<th>Display</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Inputs</strong></td>
+<td>TxIns, resolved via API</td>
+<td>Full TxOut content with CSMT proof status</td>
+</tr>
+<tr>
+<td>Cage UTxO</td>
+<td>Input datum</td>
+<td>Trie root, owner, config — verified on-chain</td>
+</tr>
+<tr>
+<td>Operation</td>
+<td>Redeemer (Contribute/Modify/Mint)</td>
+<td>"Insert", "Delete", "Update", "Boot", "Retract", "End"</td>
+</tr>
+<tr>
+<td>Token</td>
+<td>Asset name in tx outputs</td>
+<td>Token identifier</td>
+</tr>
+<tr>
+<td>Key</td>
+<td>Request datum field</td>
+<td>Decoded via verified schema</td>
+</tr>
+<tr>
+<td>Value</td>
+<td>Request datum field</td>
+<td>Decoded via verified schema</td>
+</tr>
+<tr>
+<td>Fee</td>
+<td>Tx fee field</td>
+<td>ADA amount</td>
+</tr>
+<tr>
+<td>Address</td>
+<td>Tx output addresses</td>
+<td>Bech32, highlighted if user's</td>
+</tr>
+</tbody>
+</table>
+<p>If the schema is verified, the key and value are rendered in
+structured form. Otherwise they are shown as hex with a warning
+that no verified schema is available.</p>
+<p>Every input carries a proof indicator. If any input cannot be
+verified, the UI warns prominently — the user should not sign
+a transaction with unverified inputs.</p>
+<h3 id="transaction-signing-state-machine">Transaction Signing State Machine</h3>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; SelectOperation: user chooses action
+    SelectOperation --&gt; BuildingTx: submit parameters
+    BuildingTx --&gt; TxReceived: API returns unsigned CBOR
+
+    TxReceived --&gt; Decoding: parse CBOR
+    Decoding --&gt; Decoded: extract MPFS semantics
+    Decoding --&gt; DecodeFailed: malformed or unexpected
+
+    Decoded --&gt; ReviewPending: display to user
+    ReviewPending --&gt; Approved: user approves
+    ReviewPending --&gt; Rejected: user rejects
+
+    Approved --&gt; Signing: CIP-30 signTx
+    Signing --&gt; Signed: wallet returns signature
+    Signing --&gt; SignFailed: wallet refused
+
+    Signed --&gt; Submitting: POST /tx/submit
+    Submitting --&gt; Submitted: TxId received
+    Submitting --&gt; SubmitFailed: submission error
+
+    Rejected --&gt; [*]
+    DecodeFailed --&gt; [*]
+    SignFailed --&gt; [*]
+    SubmitFailed --&gt; [*]
+    Submitted --&gt; [*]</code></pre>
+<h3 id="why-the-server-doesnt-matter">Why the Server Doesn't Matter</h3>
+<p>The MPFS off-chain service is a convenience layer. The client
+independently verifies everything:</p>
+<ul>
+<li><strong>Facts</strong> — verified via the full proof chain</li>
+<li><strong>Transactions</strong> — decoded and displayed before signing</li>
+<li><strong>State</strong> — anchored on-chain via cage UTxOs</li>
+</ul>
+<p>The server could lie, omit data, or be compromised. The client
+catches it because every claim requires a cryptographic proof.
+This is the key value proposition: a trusted client that works
+with any untrusted server.</p>
+<h2 id="cip-30-wallet-integration">CIP-30 Wallet Integration</h2>
+<h3 id="connection-flow">Connection Flow</h3>
+<pre class="mermaid"><code>sequenceDiagram
+    participant U as User
+    participant FE as Frontend
+    participant W as CIP-30 Wallet
+
+    FE-&gt;&gt;FE: Detect window.cardano.*
+    FE-&gt;&gt;U: Show available wallets (Nami, Eternl, Lace...)
+
+    U-&gt;&gt;FE: Select wallet
+    FE-&gt;&gt;W: cardano.nami.enable()
+    W--&gt;&gt;FE: API handle
+
+    FE-&gt;&gt;W: api.getUsedAddresses()
+    W--&gt;&gt;FE: [addr1, addr2, ...]
+    FE-&gt;&gt;FE: Store primary address (hex)</code></pre>
+<h3 id="api-surface-used">API Surface Used</h3>
+<table>
+<thead>
+<tr>
+<th>CIP-30 Method</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cardano.&lt;wallet&gt;.enable()</code></td>
+<td>Connect to wallet</td>
+</tr>
+<tr>
+<td><code>api.getUsedAddresses()</code></td>
+<td>Get user's address for tx building</td>
+</tr>
+<tr>
+<td><code>api.signTx(tx, partialSign)</code></td>
+<td>Sign unsigned transaction</td>
+</tr>
+<tr>
+<td><code>api.getNetworkId()</code></td>
+<td>Verify correct network (mainnet/testnet)</td>
+</tr>
+</tbody>
+</table>
+<p>The frontend does <strong>not</strong> use <code>api.submitTx()</code> — submission goes
+through the MPFS API which handles chain submission via its node
+connection.</p>
+<h2 id="state-persistence">State Persistence</h2>
+<p>The entire application state is serialized to localStorage. If the
+browser tab closes — accidentally or intentionally — reopening
+restores the exact same view: same token, same fact, same pending
+transaction, same wallet connection.</p>
+<h3 id="what-lives-where">What Lives Where</h3>
+<table>
+<thead>
+<tr>
+<th>Storage</th>
+<th>Content</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>URL hash</td>
+<td>Navigation: token, fact key, current page</td>
+<td>Bookmarkable, shareable</td>
+</tr>
+<tr>
+<td>localStorage</td>
+<td>Session config: API URL, root source, connected wallet, verified schemas, view state</td>
+<td>Survives tab close</td>
+</tr>
+</tbody>
+</table>
+<h3 id="url-structure">URL Structure</h3>
+<div class="highlight"><pre><span></span><code>#/token/abc123                    → token detail
+#/token/abc123/facts              → fact list
+#/token/abc123/facts/mykey        → fact detail + proof
+#/token/abc123/tx/insert          → build insert tx
+</code></pre></div>
+<h3 id="recovery-guarantee">Recovery Guarantee</h3>
+<p>The app serializes its full state to localStorage on every state
+change. On load, it reads localStorage first, then the URL hash.
+The result: Ctrl+W → reopen → identical view. No re-entry of API
+URL, no wallet reconnection prompt, no lost context.</p>
+<p>This is critical for the trust boundary role: the user must
+always be able to see where they are in a verification or
+signing flow, even after an interruption.</p>
+<h2 id="application-structure">Application Structure</h2>
+<h3 id="pages">Pages</h3>
+<pre class="mermaid"><code>graph TB
+    subgraph "Fact Explorer"
+        TL["Token List&lt;br/&gt;All known MPFS tokens"]
+        TD["Token Detail&lt;br/&gt;State, root, config"]
+        FL["Fact List&lt;br/&gt;All facts in token"]
+        FD["Fact Detail&lt;br/&gt;Decoded value + proof status"]
+    end
+
+    subgraph "MPFS Client"
+        TX["Build Transaction&lt;br/&gt;Select operation"]
+        TV["Review Transaction&lt;br/&gt;Decoded MPFS semantics"]
+        TS["Sign &amp; Submit&lt;br/&gt;CIP-30 wallet"]
+    end
+
+    subgraph "Proof Inspector"
+        PI["Proof Chain&lt;br/&gt;Full verification status"]
+    end
+
+    TL --&gt; TD --&gt; FL --&gt; FD
+    TD --&gt; TX --&gt; TV --&gt; TS
+    FD --&gt; PI</code></pre>
+<h3 id="token-list-view">Token List View</h3>
+<p>Shows all MPFS tokens the API tracks:</p>
+<ul>
+<li>Token ID (asset name, hex + decoded if UTF-8)</li>
+<li>Owner (payment key hash → bech32 if possible)</li>
+<li>Current root (truncated hash)</li>
+<li>Pending requests count</li>
+<li>Phase indicator (process/retract window)</li>
+</ul>
+<h3 id="fact-detail-view">Fact Detail View</h3>
+<p>For a single fact:</p>
+<ul>
+<li><strong>Key</strong> — raw hex + schema-decoded rendering</li>
+<li><strong>Value</strong> — raw hex + schema-decoded rendering</li>
+<li><strong>Proof status</strong>:<ul>
+<li>✓ MPF proof valid against cage root</li>
+<li>✓ Cage UTxO exists (CSMT proof valid)</li>
+<li>✓ CSMT root matches institutional publisher</li>
+<li>Or: ⚠ partial verification (e.g. no institutional root
+  configured)</li>
+</ul>
+</li>
+</ul>
+<h3 id="proof-inspector">Proof Inspector</h3>
+<p>Expandable panel showing the full verification chain:</p>
+<ul>
+<li>Institutional root source and value</li>
+<li>CSMT proof steps (Merkle path)</li>
+<li>Cage UTxO details (TxIn, datum, value)</li>
+<li>MPF proof steps (trie path)</li>
+<li>Final verdict: fully verified / partially verified / unverified</li>
+</ul>
+<h3 id="fact-verification-state-machine">Fact Verification State Machine</h3>
+<p>Each fact goes through a verification pipeline. The UI reflects
+the current state with visual indicators:</p>
+<pre class="mermaid"><code>stateDiagram-v2
+    [*] --&gt; Fetching: query fact
+    Fetching --&gt; ProofReceived: API returns bytes + proof
+
+    ProofReceived --&gt; MPFValid: MPF proof valid
+    ProofReceived --&gt; MPFFailed: MPF proof invalid
+
+    MPFValid --&gt; CageVerified: cage UTxO exists (CSMT proof)
+    MPFValid --&gt; CageUnverified: no CSMT proof available
+
+    CageVerified --&gt; FullyVerified: root matches institutional
+    CageVerified --&gt; PartiallyVerified: no institutional root
+
+    CageUnverified --&gt; PartiallyVerified
+
+    FullyVerified --&gt; [*]
+    PartiallyVerified --&gt; [*]
+    MPFFailed --&gt; [*]</code></pre>
+<table>
+<thead>
+<tr>
+<th>State</th>
+<th>UI Indicator</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fetching</td>
+<td>Spinner</td>
+<td>Awaiting API response</td>
+</tr>
+<tr>
+<td>MPF Failed</td>
+<td>Red</td>
+<td>Fact proof invalid — data cannot be trusted</td>
+</tr>
+<tr>
+<td>Partially Verified</td>
+<td>Yellow</td>
+<td>Fact is in trie, but chain anchor incomplete</td>
+</tr>
+<tr>
+<td>Fully Verified</td>
+<td>Green</td>
+<td>Complete proof chain from fact to institutional root</td>
+</tr>
+</tbody>
+</table>
+<h2 id="institutional-root-sources">Institutional Root Sources</h2>
+<p>The application needs at least one trusted source for the UTXO
+Merkle root. This is configurable:</p>
+<ul>
+<li><strong>URL endpoint</strong> — the institutional party publishes the current
+  root at a known URL (simplest)</li>
+<li><strong>On-chain reference</strong> — the root is published in a datum on-chain
+  (self-referential but removes the URL dependency)</li>
+<li><strong>Multiple sources</strong> — cross-reference roots from multiple
+  publishers for higher confidence</li>
+</ul>
+<p>The UI shows which root source is active and when it was last
+updated.</p>
+<h2 id="api-dependency">API Dependency</h2>
+<p>The frontend consumes the MPFS off-chain HTTP API. Current endpoint
+status:</p>
+<h3 id="available-pr-108">Available (PR #108)</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /status</code></td>
+<td>Service health and sync status</td>
+</tr>
+<tr>
+<td><code>GET /tokens</code></td>
+<td>List all tracked tokens</td>
+</tr>
+<tr>
+<td><code>GET /tokens/:id</code></td>
+<td>Token state (owner, root, config)</td>
+</tr>
+<tr>
+<td><code>GET /tokens/:id/root</code></td>
+<td>Current trie root</td>
+</tr>
+<tr>
+<td><code>GET /tokens/:id/facts/:key</code></td>
+<td>Fact value + MPF proof</td>
+</tr>
+<tr>
+<td><code>GET /tokens/:id/proofs/:key</code></td>
+<td>MPF proof only</td>
+</tr>
+<tr>
+<td><code>GET /tokens/:id/requests</code></td>
+<td>Pending requests</td>
+</tr>
+<tr>
+<td><code>POST /tx/boot</code></td>
+<td>Build boot transaction</td>
+</tr>
+<tr>
+<td><code>POST /tx/request/insert</code></td>
+<td>Build insert request tx</td>
+</tr>
+<tr>
+<td><code>POST /tx/request/delete</code></td>
+<td>Build delete request tx</td>
+</tr>
+<tr>
+<td><code>POST /tx/update</code></td>
+<td>Build update tx</td>
+</tr>
+<tr>
+<td><code>POST /tx/retract</code></td>
+<td>Build retract tx</td>
+</tr>
+<tr>
+<td><code>POST /tx/end</code></td>
+<td>Build end tx</td>
+</tr>
+<tr>
+<td><code>POST /tx/submit</code></td>
+<td>Submit signed tx</td>
+</tr>
+</tbody>
+</table>
+<h3 id="needed-issue-117">Needed (issue #117)</h3>
+<table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET /utxo/:txin</code></td>
+<td>Resolve TxIn to full UTxO</td>
+</tr>
+<tr>
+<td><code>GET /utxo/:txin/proof</code></td>
+<td>CSMT inclusion proof</td>
+</tr>
+<tr>
+<td><code>GET /csmt/root</code></td>
+<td>Current UTXO Merkle root</td>
+</tr>
+</tbody>
+</table>
+<h2 id="technology-stack">Technology Stack</h2>
+<ul>
+<li><strong>PureScript</strong> with Halogen (component framework)</li>
+<li><strong>Nix flake</strong> for reproducible dev environment</li>
+<li><strong>esbuild</strong> for bundling (via spago)</li>
+<li><strong>MkDocs</strong> with Material theme for documentation</li>
+<li><strong>No backend</strong> — static SPA served from GitHub Pages or
+  alongside the MPFS API</li>
+</ul>
+<h2 id="open-questions">Open Questions</h2>
+<ol>
+<li><strong>CBOR decoding in PureScript</strong> — which library? FFI to a JS
+   CBOR library? How much of the Cardano tx structure do we need
+   to parse?</li>
+<li><strong>Institutional root protocol</strong> — is there a standard for
+   publishing UTXO Merkle roots, or do we define one?</li>
+<li><strong>Multi-token view</strong> — should the explorer support comparing
+   facts across tokens, or is it strictly per-token?</li>
+</ol>
+</article>
+</div>
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+</div>
+</main>
+<footer class="md-footer">
+<div class="md-footer-meta md-typeset">
+<div class="md-footer-meta__inner md-grid">
+<div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" rel="noopener" target="_blank">
+      Material for MkDocs
+    </a>
+</div>
+</div>
+</div>
+</footer>
+</div>
+<div class="md-dialog" data-md-component="dialog">
+<div class="md-dialog__inner md-typeset"></div>
+</div>
+<script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+<script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/paolino/dev-assets@55d2de7/mkdocs/docs/js/read-aloud.js"></script>
+</body>
+</html>
