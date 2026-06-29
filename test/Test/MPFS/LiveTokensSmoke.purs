@@ -26,7 +26,7 @@ main =
 
 spec :: Spec Unit
 spec = describe "Live UMPFS token smoke" do
-  it "derives at least one token id from live GET /tokens" do
+  it "exercises live token read flow" do
     mBaseUrl <- liftEffect $ lookupEnv "MPFS_BASE_URL"
     let
       baseUrl =
@@ -38,8 +38,34 @@ spec = describe "Live UMPFS token smoke" do
     case result of
       Left err ->
         fail $ "GET " <> baseUrl <> "/tokens failed: " <> show err
-      Right tokens ->
-        if Array.null tokens then
+      Right tokens -> case Array.head tokens of
+        Nothing ->
           fail $ "Expected at least one token id from " <> baseUrl <> "/tokens"
-        else
-          pure unit
+        Just token -> do
+          stateResult <- client.getToken token
+          case stateResult of
+            Left err ->
+              fail $ "GET " <> baseUrl <> "/tokens/" <> token <> " failed: " <> show err
+            Right _state -> pure unit
+
+          factsResult <- client.getTokenFacts token
+          case factsResult of
+            Left err ->
+              fail $ "GET " <> baseUrl <> "/tokens/" <> token <> "/facts failed: " <> show err
+            Right _facts -> pure unit
+
+          rootResult <- client.getTokenRoot token
+          case rootResult of
+            Left err ->
+              fail $ "GET " <> baseUrl <> "/tokens/" <> token <> "/root failed: " <> show err
+            Right root ->
+              if root == "" then
+                fail $ "Expected non-empty root from " <> baseUrl <> "/tokens/" <> token <> "/root"
+              else
+                pure unit
+
+          requestsResult <- client.getTokenRequests token
+          case requestsResult of
+            Left err ->
+              fail $ "GET " <> baseUrl <> "/tokens/" <> token <> "/requests failed: " <> show err
+            Right _requests -> pure unit

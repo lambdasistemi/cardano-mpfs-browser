@@ -4,12 +4,19 @@ module Test.MPFS.TxCborSpec (spec) where
 
 import Prelude
 
+import Data.Argonaut.Decode.Class (decodeJson)
+import Data.Argonaut.Parser (jsonParser)
 import Data.Array (index, length)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff, throwError)
+import Effect.Exception (error)
 import Foreign.Object as Object
+import Node.Encoding (Encoding(..))
+import Node.FS.Aff as FS
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual, fail)
-import MPFS.Tx.Cbor (TxDatum(..), decodeTx)
+import MPFS.Tx.Cbor (TxDatum(..), decodeTx, decodeTxOutput)
 import MPFS.Tx.Cbor.Bytes (hexToBytes)
 import MPFS.Tx.PlutusData
   ( CageDatum(..)
@@ -91,9 +98,9 @@ spec = describe "CBOR Transaction Decoder" do
         Just o -> case o.datum of
           InlineDatum pd -> case interpretDatum pd of
             Just (StateDatum st) -> do
-              st.maxFee `shouldEqual` 2000000
-              st.processTime `shouldEqual` 300000
-              st.retractTime `shouldEqual` 600000
+              st.maxFee `shouldEqual` 2000000.0
+              st.processTime `shouldEqual` 300000.0
+              st.retractTime `shouldEqual` 600000.0
             _ -> fail "expected StateDatum"
           _ -> fail "expected InlineDatum"
 
@@ -111,6 +118,25 @@ spec = describe "CBOR Transaction Decoder" do
                 _ -> fail "expected Insert"
             _ -> fail "expected RequestDatum"
           _ -> fail "expected InlineDatum"
+
+    it "real request output decodes indefinite bytestring value" do
+      txOutCbor <- realRequestTxOutCbor
+      let
+        out = decodeTxOutput $ hexToBytes txOutCbor
+      case out.datum of
+        InlineDatum pd -> case interpretDatum pd of
+          Just (RequestDatum req) -> do
+            req.tokenId `shouldEqual` realTokenId
+            req.owner `shouldEqual` realOwner
+            req.key `shouldEqual` realRequestKey
+            req.fee `shouldEqual` 1000000.0
+            req.submittedAt `shouldEqual` 1781203626691.0
+            case req.operation of
+              Insert value ->
+                value `shouldEqual` realRequestValue
+              _ -> fail "expected Insert"
+          _ -> fail "expected RequestDatum"
+        _ -> fail "expected InlineDatum"
 
     it "update tx redeemer is Modify" do
       let
@@ -133,6 +159,47 @@ spec = describe "CBOR Transaction Decoder" do
           case interpretSpendRedeemer r."data" of
             Just (Retract _) -> pure unit
             _ -> fail "expected Retract"
+
+type RealRequestsFixture =
+  { request_set ::
+      { entries :: Array { txout_cbor :: String }
+      }
+  }
+
+realRequestsFixturePath :: String
+realRequestsFixturePath = "test/fixtures/real-umpfs-requests.json"
+
+realRequestTxOutCbor :: Aff String
+realRequestTxOutCbor = do
+  body <- FS.readTextFile UTF8 realRequestsFixturePath
+  case jsonParser body of
+    Left err ->
+      throwError $ error err
+    Right json ->
+      case decodeJson json of
+        Left err ->
+          throwError $ error $ show err
+        Right (fixture :: RealRequestsFixture) ->
+          case index fixture.request_set.entries 0 of
+            Nothing ->
+              throwError $ error "real requests fixture has no entries"
+            Just entry ->
+              pure entry.txout_cbor
+
+realTokenId :: String
+realTokenId =
+  "976821dbd0922f93cda689da92a6faf1894c8151bc86d6c8f725ec089aaacbc6"
+
+realOwner :: String
+realOwner =
+  "8da87507ba0a8a3c67eaeb8ec768dee132ad8ecac6f526ac526f0c9f"
+
+realRequestKey :: String
+realRequestKey = "7b2274797065223a22636f6e666967227d"
+
+realRequestValue :: String
+realRequestValue =
+  "7b226167656e74223a226238313133343233373730623564643064666530633538323630383732623464383735363930616335366561626634643330313366663137222c2270726f746f636f6c56657273696f6e223a302c227465737452756e223a7b226d61784475726174696f6e223a31322c226d696e4475726174696f6e223a317d7d"
 
 -- Test vectors from mpfs-tx-vectors
 bootHex :: String

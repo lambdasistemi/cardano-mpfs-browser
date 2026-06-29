@@ -7,6 +7,8 @@ module MPFS.Client
   , decodeFactBody
   , decodeFactsBody
   , decodeRequestsBody
+  , decodeTokenBody
+  , decodeTokenRootBody
   , decodeTokensBody
   , mkClient
   ) where
@@ -54,8 +56,13 @@ import MPFS.Client.Types
   , UpdateBody
   , UpdateRootBody
   )
-import MPFS.Tx.Cbor (decodeTxOutput)
+import MPFS.Tx.Cbor (TxDatum(..), decodeTxOutput)
 import MPFS.Tx.Cbor.Bytes (hexToBytes)
+import MPFS.Tx.PlutusData
+  ( CageDatum(..)
+  , Operation(..)
+  , interpretDatum
+  )
 import MPFS.Types (TrustedRoot(..))
 
 -- | Client error: HTTP or JSON decoding failure.
@@ -126,10 +133,10 @@ mkClient baseUrl =
   , getTokens:
       getWith decodeTokensBody (baseUrl <> "/tokens")
   , getToken: \tokenId ->
-      get
+      getWith decodeTokenBody
         (baseUrl <> "/tokens/" <> tokenId)
   , getTokenRoot: \tokenId ->
-      get
+      getWith decodeTokenRootBody
         ( baseUrl <> "/tokens/" <> tokenId
             <> "/root"
         )
@@ -226,6 +233,64 @@ decodeTokensBody body = do
   response :: TokensResponse <- decodeBody body
   traverse tokenIdFromEntry response.tokens.entries
 
+decodeTokenBody :: String -> Either ClientError TokenState
+decodeTokenBody body = do
+  json <- lmap DecodeError (jsonParser body)
+  case decodeTokenEnvelope json of
+    Right tokenState ->
+      pure tokenState
+    Left _ ->
+      lmap (show >>> DecodeError) (decodeJson json)
+
+decodeTokenRootBody :: String -> Either ClientError Hex
+decodeTokenRootBody = decodeBody
+
+type TokenEnvelope =
+  { state ::
+      { utxo ::
+          { tx_out :: Hex
+          }
+      }
+  }
+
+type RequestSetEnvelope =
+  { request_set ::
+      { entries :: Array RequestSetEntry
+      }
+  }
+
+type RequestSetEntry =
+  { ref ::
+      { tx_id :: Hex
+      , tx_ix :: Int
+      }
+  , txout_cbor :: Hex
+  }
+
+decodeTokenEnvelope :: Json -> Either ClientError TokenState
+decodeTokenEnvelope json = do
+  envelope :: TokenEnvelope <-
+    lmap (show >>> DecodeError) (decodeJson json)
+  tokenStateFromTxOut envelope.state.utxo.tx_out
+
+tokenStateFromTxOut :: Hex -> Either ClientError TokenState
+tokenStateFromTxOut txOutCbor =
+  case (decodeTxOutput (hexToBytes txOutCbor)).datum of
+    InlineDatum pd ->
+      case interpretDatum pd of
+        Just (StateDatum state) ->
+          pure
+            { owner: state.owner
+            , root: state.root
+            , max_fee: state.maxFee
+            , process_time: state.processTime
+            , retract_time: state.retractTime
+            }
+        _ ->
+          Left $ DecodeError "Expected token state inline datum"
+    _ ->
+      Left $ DecodeError "Expected token state TxOut inline datum"
+
 tokenIdFromEntry :: TokenUtxoEntry -> Either ClientError TokenId
 tokenIdFromEntry entry =
   case tokenIdsFromEntry entry of
@@ -253,7 +318,11 @@ decodeFactsBody body = do
 decodeRequestsBody :: String -> Either ClientError (Array PendingRequest)
 decodeRequestsBody body = do
   json <- lmap DecodeError (jsonParser body)
-  lmap (show >>> DecodeError) (decodeRequests json)
+  case decodeRequestEntries json of
+    Right requests ->
+      pure requests
+    Left _ ->
+      lmap (show >>> DecodeError) (decodeRequests json)
 
 decodeFactBody :: String -> Either ClientError Hex
 decodeFactBody body = do
@@ -285,6 +354,62 @@ decodeTxId :: Json -> Either JsonDecodeError Hex
 decodeTxId json = do
   top <- decodeJson json
   top .: "txId"
+
+decodeRequestEntries :: Json -> Either ClientError (Array PendingRequest)
+decodeRequestEntries json = do
+  envelope :: RequestSetEnvelope <-
+    lmap (show >>> DecodeError) (decodeJson json)
+  traverse pendingRequestFromEntry envelope.request_set.entries
+
+pendingRequestFromEntry :: RequestSetEntry -> Either ClientError PendingRequest
+pendingRequestFromEntry entry = do
+  request <- requestFromTxOut entry.txout_cbor
+  let
+    op =
+      pendingOperation request.operation
+  pure
+    { token: request.tokenId
+    , owner: request.owner
+    , key: request.key
+    , operation: op.operation
+    , value: op.value
+    , fee: request.fee
+    , submitted_at: request.submittedAt
+    , request_id: entry.ref.tx_id <> "#" <> show entry.ref.tx_ix
+    }
+
+requestFromTxOut
+  :: Hex
+  -> Either
+       ClientError
+       { tokenId :: String
+       , owner :: String
+       , key :: String
+       , operation :: Operation
+       , fee :: Number
+       , submittedAt :: Number
+       }
+requestFromTxOut txOutCbor =
+  case (decodeTxOutput (hexToBytes txOutCbor)).datum of
+    InlineDatum pd ->
+      case interpretDatum pd of
+        Just (RequestDatum request) ->
+          pure request
+        _ ->
+          Left $ DecodeError "Expected request inline datum"
+    _ ->
+      Left $ DecodeError "Expected request TxOut inline datum"
+
+pendingOperation
+  :: Operation
+  -> { operation :: String, value :: Maybe Hex }
+pendingOperation = case _ of
+  Insert value ->
+    { operation: "insert", value: Just value }
+  Delete value ->
+    { operation: "delete", value: Just value }
+  Update _ value ->
+    { operation: "update", value: Just value }
 
 decodeRequests :: Json -> Either JsonDecodeError (Array PendingRequest)
 decodeRequests json = do

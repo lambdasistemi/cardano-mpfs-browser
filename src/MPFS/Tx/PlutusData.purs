@@ -14,12 +14,13 @@ module MPFS.Tx.PlutusData
 import Prelude
 
 import Data.Array (index)
+import Data.Int as Int
 import Data.Maybe (Maybe(..))
 
 -- | Plutus Data AST (decoded from CBOR).
 data PlutusData
   = Constr Int (Array PlutusData)
-  | PInt Int
+  | PInt Number
   | PBytes String
   | PList (Array PlutusData)
   | PMap (Array MapEntry)
@@ -29,9 +30,9 @@ type MapEntry = { k :: PlutusData, v :: PlutusData }
 type TokenState =
   { owner :: String
   , root :: String
-  , maxFee :: Int
-  , processTime :: Int
-  , retractTime :: Int
+  , maxFee :: Number
+  , processTime :: Number
+  , retractTime :: Number
   }
 
 data Operation
@@ -44,8 +45,8 @@ type Request =
   , owner :: String
   , key :: String
   , operation :: Operation
-  , fee :: Int
-  , submittedAt :: Int
+  , fee :: Number
+  , submittedAt :: Number
   }
 
 data CageDatum
@@ -63,8 +64,12 @@ asBytes :: PlutusData -> Maybe String
 asBytes (PBytes s) = Just s
 asBytes _ = Nothing
 
+asNumber :: PlutusData -> Maybe Number
+asNumber (PInt n) = Just n
+asNumber _ = Nothing
+
 asInt :: PlutusData -> Maybe Int
-asInt (PInt n) = Just n
+asInt (PInt n) = Int.fromNumber n
 asInt _ = Nothing
 
 asConstr :: Int -> PlutusData -> Maybe (Array PlutusData)
@@ -90,9 +95,9 @@ interpretState d = do
   fields <- asConstr 0 d
   owner <- index fields 0 >>= asBytes
   root <- index fields 1 >>= asBytes
-  maxFee <- index fields 2 >>= asInt
-  processTime <- index fields 3 >>= asInt
-  retractTime <- index fields 4 >>= asInt
+  maxFee <- index fields 2 >>= asNumber
+  processTime <- index fields 3 >>= asNumber
+  retractTime <- index fields 4 >>= asNumber
   pure { owner, root, maxFee, processTime, retractTime }
 
 interpretRequest :: PlutusData -> Maybe Request
@@ -105,8 +110,8 @@ interpretRequest d = do
   key <- index fields 2 >>= asBytes
   opD <- index fields 3
   operation <- interpretOp opD
-  fee <- index fields 4 >>= asInt
-  submittedAt <- index fields 5 >>= asInt
+  fee <- index fields 4 >>= asNumber
+  submittedAt <- index fields 5 >>= asNumber
   pure { tokenId, owner, key, operation, fee, submittedAt }
 
 -- | Interpret an inline datum as a cage datum.

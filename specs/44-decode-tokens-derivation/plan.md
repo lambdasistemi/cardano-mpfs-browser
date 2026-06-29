@@ -136,7 +136,10 @@ Expected approach:
    `Tx.PlutusData.interpretDatum`; do not hand-roll another datum parser.
 4. Wire `mkClient.getToken` to the new token-state decoder instead of generic
    JSON decode.
-5. Extend the live smoke so it calls the read flow for a real token: tokens →
+5. Extend the existing CBOR and Plutus datum readers where required by the real
+   captured request UTxO data, including indefinite-length byte strings and
+   Plutus integer values that exceed 32-bit `Int`.
+6. Extend the live smoke so it calls the read flow for a real token: tokens →
    token state → facts → root → requests. It must fail on the previous
    `max_fee` MissingValue path.
 
@@ -144,8 +147,12 @@ Owned files:
 
 - `src/MPFS/Client.purs`
 - `src/MPFS/Client/Types.purs`
+- `src/MPFS/Tx/Cbor.purs`
+- `src/MPFS/Tx/Cbor.js`
+- `src/MPFS/Tx/PlutusData.purs`
 - `test/Test/MPFS/ClientSpec.purs`
 - `test/Test/MPFS/LiveTokensSmoke.purs`
+- `test/Test/MPFS/TxCborSpec.purs`
 - `test/fixtures/real-umpfs-token-state.json`
 - `test/fixtures/real-umpfs-facts.json`
 - `test/fixtures/real-umpfs-token-root.json`
