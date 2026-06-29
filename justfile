@@ -75,8 +75,10 @@ prepare-wasm:
     wasm_out="$(nix build --fallback --no-link --print-out-paths .#wasm-mpfs-verify)"
     test -f "$wasm_out/mpfs-cage-reactor.wasm"
     test -f "$wasm_out/mpfs-verify-reactor.wasm"
+    test -f "$wasm_out/csmt-verify-wasm.wasm"
     install -m 644 "$wasm_out/mpfs-cage-reactor.wasm" src/assets/mpfs-cage-reactor.wasm
     install -m 644 "$wasm_out/mpfs-verify-reactor.wasm" src/assets/mpfs-verify-reactor.wasm
+    install -m 644 "$wasm_out/csmt-verify-wasm.wasm" src/assets/csmt-verify-wasm.wasm
 
 # E2E tests against devnet server
 e2e blueprint:
