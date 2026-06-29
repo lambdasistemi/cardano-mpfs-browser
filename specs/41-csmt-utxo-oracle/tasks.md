@@ -21,13 +21,13 @@
 
 ## Slice 2 - csmt-utxo REST Client
 
-- [ ] T041-S2 Add csmt-utxo response types for merkle roots, proof responses,
+- [X] T041-S2 Add csmt-utxo response types for merkle roots, proof responses,
   chainpoints, output references, and attested TxOut payloads.
-- [ ] T041-S2 Add a REST client for `/merkle-roots` and
+- [X] T041-S2 Add a REST client for `/merkle-roots` and
   `/proof/:txId/:txIx`, defaulting to `https://utxo-csmt.plutimus.com` where
   appropriate but keeping tests fixture-driven.
-- [ ] T041-S2 Add valid and malformed fixture decode tests for both endpoints.
-- [ ] T041-S2 Run the focused client tests and `./gate.sh`, then commit the
+- [X] T041-S2 Add valid and malformed fixture decode tests for both endpoints.
+- [X] T041-S2 Run the focused client tests and `./gate.sh`, then commit the
   slice.
 
 ## Slice 3 - Cross-Check Verdict
