@@ -52,6 +52,7 @@ import MPFS.Client.Types
   , TokenId
   , TokensResponse
   , TokenUtxoEntry
+  , TokenOutputRef
   , TokenState
   , UpdateBody
   , UpdateRootBody
@@ -240,7 +241,9 @@ decodeTokenBody body = do
     Right tokenState ->
       pure tokenState
     Left _ ->
-      lmap (show >>> DecodeError) (decodeJson json)
+      lmap (show >>> DecodeError) do
+        flatState :: FlatTokenState <- decodeJson json
+        pure (tokenStateFromFlat flatState Nothing)
 
 decodeTokenRootBody :: String -> Either ClientError Hex
 decodeTokenRootBody = decodeBody
@@ -248,9 +251,18 @@ decodeTokenRootBody = decodeBody
 type TokenEnvelope =
   { state ::
       { utxo ::
-          { tx_out :: Hex
+          { tx_in :: TokenOutputRef
+          , tx_out :: Hex
           }
       }
+  }
+
+type FlatTokenState =
+  { owner :: Hex
+  , root :: Hex
+  , max_fee :: Number
+  , process_time :: Number
+  , retract_time :: Number
   }
 
 type RequestSetEnvelope =
@@ -271,25 +283,39 @@ decodeTokenEnvelope :: Json -> Either ClientError TokenState
 decodeTokenEnvelope json = do
   envelope :: TokenEnvelope <-
     lmap (show >>> DecodeError) (decodeJson json)
-  tokenStateFromTxOut envelope.state.utxo.tx_out
+  tokenStateFromTxOut
+    (Just envelope.state.utxo.tx_in)
+    envelope.state.utxo.tx_out
 
-tokenStateFromTxOut :: Hex -> Either ClientError TokenState
-tokenStateFromTxOut txOutCbor =
+tokenStateFromTxOut :: Maybe TokenOutputRef -> Hex -> Either ClientError TokenState
+tokenStateFromTxOut outputRef txOutCbor =
   case (decodeTxOutput (hexToBytes txOutCbor)).datum of
     InlineDatum pd ->
       case interpretDatum pd of
         Just (StateDatum state) ->
-          pure
-            { owner: state.owner
-            , root: state.root
-            , max_fee: state.maxFee
-            , process_time: state.processTime
-            , retract_time: state.retractTime
-            }
+          pure $
+            tokenStateFromFlat
+              { owner: state.owner
+              , root: state.root
+              , max_fee: state.maxFee
+              , process_time: state.processTime
+              , retract_time: state.retractTime
+              }
+              outputRef
         _ ->
           Left $ DecodeError "Expected token state inline datum"
     _ ->
       Left $ DecodeError "Expected token state TxOut inline datum"
+
+tokenStateFromFlat :: FlatTokenState -> Maybe TokenOutputRef -> TokenState
+tokenStateFromFlat state outputRef =
+  { owner: state.owner
+  , root: state.root
+  , max_fee: state.max_fee
+  , process_time: state.process_time
+  , retract_time: state.retract_time
+  , current_output_ref: outputRef
+  }
 
 tokenIdFromEntry :: TokenUtxoEntry -> Either ClientError TokenId
 tokenIdFromEntry entry =

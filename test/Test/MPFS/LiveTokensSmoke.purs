@@ -5,12 +5,19 @@ module Test.MPFS.LiveTokensSmoke
 
 import Prelude
 
+import App as App
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class (liftEffect)
+import MPFS.App.State (defaultState)
 import MPFS.Client (mkClient)
+import MPFS.SecondOracle as SecondOracle
+import MPFS.SecondOracle.Client as SecondOracleClient
+import MPFS.SecondOracle.CsmtVerify as CsmtVerify
+import MPFS.SecondOracle.Types (SecondOracleVerdict(..))
+import MPFS.UI.Remote (Remote(..))
 import Node.Process (lookupEnv)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (fail)
@@ -69,3 +76,35 @@ spec = describe "Live UMPFS token smoke" do
             Left err ->
               fail $ "GET " <> baseUrl <> "/tokens/" <> token <> "/requests failed: " <> show err
             Right _requests -> pure unit
+
+          case stateResult of
+            Left _ ->
+              pure unit
+            Right tokenState -> do
+              let
+                appState = defaultState { tokenState = Success tokenState }
+
+              case App.selectedTokenOutputRef appState of
+                Nothing ->
+                  fail "Expected decoded live token state to include an output reference for the second oracle"
+                Just outputRef -> do
+                  verdict <- SecondOracle.checkOutputRef
+                    secondOracleDeps
+                    outputRef
+                    tokenState.root
+                  case verdict of
+                    SecondOracleVerified _ ->
+                      pure unit
+                    SecondOracleMismatch _ ->
+                      pure unit
+                    other ->
+                      fail $ "Expected concrete second-oracle verdict, got " <> show other
+
+secondOracleDeps :: SecondOracle.SecondOracleDeps
+secondOracleDeps =
+  { getMerkleRoots: client.getMerkleRoots
+  , getProof: client.getProof
+  , verifyInclusion: CsmtVerify.verifyInclusion
+  }
+  where
+  client = SecondOracleClient.defaultClient

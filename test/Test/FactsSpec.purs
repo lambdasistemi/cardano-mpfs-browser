@@ -163,6 +163,7 @@ tokenState =
   , max_fee: 2.0
   , process_time: 10.0
   , retract_time: 20.0
+  , current_output_ref: Nothing
   }
 
 pendingAt :: Number -> PendingRequest
