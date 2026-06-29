@@ -172,3 +172,57 @@ Commit:
 
 - Subject: `fix(client): decode real umpfs read responses`
 - Trailer: `Tasks: T044-S3`
+
+## Continuation After A-003
+
+The second live browser walk proved Slice 3 fixed the token read flow, but the
+second oracle remained unreachable because `App.selectedTokenOutputRef` was a
+stub. Add one more vertical slice that carries the authoritative selected token
+UTxO ref from the real token-state response into app state and proves the app
+can call the real second oracle.
+
+## Slice 4 - Reach the real second oracle
+
+Expected approach:
+
+1. Extend `TokenState` with a current output reference derived from
+   `/tokens/:id` `state.utxo.tx_in`.
+2. Update `decodeTokenBody` so the real token-state fixture preserves
+   `{ tx_id, tx_ix }` alongside the datum-derived state fields.
+3. Implement `App.selectedTokenOutputRef` by reading loaded token state and
+   converting that current ref to `SecondOracle.OutputRef`.
+4. Replace the old "does not fabricate" unit assertion with one that fails
+   while the stub remains and proves the loaded token-state ref is returned.
+5. Add a real boundary proof that the app-selected output ref reaches the real
+   `utxo-csmt.plutimus.com` proof/roots path and produces a concrete
+   second-oracle verdict with the WASM verifier.
+6. Extend the live smoke so it exercises tokens → token state → facts → root →
+   requests → second oracle.
+
+Owned files:
+
+- `src/MPFS/Client.purs`
+- `src/MPFS/Client/Types.purs`
+- `src/App.purs`
+- `test/Test/MPFS/ClientSpec.purs`
+- `test/Test/MPFS/LiveTokensSmoke.purs`
+- `test/Test/SecondOracleAppSpec.purs`
+- `test/Test/MPFS/SecondOracleSpec.purs`
+- `test/fixtures/real-umpfs-token-state.json`
+
+Forbidden scope:
+
+- No wallet write-flow, reactor internals, offchain server, flake, dependency
+  manifest, or lockfile changes.
+- Do not replace the real second-oracle proof with a mock for the new
+  acceptance test.
+
+Focused command:
+
+- `nix develop --quiet --command just test`
+- `nix develop --quiet --command just smoke-umpfs-tokens`
+
+Commit:
+
+- Subject: `fix(app): reach second oracle from selected token`
+- Trailer: `Tasks: T044-S4`
