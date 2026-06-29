@@ -28,5 +28,5 @@
 
 ## Orchestrator Finalization
 
-- [ ] T044-F1 Verify both pair commits, rerun `./gate.sh`, push the branch, and
+- [X] T044-F1 Verify both pair commits, rerun `./gate.sh`, push the branch, and
   report `READY-FOR-REVIEW <sha>` via `/tmp/mpfs44/ticket/STATUS.md`.
