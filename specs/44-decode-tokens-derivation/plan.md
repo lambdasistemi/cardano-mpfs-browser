@@ -109,3 +109,59 @@ Final ticket gate:
 
 The gate removes stale local wasm assets first, then runs lint, `just ci`, the
 devnet e2e recipe, and the live `umpfs` token smoke.
+
+## Continuation After A-002
+
+The branch was reopened after live browser testing showed `Load facts` still
+failed on the fictional `TokenState` JSON contract. Add one more vertical slice
+to align the read flow with the real offchain API.
+
+## Slice 3 - Align real read-flow decoders
+
+Expected approach:
+
+1. Copy real fixtures:
+   - `/tmp/mpfs44/ticket/answers/real-umpfs-token-state.json`
+   - `/tmp/mpfs44/ticket/answers/real-umpfs-facts.json`
+   - live-captured root and requests fixtures from
+     `/tmp/mpfs44/ticket/live-captures/`.
+2. Add RED tests per endpoint:
+   - `decodeTokenBody` or equivalent for `/tokens/:id` derives
+     `{ owner, root, max_fee, process_time, retract_time }` from the inline
+     datum in `state.utxo.tx_out`.
+   - facts fixture decodes real `facts: []` with the real `state` envelope.
+   - root fixture decodes the real quoted root string.
+   - requests fixture decodes real pending request rows from the live response.
+3. Reuse existing `decodeTxOutput`, `hexToBytes`, and
+   `Tx.PlutusData.interpretDatum`; do not hand-roll another datum parser.
+4. Wire `mkClient.getToken` to the new token-state decoder instead of generic
+   JSON decode.
+5. Extend the live smoke so it calls the read flow for a real token: tokens →
+   token state → facts → root → requests. It must fail on the previous
+   `max_fee` MissingValue path.
+
+Owned files:
+
+- `src/MPFS/Client.purs`
+- `src/MPFS/Client/Types.purs`
+- `test/Test/MPFS/ClientSpec.purs`
+- `test/Test/MPFS/LiveTokensSmoke.purs`
+- `test/fixtures/real-umpfs-token-state.json`
+- `test/fixtures/real-umpfs-facts.json`
+- `test/fixtures/real-umpfs-token-root.json`
+- `test/fixtures/real-umpfs-requests.json`
+
+Forbidden scope:
+
+- No reactor, SecondOracle internals, wallet write-flow, flake, dependency
+  manifest, or lockfile changes.
+
+Focused command:
+
+- `nix develop --quiet --command just test`
+- `nix develop --quiet --command just smoke-umpfs-tokens`
+
+Commit:
+
+- Subject: `fix(client): decode real umpfs read responses`
+- Trailer: `Tasks: T044-S3`
