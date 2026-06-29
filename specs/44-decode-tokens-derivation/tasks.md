@@ -51,5 +51,5 @@
 
 ## Orchestrator Finalization After A-002
 
-- [ ] T044-F2 Verify the read-flow pair commit, rerun `./gate.sh`, push the
+- [X] T044-F2 Verify the read-flow pair commit, rerun `./gate.sh`, push the
   branch, update PR metadata, and report `READY-FOR-REVIEW <sha>`.
