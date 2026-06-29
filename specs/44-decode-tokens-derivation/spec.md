@@ -82,3 +82,29 @@ Required real fixtures:
 - `/tmp/mpfs44/ticket/answers/real-umpfs-token-state.json`
 - `/tmp/mpfs44/ticket/answers/real-umpfs-facts.json`
 - live-captured root and requests fixtures for the same real token.
+
+## A-003 Correction: Second Oracle Must Be Reachable
+
+The A-002 live walk proved the read flow now loads state, pending requests,
+facts, and root from real `umpfs` data. The remaining #44 acceptance path still
+does not run because `App.selectedTokenOutputRef` returns `Nothing` for every
+state:
+
+```purescript
+selectedTokenOutputRef :: AppState -> Maybe OutputRef
+selectedTokenOutputRef _ = Nothing
+```
+
+That keeps `SecondOracle.checkOutputRef` unreachable from the running app and
+turns the `csmt-utxo` integration into dead code.
+
+This ticket therefore also requires:
+
+- `decodeTokenBody` must preserve the current token output reference from
+  `state.utxo.tx_in`.
+- `selectedTokenOutputRef` must return that selected token current output
+  reference after token state is loaded.
+- The real second-oracle path must be tested with live data:
+  `umpfs.plutimus.com` selected token state/root plus
+  `utxo-csmt.plutimus.com` proof/roots and the real WASM verifier. A mock
+  verifier does not satisfy this acceptance condition.
