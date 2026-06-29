@@ -42,9 +42,27 @@ spec = describe "CSMT UTxO verifier" do
     verdict <- verifyInclusion fixture.merkleRoot (tamperProof fixture.proof)
     verdict `shouldEqual` false
 
+  it "verifies a real MPFS-token inclusion proof through the wasm" do
+    fixture <- readRealMpfsTokenFixture
+    verdict <- verifyInclusion fixture.merkleRoot fixture.proof
+    verdict `shouldEqual` true
+
+  it "rejects a tampered real MPFS-token proof" do
+    fixture <- readRealMpfsTokenFixture
+    verdict <- verifyInclusion fixture.merkleRoot (tamperProof fixture.proof)
+    verdict `shouldEqual` false
+
 readFixture :: Aff Fixture
-readFixture = do
-  body <- FS.readTextFile UTF8 "test/fixtures/csmt-utxo-verify.json"
+readFixture =
+  readFixtureFile "test/fixtures/csmt-utxo-verify.json"
+
+readRealMpfsTokenFixture :: Aff Fixture
+readRealMpfsTokenFixture =
+  readFixtureFile "test/fixtures/csmt-utxo-verdict-real-mpfs-token.json"
+
+readFixtureFile :: String -> Aff Fixture
+readFixtureFile path = do
+  body <- FS.readTextFile UTF8 path
   case decodeFixture body of
     Left err -> throwError (error err)
     Right fixture -> pure fixture
