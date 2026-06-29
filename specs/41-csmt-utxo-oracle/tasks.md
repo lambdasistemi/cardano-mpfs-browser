@@ -8,15 +8,15 @@
 
 ## Slice 1 - Bundle And Verify Primitive
 
-- [ ] T041-S1 Repin `cardano-mpfs-offchain` in `flake.lock` to revision
+- [X] T041-S1 Repin `cardano-mpfs-offchain` in `flake.lock` to revision
   `a20656e`, with no unrelated input bumps.
-- [ ] T041-S1 Extend `just prepare-wasm` to assert and install
+- [X] T041-S1 Extend `just prepare-wasm` to assert and install
   `csmt-verify-wasm.wasm` from `.#wasm-mpfs-verify`.
-- [ ] T041-S1 Add the binary-stdin `csmt-verify-wasm` JS runner and PureScript
+- [X] T041-S1 Add the binary-stdin `csmt-verify-wasm` JS runner and PureScript
   wrapper under `src/MPFS/SecondOracle/`.
-- [ ] T041-S1 Add RED/GREEN coverage for a captured real root/proof verifying
+- [X] T041-S1 Add RED/GREEN coverage for a captured real root/proof verifying
   true and a tampered variant verifying false.
-- [ ] T041-S1 Run the focused verifier tests and `./gate.sh`, then commit the
+- [X] T041-S1 Run the focused verifier tests and `./gate.sh`, then commit the
   slice.
 
 ## Slice 2 - csmt-utxo REST Client
