@@ -2,15 +2,18 @@ module MPFS.App.Verification
   ( VerificationStatus(..)
   , anchorFactSnapshotRoot
   , anchorFactsSnapshotRoot
+  , anchorRequestsSnapshotRoot
   , anchorTokenSnapshotRoot
   , buildFactInclusionEnvelope
   , buildFactsVerificationEnvelope
+  , buildRequestsVerificationEnvelope
   , buildTokensVerificationEnvelope
   , finishVerification
   , startVerification
   , verifyFactEnvelope
   , verifyFactInclusion
   , verifyFactsSet
+  , verifyRequestsSnapshot
   , verifyTokenList
   ) where
 
@@ -24,7 +27,12 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Foreign.Object as Object
-import MPFS.Client (RawFactResponse, RawFactsResponse, RawTokensResponse)
+import MPFS.Client
+  ( RawFactResponse
+  , RawFactsResponse
+  , RawRequestsResponse
+  , RawTokensResponse
+  )
 import MPFS.Reactor as Reactor
 import MPFS.SecondOracle.Types (MerkleRootEntry)
 import MPFS.Types (CageConfig)
@@ -152,6 +160,29 @@ anchorFactsSnapshotRoot roots facts =
   matchesSlot root =
     root.slotNo == slot
 
+anchorRequestsSnapshotRoot
+  :: Array MerkleRootEntry
+  -> RawRequestsResponse
+  -> Either String String
+anchorRequestsSnapshotRoot roots requests =
+  case Array.find matchesSlot roots of
+    Nothing ->
+      Left
+        ( "Requests snapshot slot "
+            <> show slot
+            <> " is not anchored by the second oracle"
+        )
+    Just root
+      | root.merkleRoot == requests.snapshot.utxo_root ->
+          Right root.merkleRoot
+      | otherwise ->
+          Left "Requests snapshot UTxO root is not anchored by the second oracle"
+  where
+  slot = requests.snapshot.chainpoint.slot
+
+  matchesSlot root =
+    root.slotNo == slot
+
 buildFactInclusionEnvelope :: String -> Json -> String -> String
 buildFactInclusionEnvelope trustedRoot facts key =
   stringify
@@ -201,6 +232,35 @@ buildFactsVerificationEnvelope trustedRoot facts =
 verifyFactsSet :: String -> Json -> Aff (Either String Unit)
 verifyFactsSet trustedRoot facts =
   verifyFactEnvelope (buildFactsVerificationEnvelope trustedRoot facts)
+
+buildRequestsVerificationEnvelope
+  :: String
+  -> Json
+  -> CageConfig
+  -> String
+  -> String
+buildRequestsVerificationEnvelope trustedRoot facts cfg tokenId =
+  stringify
+    ( fromObject
+        ( Object.fromFoldable
+            [ Tuple "op" (fromString "verify_snapshot")
+            , Tuple "trusted_root" (fromString trustedRoot)
+            , Tuple "facts" facts
+            , Tuple "cage_config" (cageConfigJson cfg)
+            , Tuple "token_id" (fromString tokenId)
+            ]
+        )
+    )
+
+verifyRequestsSnapshot
+  :: String
+  -> Json
+  -> CageConfig
+  -> String
+  -> Aff (Either String Unit)
+verifyRequestsSnapshot trustedRoot facts cfg tokenId =
+  verifyFactEnvelope
+    (buildRequestsVerificationEnvelope trustedRoot facts cfg tokenId)
 
 cageConfigJson :: CageConfig -> Json
 cageConfigJson cfg =

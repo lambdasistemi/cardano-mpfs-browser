@@ -7,12 +7,14 @@ module MPFS.Client
   , FactSnapshot
   , RawFactResponse
   , RawFactsResponse
+  , RawRequestsResponse
   , RawTokensResponse
   , decodeFactBody
   , decodeFactRawBody
   , decodeFactsBody
   , decodeFactsRawBody
   , decodeRequestsBody
+  , decodeRequestsRawBody
   , decodeTokenBody
   , decodeTokenRootBody
   , decodeTokensBody
@@ -113,6 +115,10 @@ type Client =
       TokenId
       -> Aff
            (Either ClientError (Array PendingRequest))
+  , getTokenRequestsRaw ::
+      TokenId
+      -> Aff
+           (Either ClientError RawRequestsResponse)
   , boot :: BootBody -> Aff (Either ClientError Hex)
   , insert :: InsertBody -> Aff (Either ClientError Hex)
   , delete :: DeleteBody -> Aff (Either ClientError Hex)
@@ -186,6 +192,11 @@ mkClient baseUrl =
         )
   , getTokenRequests: \tokenId ->
       getWith decodeRequestsBody
+        ( baseUrl <> "/tokens/" <> tokenId
+            <> "/requests"
+        )
+  , getTokenRequestsRaw: \tokenId ->
+      getWith decodeRequestsRawBody
         ( baseUrl <> "/tokens/" <> tokenId
             <> "/requests"
         )
@@ -420,6 +431,32 @@ decodeRequestsBody body = do
       pure requests
     Left _ ->
       lmap (show >>> DecodeError) (decodeRequests json)
+
+type RawRequestsResponse =
+  { requests :: Array PendingRequest
+  , raw :: Json
+  , snapshot :: FactSnapshot
+  }
+
+type RequestsResponseWithSnapshot =
+  { snapshot :: FactSnapshot
+  }
+
+decodeRequestsRawBody :: String -> Either ClientError RawRequestsResponse
+decodeRequestsRawBody body = do
+  json <- lmap DecodeError (jsonParser body)
+  requests <- case decodeRequestEntries json of
+    Right requests ->
+      pure requests
+    Left _ ->
+      lmap (show >>> DecodeError) (decodeRequests json)
+  response :: RequestsResponseWithSnapshot <-
+    lmap (show >>> DecodeError) (decodeJson json)
+  pure
+    { requests
+    , raw: json
+    , snapshot: response.snapshot
+    }
 
 decodeFactBody :: String -> Either ClientError Hex
 decodeFactBody body = do

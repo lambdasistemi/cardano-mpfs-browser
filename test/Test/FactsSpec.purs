@@ -14,6 +14,7 @@ import MPFS.App.Facts
   , finishFactsLoad
   , finishFactsLoadAt
   , finishFactsLoadWithRootAt
+  , finishPendingRequestsVerification
   , phaseLabel
   , requestPhase
   , resetSecondOracle
@@ -21,6 +22,7 @@ import MPFS.App.Facts
   , startFactLookup
   , startFactsSetVerification
   , startFactsLoad
+  , startPendingRequestsVerification
   )
 import MPFS.App.State (defaultState)
 import MPFS.App.Verification
@@ -61,6 +63,7 @@ spec = describe "MPFS App Facts" do
     next.trustedRoot `shouldEqual` Loading
     next.secondOracle `shouldEqual` Loading
     next.selectedToken `shouldEqual` Just selected
+    next.pendingRequestsVerification `shouldEqual` VerificationLoading
 
   it "resets second oracle state when token-dependent facts change" do
     let
@@ -159,6 +162,19 @@ spec = describe "MPFS App Facts" do
         VerificationFailed "root mismatch"
     rejected.factLookup.verification `shouldEqual` VerificationNotAsked
 
+  it "tracks pending-requests verification independently from facts-set verification" do
+    let
+      loading = startPendingRequestsVerification defaultState
+      verified = finishPendingRequestsVerification (Right unit) loading
+      rejected = finishPendingRequestsVerification (Left "request root mismatch") loading
+
+    loading.pendingRequestsVerification `shouldEqual` VerificationLoading
+    verified.pendingRequestsVerification `shouldEqual` VerificationVerified
+    rejected.pendingRequestsVerification
+      `shouldEqual`
+        VerificationFailed "request root mismatch"
+    rejected.factsSetVerification `shouldEqual` VerificationNotAsked
+
   it "renders facts-set verifier labels" do
     View.factsSetStatusLabel VerificationVerified
       `shouldEqual`
@@ -166,6 +182,14 @@ spec = describe "MPFS App Facts" do
     View.factsSetStatusLabel (VerificationFailed "root mismatch")
       `shouldEqual`
         "Facts set: Rejected: root mismatch"
+
+  it "renders pending-requests verifier labels" do
+    View.pendingRequestsStatusLabel VerificationVerified
+      `shouldEqual`
+        "Pending requests: Verified"
+    View.pendingRequestsStatusLabel (VerificationFailed "root mismatch")
+      `shouldEqual`
+        "Pending requests: Rejected: root mismatch"
 
   it "keeps looked-up values while automatic verification resolves" do
     let

@@ -18,9 +18,11 @@ import MPFS.App.Verification as Verification
 import MPFS.Client
   ( RawFactResponse
   , RawFactsResponse
+  , RawRequestsResponse
   , RawTokensResponse
   , decodeFactRawBody
   , decodeFactsRawBody
+  , decodeRequestsRawBody
   , decodeTokensRawBody
   )
 import MPFS.SecondOracle.Types (MerkleRootEntry)
@@ -217,6 +219,62 @@ spec = describe "WASM Verify Reactor Verification" do
       `shouldEqual`
         Left "Facts snapshot UTxO root is not anchored by the second oracle"
 
+  it "keeps a real requests fixture with non-empty request-set entries" do
+    requests <- readRawRequestsFixture
+
+    Array.null requests.requests `shouldEqual` false
+    requests.snapshot.chainpoint.slot `shouldEqual` 127146261
+    requests.snapshot.utxo_root `shouldEqual` requestsFixtureUtxoRoot
+
+  it "builds a verify_snapshot envelope with the raw requests fixture and verifies it" do
+    requests <- readRawRequestsFixture
+    let
+      anchoredRoot =
+        Verification.anchorRequestsSnapshotRoot [ matchingRequestsMerkleRoot ] requests
+
+    anchoredRoot `shouldEqual` Right requestsFixtureUtxoRoot
+
+    case anchoredRoot of
+      Left err ->
+        fail err
+      Right trustedRoot -> do
+        let
+          envelope =
+            Verification.buildRequestsVerificationEnvelope
+              trustedRoot
+              requests.raw
+              testCageConfig
+              requestTokenId
+
+        assertRequestsEnvelope envelope trustedRoot requests.raw
+
+        verdict <- verifyEnvelope envelope
+        verdict `shouldEqual` Right unit
+
+  it "rejects the real requests fixture after tampering completeness_proof" do
+    requests <- readRawRequestsFixture
+    tamperedRequests <- case tamperRequestsProof requests.raw of
+      Left err -> throwError $ error err
+      Right value -> pure value
+
+    verdict <-
+      verifyEnvelope
+        ( Verification.buildRequestsVerificationEnvelope
+            requestsFixtureUtxoRoot
+            tamperedRequests
+            testCageConfig
+            requestTokenId
+        )
+    case verdict of
+      Left _ -> pure unit
+      Right _ -> fail "expected tampered request set to fail verification"
+
+  it "rejects a requests response whose snapshot root is not independently anchored" do
+    requests <- readRawRequestsFixture
+    Verification.anchorRequestsSnapshotRoot [ mismatchedRequestsMerkleRoot ] requests
+      `shouldEqual`
+        Left "Requests snapshot UTxO root is not anchored by the second oracle"
+
 unknownOpEnvelope :: String
 unknownOpEnvelope =
   "{\"op\":\"frobnicate\",\"trusted_root\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"facts\":{}}"
@@ -234,6 +292,9 @@ realTokensFixturePath = "test/fixtures/real-umpfs-tokens.json"
 realFactsFixturePath :: String
 realFactsFixturePath = "test/fixtures/real-umpfs-facts.json"
 
+realRequestsFixturePath :: String
+realRequestsFixturePath = "test/fixtures/real-umpfs-requests.json"
+
 fixtureUtxoRoot :: String
 fixtureUtxoRoot =
   "2890b676dbb8714954c07b368bd229cc338dced143e8efd3ca4378b5b59f07bb"
@@ -246,12 +307,20 @@ factsFixtureUtxoRoot :: String
 factsFixtureUtxoRoot =
   "db8b966a98a6db0a8a6d043016dd5abee38d034827ebd458882387f8757490fe"
 
+requestsFixtureUtxoRoot :: String
+requestsFixtureUtxoRoot =
+  "68e0677e595d5e0f0f9817eaefecf0341f0ccea7f8b28d6d125512b292970d22"
+
 mismatchedUtxoRoot :: String
 mismatchedUtxoRoot =
   "0000000000000000000000000000000000000000000000000000000000000000"
 
 lookupKey :: String
 lookupKey = "70616f6c696e6f"
+
+requestTokenId :: String
+requestTokenId =
+  "976821dbd0922f93cda689da92a6faf1894c8151bc86d6c8f725ec089aaacbc6"
 
 testCageConfig :: CageConfig
 testCageConfig =
@@ -307,6 +376,13 @@ readRawFactsFixture = do
     Left err -> throwError $ error (show err)
     Right facts -> pure facts
 
+readRawRequestsFixture :: Aff RawRequestsResponse
+readRawRequestsFixture = do
+  body <- FS.readTextFile UTF8 realRequestsFixturePath
+  case decodeRequestsRawBody body of
+    Left err -> throwError $ error (show err)
+    Right requests -> pure requests
+
 matchingMerkleRoot :: MerkleRootEntry
 matchingMerkleRoot =
   { slotNo: 127139766
@@ -339,6 +415,17 @@ matchingFactsMerkleRoot =
 mismatchedFactsMerkleRoot :: MerkleRootEntry
 mismatchedFactsMerkleRoot =
   matchingFactsMerkleRoot { merkleRoot = mismatchedUtxoRoot }
+
+matchingRequestsMerkleRoot :: MerkleRootEntry
+matchingRequestsMerkleRoot =
+  { slotNo: 127146261
+  , blockHash: "1d0cdfa3510982444ca0a6601be537e2c6b362ca6e87c9097cdd96e9d0324271"
+  , merkleRoot: requestsFixtureUtxoRoot
+  }
+
+mismatchedRequestsMerkleRoot :: MerkleRootEntry
+mismatchedRequestsMerkleRoot =
+  matchingRequestsMerkleRoot { merkleRoot = mismatchedUtxoRoot }
 
 assertFactInclusionEnvelope :: String -> String -> Json -> Aff Unit
 assertFactInclusionEnvelope envelope trustedRoot facts = case jsonParser envelope of
@@ -406,6 +493,36 @@ assertFactsEnvelope envelope trustedRoot facts = case jsonParser envelope of
         Right envelopeFacts ->
           stringify envelopeFacts `shouldEqual` stringify facts
 
+assertRequestsEnvelope :: String -> String -> Json -> Aff Unit
+assertRequestsEnvelope envelope trustedRoot facts = case jsonParser envelope of
+  Left err ->
+    fail err
+  Right json -> case jsonObjectFields json of
+    Left err ->
+      fail err
+    Right fields -> do
+      jsonStringField "op" "op" fields `shouldEqual` Right "verify_snapshot"
+      jsonStringField "trusted_root" "trusted_root" fields
+        `shouldEqual`
+          Right trustedRoot
+      jsonStringField "token_id" "token_id" fields `shouldEqual` Right requestTokenId
+      case lookupJson "facts" fields of
+        Left err ->
+          fail err
+        Right envelopeFacts ->
+          stringify envelopeFacts `shouldEqual` stringify facts
+      case lookupJson "cage_config" fields of
+        Left err ->
+          fail err
+        Right cfg ->
+          case jsonObjectFields cfg of
+            Left err ->
+              fail err
+            Right cfgFields ->
+              jsonStringField "cage_config.network" "network" cfgFields
+                `shouldEqual`
+                  Right "testnet"
+
 tamperFactProof :: Json -> Either String Json
 tamperFactProof facts = do
   fields <- jsonObjectFields facts
@@ -469,6 +586,28 @@ tamperFactsValue facts = do
         ( fromObject
             (Object.insert "facts" (fromArray ([ tamperedHead ] <> tail)) fields)
         )
+
+tamperRequestsProof :: Json -> Either String Json
+tamperRequestsProof facts = do
+  fields <- jsonObjectFields facts
+  requestsJson <- lookupJson "request_set" fields
+  requestFields <- jsonObjectFields requestsJson
+  proof <- jsonStringField "request_set.completeness_proof" "completeness_proof" requestFields
+  let
+    corruptedProof =
+      if proof == "00" then "01"
+      else "00"
+    tamperedRequests =
+      fromObject
+        ( Object.insert
+            "completeness_proof"
+            (fromString corruptedProof)
+            requestFields
+        )
+  pure
+    ( fromObject
+        (Object.insert "request_set" tamperedRequests fields)
+    )
 
 expectEither :: forall a. Either String a -> Aff a
 expectEither = case _ of

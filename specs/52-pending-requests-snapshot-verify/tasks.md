@@ -8,24 +8,24 @@
 
 ## Slice 1 - Forward Requests Response To WASM Verifier
 
-- [ ] T052-S1 Add or refresh a captured real `/tokens/:id/requests` fixture with
+- [X] T052-S1 Add or refresh a captured real `/tokens/:id/requests` fixture with
   non-empty `request_set.entries`.
-- [ ] T052-S1 Add real reactor tests proving the honest fixture returns
+- [X] T052-S1 Add real reactor tests proving the honest fixture returns
   `verify_ok` after independent UTxO-CSMT root anchoring.
-- [ ] T052-S1 Add real reactor tests proving a tampered requests response
+- [X] T052-S1 Add real reactor tests proving a tampered requests response
   returns `verify_error`.
-- [ ] T052-S1 Prove a mismatched independent UTxO-CSMT root fails as not
+- [X] T052-S1 Prove a mismatched independent UTxO-CSMT root fails as not
   anchored before trusted verification succeeds.
-- [ ] T052-S1 Preserve the raw requests response JSON in the client facts-load
+- [X] T052-S1 Preserve the raw requests response JSON in the client facts-load
   path while keeping decoded pending requests available to the app.
-- [ ] T052-S1 Build the `verify_snapshot` envelope from the independently
+- [X] T052-S1 Build the `verify_snapshot` envelope from the independently
   anchored UTxO-CSMT root, raw requests response object, cage config, and token
   id.
-- [ ] T052-S1 Automatically run `verifyEnvelope` after pending requests load and
+- [X] T052-S1 Automatically run `verifyEnvelope` after pending requests load and
   map success to `Verified`, failure to rejected.
-- [ ] T052-S1 Show the Facts tab `Pending requests: Verified` / rejected
+- [X] T052-S1 Show the Facts tab `Pending requests: Verified` / rejected
   indicator.
-- [ ] T052-S1 Run focused tests and `./gate.sh`, then commit the slice.
+- [X] T052-S1 Run focused tests and `./gate.sh`, then commit the slice.
 
 ## Orchestrator Finalization
 
