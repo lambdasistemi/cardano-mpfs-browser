@@ -17,21 +17,23 @@
 
 ## Slice 2 - Forward Lookup Response To WASM Verifier
 
-- [ ] T049-S2 Add a captured real `/tokens/:id/facts/:key` fixture with a
+- [X] T049-S2 Add a captured real `/tokens/:id/facts/:key` fixture with a
   non-empty `fact.mpf_proof`.
-- [ ] T049-S2 Add real reactor tests proving the honest fixture returns
-  `verify_ok`.
-- [ ] T049-S2 Add real reactor tests proving a tampered proof returns
+- [X] T049-S2 Add real reactor tests proving the honest fixture returns
+  `verify_ok` after independent UTxO-CSMT root anchoring.
+- [X] T049-S2 Add real reactor tests proving a tampered proof returns
   `verify_error`.
-- [ ] T049-S2 Preserve the raw fact response JSON in the client lookup path
+- [X] T049-S2 Prove a mismatched independent UTxO-CSMT root fails as not
+  anchored before trusted verification succeeds.
+- [X] T049-S2 Preserve the raw fact response JSON in the client lookup path
   while keeping the value available to the app.
-- [ ] T049-S2 Build the `verify_fact_inclusion` envelope from the selected
-  token facts root, raw response object, and lookup key.
-- [ ] T049-S2 Automatically run `verifyEnvelope` after lookup and map success
+- [X] T049-S2 Build the `verify_fact_inclusion` envelope from the independently
+  anchored UTxO-CSMT root, raw response object, and lookup key.
+- [X] T049-S2 Automatically run `verifyEnvelope` after lookup and map success
   to `Verified`, failure to rejected.
-- [ ] T049-S2 Remove the manual proof-envelope requirement from the looked-up
+- [X] T049-S2 Remove the manual proof-envelope requirement from the looked-up
   fact UI path.
-- [ ] T049-S2 Run focused tests and `./gate.sh`, then commit the slice.
+- [X] T049-S2 Run focused tests and `./gate.sh`, then commit the slice.
 
 ## Orchestrator Finalization
 

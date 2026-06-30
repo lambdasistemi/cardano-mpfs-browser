@@ -1,6 +1,7 @@
 module MPFS.App.View
   ( render
   , secondOracleStatusLabel
+  , verificationStatusLabel
   ) where
 
 import Prelude
@@ -853,7 +854,7 @@ verificationStatusLabel = case _ of
   VerificationNotAsked -> "Not verified"
   VerificationLoading -> "Verifying"
   VerificationVerified -> "Verified"
-  VerificationFailed message -> "Error: " <> message
+  VerificationFailed message -> "Rejected: " <> message
 
 secondOracleStatusLabel :: Remote SecondOracleVerdict -> String
 secondOracleStatusLabel = case _ of

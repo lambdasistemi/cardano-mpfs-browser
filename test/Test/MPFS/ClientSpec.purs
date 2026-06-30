@@ -4,6 +4,8 @@ module Test.MPFS.ClientSpec (spec) where
 
 import Prelude
 
+import Data.Argonaut.Core (stringify)
+import Data.Argonaut.Parser (jsonParser)
 import App as App
 import Data.Array as Array
 import Data.Either (Either(..))
@@ -17,6 +19,7 @@ import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual, fail)
 import MPFS.Client
   ( decodeFactBody
+  , decodeFactRawBody
   , decodeFactsBody
   , decodeTokensBody
   , decodeRequestsBody
@@ -59,6 +62,9 @@ realTokenRootFixturePath = "test/fixtures/real-umpfs-token-root.json"
 
 realRequestsFixturePath :: String
 realRequestsFixturePath = "test/fixtures/real-umpfs-requests.json"
+
+realFactInclusionFixturePath :: String
+realFactInclusionFixturePath = "test/fixtures/real-umpfs-fact-inclusion.json"
 
 baseUrl :: Maybe String -> Aff String
 baseUrl mUrl =
@@ -164,6 +170,21 @@ spec mBaseUrl = describe "MPFS Client" do
       Left err -> fail $ show err
       Right value ->
         value `shouldEqual` "76616c7565"
+
+  it "decodes real GET /tokens/:id/facts/:key response value and preserves raw JSON" do
+    body <- FS.readTextFile UTF8 realFactInclusionFixturePath
+    case decodeFactRawBody body, jsonParser body of
+      Right decoded, Right raw -> do
+        decoded.value `shouldEqual` "3432"
+        decoded.snapshot.chainpoint.slot `shouldEqual` 127139766
+        decoded.snapshot.utxo_root
+          `shouldEqual`
+            "2890b676dbb8714954c07b368bd229cc338dced143e8efd3ca4378b5b59f07bb"
+        stringify decoded.raw `shouldEqual` stringify raw
+      Left err, _ ->
+        fail $ show err
+      _, Left err ->
+        fail err
 
   case mBaseUrl of
     Nothing -> pure unit
