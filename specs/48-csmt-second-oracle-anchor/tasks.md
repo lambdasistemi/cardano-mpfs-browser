@@ -23,6 +23,6 @@
 
 ## Orchestrator Finalization
 
-- [ ] T048-F1 Verify the pair commit, rerun `./gate.sh`, update PR metadata with
+- [X] T048-F1 Verify the pair commit, rerun `./gate.sh`, update PR metadata with
   `Closes #48` and parent `#47`, push the branch, and report
   `READY-FOR-REVIEW <sha>` to the epic via STATUS.md.
