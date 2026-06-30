@@ -6,6 +6,7 @@ module MPFS.Client
   , Client
   , FactSnapshot
   , RawFactResponse
+  , RawTokensResponse
   , decodeFactBody
   , decodeFactRawBody
   , decodeFactsBody
@@ -13,6 +14,7 @@ module MPFS.Client
   , decodeTokenBody
   , decodeTokenRootBody
   , decodeTokensBody
+  , decodeTokensRawBody
   , mkClient
   ) where
 
@@ -52,7 +54,7 @@ import MPFS.Client.Types
   , StatusResponse
   , SubmitBody
   , TokenId
-  , TokensResponse
+  , TokenSetWitness
   , TokenUtxoEntry
   , TokenOutputRef
   , TokenState
@@ -83,6 +85,7 @@ instance Show ClientError where
 type Client =
   { getStatus :: Aff (Either ClientError StatusResponse)
   , getTokens :: Aff (Either ClientError (Array TokenId))
+  , getTokensRaw :: Aff (Either ClientError RawTokensResponse)
   , getToken ::
       TokenId
       -> Aff (Either ClientError TokenState)
@@ -139,6 +142,8 @@ mkClient baseUrl =
       get (baseUrl <> "/status")
   , getTokens:
       getWith decodeTokensBody (baseUrl <> "/tokens")
+  , getTokensRaw:
+      getWith decodeTokensRawBody (baseUrl <> "/tokens")
   , getToken: \tokenId ->
       getWith decodeTokenBody
         (baseUrl <> "/tokens/" <> tokenId)
@@ -243,8 +248,31 @@ decodeBody body = do
 
 decodeTokensBody :: String -> Either ClientError (Array TokenId)
 decodeTokensBody body = do
-  response :: TokensResponse <- decodeBody body
-  traverse tokenIdFromEntry response.tokens.entries
+  response <- decodeTokensRawBody body
+  pure response.tokenIds
+
+type RawTokensResponse =
+  { tokenIds :: Array TokenId
+  , raw :: Json
+  , snapshot :: FactSnapshot
+  }
+
+type TokensResponseWithSnapshot =
+  { tokens :: TokenSetWitness
+  , snapshot :: FactSnapshot
+  }
+
+decodeTokensRawBody :: String -> Either ClientError RawTokensResponse
+decodeTokensRawBody body = do
+  json <- lmap DecodeError (jsonParser body)
+  response :: TokensResponseWithSnapshot <-
+    lmap (show >>> DecodeError) (decodeJson json)
+  tokenIds <- traverse tokenIdFromEntry response.tokens.entries
+  pure
+    { tokenIds
+    , raw: json
+    , snapshot: response.snapshot
+    }
 
 decodeTokenBody :: String -> Either ClientError TokenState
 decodeTokenBody body = do

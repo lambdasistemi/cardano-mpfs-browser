@@ -66,6 +66,7 @@ type AppState =
   , pendingRequests :: Remote (Array PendingRequest)
   , trustedRoot :: Remote TrustedRoot
   , secondOracle :: Remote SecondOracleVerdict
+  , tokenCompleteness :: VerificationStatus
   , requestNowMillis :: Number
   , factLookup :: FactLookup
   , writeStatus :: Write.WriteStatus
@@ -85,6 +86,7 @@ defaultState =
   , pendingRequests: NotAsked
   , trustedRoot: NotAsked
   , secondOracle: NotAsked
+  , tokenCompleteness: VerificationNotAsked
   , requestNowMillis: 0.0
   , factLookup:
       { key: ""

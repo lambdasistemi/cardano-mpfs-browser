@@ -1,6 +1,7 @@
 module MPFS.App.View
   ( render
   , secondOracleStatusLabel
+  , tokenCompletenessStatusLabel
   , verificationStatusLabel
   ) where
 
@@ -157,7 +158,9 @@ tokensPanel
   -> H.ComponentHTML action () m
 tokensPanel actions state =
   panelLayout "Tokens" "Token registry"
-    [ fieldLine "Token list" (remoteStatus state.tokens)
+    [ fieldLine "Load status" (remoteStatus state.tokens)
+    , fieldLine "Token list" (tokenCompletenessStatusLabel state.tokenCompleteness)
+    , tokenCompletenessMessageView state.tokenCompleteness
     , fieldLine "Selected token" (selectedTokenLabel state.selectedToken)
     , tokenRemoteView actions state.selectedToken state.tokens
     , writeStatusView state.writeStatus
@@ -701,6 +704,18 @@ factLookupRemoteView = case _ of
   Success value ->
     fieldLine "Lookup value" value
 
+tokenCompletenessMessageView
+  :: forall action m
+   . VerificationStatus
+  -> H.ComponentHTML action () m
+tokenCompletenessMessageView = case _ of
+  VerificationFailed message ->
+    HH.p
+      [ HP.class_ (HH.ClassName "error-state") ]
+      [ HH.text ("Token list incomplete: " <> message) ]
+  _ ->
+    HH.text ""
+
 requestRow
   :: forall action m
    . AppActions action
@@ -855,6 +870,13 @@ verificationStatusLabel = case _ of
   VerificationLoading -> "Verifying"
   VerificationVerified -> "Verified"
   VerificationFailed message -> "Rejected: " <> message
+
+tokenCompletenessStatusLabel :: VerificationStatus -> String
+tokenCompletenessStatusLabel = case _ of
+  VerificationNotAsked -> "not checked"
+  VerificationLoading -> "checking"
+  VerificationVerified -> "complete"
+  VerificationFailed _ -> "incomplete"
 
 secondOracleStatusLabel :: Remote SecondOracleVerdict -> String
 secondOracleStatusLabel = case _ of
