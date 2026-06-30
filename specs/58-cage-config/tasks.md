@@ -8,18 +8,18 @@
 
 ## Slice 1 - Substitute Bundled Cage Config
 
-- [ ] T058-S1 Add a regression proof that the built bundle does not contain
+- [X] T058-S1 Add a regression proof that the built bundle does not contain
   `__MPFS_` cage-config placeholders.
-- [ ] T058-S1 Derive expected `cageScriptBytes`, `requestScriptBytes`, and
+- [X] T058-S1 Derive expected `cageScriptBytes`, `requestScriptBytes`, and
   `cfgScriptHash` from `.#cage-blueprint`.
-- [ ] T058-S1 Assert all bundled cage-config fields are valid hex and not
+- [X] T058-S1 Assert all bundled cage-config fields are valid hex and not
   placeholders.
-- [ ] T058-S1 Substitute `state.state.mint.compiledCode` into
+- [X] T058-S1 Substitute `state.state.mint.compiledCode` into
   `cageScriptBytes`.
-- [ ] T058-S1 Substitute `state.state.mint.hash` into `cfgScriptHash`.
-- [ ] T058-S1 Substitute `request.request.spend.compiledCode` into
+- [X] T058-S1 Substitute `state.state.mint.hash` into `cfgScriptHash`.
+- [X] T058-S1 Substitute `request.request.spend.compiledCode` into
   `requestScriptBytes`.
-- [ ] T058-S1 Run focused commands and `./gate.sh`, then commit the slice.
+- [X] T058-S1 Run focused commands and `./gate.sh`, then commit the slice.
 
 ## Orchestrator Finalization
 
