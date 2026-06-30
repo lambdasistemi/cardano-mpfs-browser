@@ -68,6 +68,7 @@ type AppState =
   , secondOracle :: Remote SecondOracleVerdict
   , tokenCompleteness :: VerificationStatus
   , factsSetVerification :: VerificationStatus
+  , pendingRequestsVerification :: VerificationStatus
   , requestNowMillis :: Number
   , factLookup :: FactLookup
   , writeStatus :: Write.WriteStatus
@@ -89,6 +90,7 @@ defaultState =
   , secondOracle: NotAsked
   , tokenCompleteness: VerificationNotAsked
   , factsSetVerification: VerificationNotAsked
+  , pendingRequestsVerification: VerificationNotAsked
   , requestNowMillis: 0.0
   , factLookup:
       { key: ""

@@ -247,19 +247,26 @@ handleAction = case _ of
           client = Client.mkClient loadingState.baseUrl
           clientToken = fromAppTokenId token
         tokenStateResult <- liftAff (client.getToken clientToken)
-        requestsResult <- liftAff (client.getTokenRequests clientToken)
+        requestsResult <- liftAff (client.getTokenRequestsRaw clientToken)
         factsResult <- liftAff (client.getTokenFactsRaw clientToken)
         case tokenStateResult, requestsResult, factsResult of
-          Right tokenState, Right requests, Right factsResponse -> do
+          Right tokenState, Right requestsResponse, Right factsResponse -> do
             requestNowMillis <- currentTimeMillis
-            rootResult <- liftAff do
-              rootsResult <- SecondOracleClient.defaultClient.getMerkleRoots
-              pure case rootsResult of
+            rootsResult <- liftAff SecondOracleClient.defaultClient.getMerkleRoots
+            let
+              factsRootResult = case rootsResult of
                 Left error ->
                   Left (show error)
                 Right roots ->
                   Verification.anchorFactsSnapshotRoot roots factsResponse
-            verificationResult <- case rootResult of
+
+              requestsRootResult = case rootsResult of
+                Left error ->
+                  Left (show error)
+                Right roots ->
+                  Verification.anchorRequestsSnapshotRoot roots requestsResponse
+
+            factsVerificationResult <- case factsRootResult of
               Left message ->
                 pure (Left message)
               Right trustedRoot ->
@@ -268,13 +275,24 @@ handleAction = case _ of
                       trustedRoot
                       factsResponse.raw
                   )
-            case rootResult of
+            pendingRequestsVerificationResult <- case requestsRootResult of
+              Left message ->
+                pure (Left message)
+              Right trustedRoot ->
+                liftAff
+                  ( Verification.verifyRequestsSnapshot
+                      trustedRoot
+                      requestsResponse.raw
+                      AppConfig.defaultCageConfig
+                      clientToken
+                  )
+            case factsRootResult of
               Left message ->
                 H.modify_ \current ->
                   ( Facts.finishFactsLoadAt
                       requestNowMillis
                       tokenState
-                      requests
+                      requestsResponse.requests
                       factsResponse.facts
                       current
                   )
@@ -284,11 +302,15 @@ handleAction = case _ of
                   ( Facts.finishFactsLoadWithRootAt
                       requestNowMillis
                       tokenState
-                      requests
+                      requestsResponse.requests
                       factsResponse.facts
                       (TrustedRoot trustedRoot)
                   )
-            H.modify_ (Facts.finishFactsSetVerification verificationResult)
+            H.modify_ (Facts.finishFactsSetVerification factsVerificationResult)
+            H.modify_
+              ( Facts.finishPendingRequestsVerification
+                  pendingRequestsVerificationResult
+              )
             runSecondOracleCheck tokenState.root
           Left error, _, _ ->
             H.modify_ (Facts.failFactsLoad (show error))

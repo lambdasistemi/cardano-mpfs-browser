@@ -25,6 +25,7 @@ import MPFS.Client
   , decodeTokensBody
   , decodeTokensRawBody
   , decodeRequestsBody
+  , decodeRequestsRawBody
   , decodeTokenBody
   , decodeTokenRootBody
   , mkClient
@@ -212,6 +213,21 @@ spec mBaseUrl = describe "MPFS Client" do
             first.submitted_at `shouldEqual` 1781203626691.0
             first.request_id `shouldEqual`
               "14850e4aa5a87674d917161a00c0c250a6ebd99dc79987a21c5a024c2cfac42a#0"
+
+  it "preserves raw real GET /tokens/:id/requests JSON while decoding pending requests" do
+    body <- FS.readTextFile UTF8 realRequestsFixturePath
+    case decodeRequestsRawBody body, jsonParser body of
+      Right decoded, Right raw -> do
+        Array.length decoded.requests `shouldEqual` 6
+        decoded.snapshot.chainpoint.slot `shouldEqual` 127146261
+        decoded.snapshot.utxo_root
+          `shouldEqual`
+            "68e0677e595d5e0f0f9817eaefecf0341f0ccea7f8b28d6d125512b292970d22"
+        stringify decoded.raw `shouldEqual` stringify raw
+      Left err, _ ->
+        fail $ show err
+      _, Left err ->
+        fail err
 
   it "decodes GET /tokens/:id/facts/:key response value" do
     case decodeFactBody factResponseBody of
