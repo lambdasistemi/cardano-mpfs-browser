@@ -3,7 +3,7 @@ module Test.MPFS.ProofSpec (spec) where
 
 import Prelude
 
-import Data.Argonaut.Core (Json, fromObject, fromString, stringify)
+import Data.Argonaut.Core (Json, fromArray, fromObject, fromString, stringify)
 import Data.Argonaut.Decode (decodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 import Data.Argonaut.Parser (jsonParser)
@@ -17,8 +17,10 @@ import Foreign.Object as Object
 import MPFS.App.Verification as Verification
 import MPFS.Client
   ( RawFactResponse
+  , RawFactsResponse
   , RawTokensResponse
   , decodeFactRawBody
+  , decodeFactsRawBody
   , decodeTokensRawBody
   )
 import MPFS.SecondOracle.Types (MerkleRootEntry)
@@ -168,6 +170,53 @@ spec = describe "WASM Verify Reactor Verification" do
       `shouldEqual`
         Left "Token list snapshot UTxO root is not anchored by the second oracle"
 
+  it "keeps a real facts-set fixture with non-empty facts" do
+    facts <- readRawFactsFixture
+
+    Array.null facts.facts `shouldEqual` false
+    facts.snapshot.chainpoint.slot `shouldEqual` 127144417
+    facts.snapshot.utxo_root `shouldEqual` factsFixtureUtxoRoot
+
+  it "builds a verify_facts envelope with the raw facts fixture and verifies it" do
+    facts <- readRawFactsFixture
+    let
+      anchoredRoot =
+        Verification.anchorFactsSnapshotRoot [ matchingFactsMerkleRoot ] facts
+
+    anchoredRoot `shouldEqual` Right factsFixtureUtxoRoot
+
+    case anchoredRoot of
+      Left err ->
+        fail err
+      Right trustedRoot -> do
+        let
+          envelope =
+            Verification.buildFactsVerificationEnvelope trustedRoot facts.raw
+
+        assertFactsEnvelope envelope trustedRoot facts.raw
+
+        verdict <- verifyEnvelope envelope
+        verdict `shouldEqual` Right unit
+
+  it "rejects the real facts-set fixture after tampering a fact value" do
+    facts <- readRawFactsFixture
+    tamperedFacts <- case tamperFactsValue facts.raw of
+      Left err -> throwError $ error err
+      Right value -> pure value
+
+    verdict <-
+      verifyEnvelope
+        (Verification.buildFactsVerificationEnvelope factsFixtureUtxoRoot tamperedFacts)
+    case verdict of
+      Left _ -> pure unit
+      Right _ -> fail "expected tampered facts set to fail verification"
+
+  it "rejects a facts response whose snapshot root is not independently anchored" do
+    facts <- readRawFactsFixture
+    Verification.anchorFactsSnapshotRoot [ mismatchedFactsMerkleRoot ] facts
+      `shouldEqual`
+        Left "Facts snapshot UTxO root is not anchored by the second oracle"
+
 unknownOpEnvelope :: String
 unknownOpEnvelope =
   "{\"op\":\"frobnicate\",\"trusted_root\":\"0000000000000000000000000000000000000000000000000000000000000000\",\"facts\":{}}"
@@ -182,6 +231,9 @@ realFactInclusionFixturePath = "test/fixtures/real-umpfs-fact-inclusion.json"
 realTokensFixturePath :: String
 realTokensFixturePath = "test/fixtures/real-umpfs-tokens.json"
 
+realFactsFixturePath :: String
+realFactsFixturePath = "test/fixtures/real-umpfs-facts.json"
+
 fixtureUtxoRoot :: String
 fixtureUtxoRoot =
   "2890b676dbb8714954c07b368bd229cc338dced143e8efd3ca4378b5b59f07bb"
@@ -189,6 +241,10 @@ fixtureUtxoRoot =
 tokensFixtureUtxoRoot :: String
 tokensFixtureUtxoRoot =
   "20d78f11f7b0b32ac4e5608e92310bded182d43ed9c52eab35f75451c514cf9f"
+
+factsFixtureUtxoRoot :: String
+factsFixtureUtxoRoot =
+  "db8b966a98a6db0a8a6d043016dd5abee38d034827ebd458882387f8757490fe"
 
 mismatchedUtxoRoot :: String
 mismatchedUtxoRoot =
@@ -244,6 +300,13 @@ readRawTokensFixture = do
     Left err -> throwError $ error (show err)
     Right tokens -> pure tokens
 
+readRawFactsFixture :: Aff RawFactsResponse
+readRawFactsFixture = do
+  body <- FS.readTextFile UTF8 realFactsFixturePath
+  case decodeFactsRawBody body of
+    Left err -> throwError $ error (show err)
+    Right facts -> pure facts
+
 matchingMerkleRoot :: MerkleRootEntry
 matchingMerkleRoot =
   { slotNo: 127139766
@@ -265,6 +328,17 @@ matchingTokensMerkleRoot =
 mismatchedTokensMerkleRoot :: MerkleRootEntry
 mismatchedTokensMerkleRoot =
   matchingTokensMerkleRoot { merkleRoot = mismatchedUtxoRoot }
+
+matchingFactsMerkleRoot :: MerkleRootEntry
+matchingFactsMerkleRoot =
+  { slotNo: 127144417
+  , blockHash: "d42df9753a8342112482dc12f1ce46446ffa73887a3213ca08526b55998d49a5"
+  , merkleRoot: factsFixtureUtxoRoot
+  }
+
+mismatchedFactsMerkleRoot :: MerkleRootEntry
+mismatchedFactsMerkleRoot =
+  matchingFactsMerkleRoot { merkleRoot = mismatchedUtxoRoot }
 
 assertFactInclusionEnvelope :: String -> String -> Json -> Aff Unit
 assertFactInclusionEnvelope envelope trustedRoot facts = case jsonParser envelope of
@@ -314,6 +388,24 @@ assertTokensEnvelope envelope trustedRoot facts = case jsonParser envelope of
                 `shouldEqual`
                   Right "testnet"
 
+assertFactsEnvelope :: String -> String -> Json -> Aff Unit
+assertFactsEnvelope envelope trustedRoot facts = case jsonParser envelope of
+  Left err ->
+    fail err
+  Right json -> case jsonObjectFields json of
+    Left err ->
+      fail err
+    Right fields -> do
+      jsonStringField "op" "op" fields `shouldEqual` Right "verify_facts"
+      jsonStringField "trusted_root" "trusted_root" fields
+        `shouldEqual`
+          Right trustedRoot
+      case lookupJson "facts" fields of
+        Left err ->
+          fail err
+        Right envelopeFacts ->
+          stringify envelopeFacts `shouldEqual` stringify facts
+
 tamperFactProof :: Json -> Either String Json
 tamperFactProof facts = do
   fields <- jsonObjectFields facts
@@ -353,6 +445,30 @@ tamperTokensProof facts = do
     ( fromObject
         (Object.insert "tokens" tamperedTokens fields)
     )
+
+tamperFactsValue :: Json -> Either String Json
+tamperFactsValue facts = do
+  fields <- jsonObjectFields facts
+  factsJson <- lookupJson "facts" fields
+  entries <-
+    lmap show (decodeJson factsJson :: Either JsonDecodeError (Array Json))
+  case Array.uncons entries of
+    Nothing ->
+      Left "expected non-empty facts"
+    Just { head, tail } -> do
+      factFields <- jsonObjectFields head
+      value <- jsonStringField "facts[0].value" "value" factFields
+      let
+        corruptedValue =
+          if value == "00" then "01"
+          else "00"
+        tamperedHead =
+          fromObject
+            (Object.insert "value" (fromString corruptedValue) factFields)
+      pure
+        ( fromObject
+            (Object.insert "facts" (fromArray ([ tamperedHead ] <> tail)) fields)
+        )
 
 expectEither :: forall a. Either String a -> Aff a
 expectEither = case _ of

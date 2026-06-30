@@ -37,6 +37,7 @@ import MPFS.Types
   , Key(..)
   , RequestId
   , TokenId(..)
+  , TrustedRoot(..)
   , UnsignedTxCbor(..)
   , Value(..)
   , WalletAddr(..)
@@ -247,27 +248,53 @@ handleAction = case _ of
           clientToken = fromAppTokenId token
         tokenStateResult <- liftAff (client.getToken clientToken)
         requestsResult <- liftAff (client.getTokenRequests clientToken)
-        factsResult <- liftAff (client.getTokenFacts clientToken)
-        trustedRootResult <- liftAff client.getTrustedRoot
-        case tokenStateResult, requestsResult, factsResult, trustedRootResult of
-          Right tokenState, Right requests, Right facts, Right trustedRoot -> do
+        factsResult <- liftAff (client.getTokenFactsRaw clientToken)
+        case tokenStateResult, requestsResult, factsResult of
+          Right tokenState, Right requests, Right factsResponse -> do
             requestNowMillis <- currentTimeMillis
-            H.modify_
-              ( Facts.finishFactsLoadWithRootAt
-                  requestNowMillis
-                  tokenState
-                  requests
-                  facts
-                  trustedRoot
-              )
+            rootResult <- liftAff do
+              rootsResult <- SecondOracleClient.defaultClient.getMerkleRoots
+              pure case rootsResult of
+                Left error ->
+                  Left (show error)
+                Right roots ->
+                  Verification.anchorFactsSnapshotRoot roots factsResponse
+            verificationResult <- case rootResult of
+              Left message ->
+                pure (Left message)
+              Right trustedRoot ->
+                liftAff
+                  ( Verification.verifyFactsSet
+                      trustedRoot
+                      factsResponse.raw
+                  )
+            case rootResult of
+              Left message ->
+                H.modify_ \current ->
+                  ( Facts.finishFactsLoadAt
+                      requestNowMillis
+                      tokenState
+                      requests
+                      factsResponse.facts
+                      current
+                  )
+                    { trustedRoot = Failure message }
+              Right trustedRoot ->
+                H.modify_
+                  ( Facts.finishFactsLoadWithRootAt
+                      requestNowMillis
+                      tokenState
+                      requests
+                      factsResponse.facts
+                      (TrustedRoot trustedRoot)
+                  )
+            H.modify_ (Facts.finishFactsSetVerification verificationResult)
             runSecondOracleCheck tokenState.root
-          Left error, _, _, _ ->
+          Left error, _, _ ->
             H.modify_ (Facts.failFactsLoad (show error))
-          _, Left error, _, _ ->
+          _, Left error, _ ->
             H.modify_ (Facts.failFactsLoad (show error))
-          _, _, Left error, _ ->
-            H.modify_ (Facts.failFactsLoad (show error))
-          _, _, _, Left error ->
+          _, _, Left error ->
             H.modify_ (Facts.failFactsLoad (show error))
 
   RegisterToken ->
