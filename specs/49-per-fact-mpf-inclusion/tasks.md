@@ -8,12 +8,12 @@
 
 ## Slice 1 - Repin Offchain Verify Reactor
 
-- [ ] T049-S1 Run `nix flake lock --update-input cardano-mpfs-offchain`.
-- [ ] T049-S1 Confirm the offchain locked revision is `82dc3b9`.
-- [ ] T049-S1 Confirm the lock diff is limited to `cardano-mpfs-offchain` and
+- [X] T049-S1 Run `nix flake lock --update-input cardano-mpfs-offchain`.
+- [X] T049-S1 Confirm the offchain locked revision is `82dc3b9`.
+- [X] T049-S1 Confirm the lock diff is limited to `cardano-mpfs-offchain` and
   its follows.
-- [ ] T049-S1 Build `.#wasm-mpfs-verify` and run the ticket gate if feasible.
-- [ ] T049-S1 Commit the repin slice with the required `Tasks:` trailer.
+- [X] T049-S1 Build `.#wasm-mpfs-verify` and run the ticket gate if feasible.
+- [X] T049-S1 Commit the repin slice with the required `Tasks:` trailer.
 
 ## Slice 2 - Forward Lookup Response To WASM Verifier
 

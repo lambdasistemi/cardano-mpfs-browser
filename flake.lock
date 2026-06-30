@@ -717,11 +717,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782556469,
-        "narHash": "sha256-UHLCb3fQM3OK954gFcNfU2pvJRV59a3mOyKpN6gw4KY=",
+        "lastModified": 1782814863,
+        "narHash": "sha256-oeEM6KJGXW5Oqzktg60WUb6pT6dNaPjbpNVCAJqZRtU=",
         "owner": "lambdasistemi",
         "repo": "cardano-mpfs-offchain",
-        "rev": "a20656ecb2050c5685c87e18376ac6cad585da43",
+        "rev": "82dc3b93c08374b068f3351a85e5e7311474728e",
         "type": "github"
       },
       "original": {
