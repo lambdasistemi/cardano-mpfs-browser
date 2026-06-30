@@ -26,6 +26,7 @@ import MPFS.App.Verification
   , finishVerification
   , startVerification
   )
+import MPFS.App.View as View
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
 import MPFS.SecondOracle.Types (SecondOracleVerdict(..))
 import MPFS.Types (TokenId(..), TrustedRoot(..))
@@ -142,6 +143,24 @@ spec = describe "MPFS App Facts" do
     failed.factLookup.verification
       `shouldEqual`
         VerificationFailed "root mismatch"
+
+  it "keeps looked-up values while automatic verification resolves" do
+    let
+      lookedUp = finishFactLookup "3432" (startFactLookup "70616f6c696e6f" defaultState)
+      verified = finishVerification (Right unit) lookedUp
+      rejected = finishVerification (Left "proof mismatch") lookedUp
+
+    verified.factLookup.value `shouldEqual` Success "3432"
+    verified.factLookup.verification `shouldEqual` VerificationVerified
+    rejected.factLookup.value `shouldEqual` Success "3432"
+    rejected.factLookup.verification
+      `shouldEqual`
+        VerificationFailed "proof mismatch"
+
+  it "renders verifier failures as rejected verdicts" do
+    View.verificationStatusLabel (VerificationFailed "proof mismatch")
+      `shouldEqual`
+        "Rejected: proof mismatch"
 
   it "tracks second oracle loading, verdicts, and local unavailable messages" do
     let

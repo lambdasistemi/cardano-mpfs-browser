@@ -4,7 +4,10 @@
 module MPFS.Client
   ( ClientError(..)
   , Client
+  , FactSnapshot
+  , RawFactResponse
   , decodeFactBody
+  , decodeFactRawBody
   , decodeFactsBody
   , decodeRequestsBody
   , decodeTokenBody
@@ -38,7 +41,6 @@ import MPFS.Client.Types
   ( BootBody
   , DeleteBody
   , EndBody
-  , FactResponse
   , FactEntry
   , FactsResponse
   , Hex
@@ -89,6 +91,10 @@ type Client =
       TokenId
       -> Hex
       -> Aff (Either ClientError Hex)
+  , getTokenFactRaw ::
+      TokenId
+      -> Hex
+      -> Aff (Either ClientError RawFactResponse)
   , getTokenFacts ::
       TokenId
       -> Aff (Either ClientError (Array FactEntry))
@@ -143,6 +149,12 @@ mkClient baseUrl =
         )
   , getTokenFact: \tokenId key ->
       getWith decodeFactBody
+        ( baseUrl <> "/tokens/" <> tokenId
+            <> "/facts/"
+            <> key
+        )
+  , getTokenFactRaw: \tokenId key ->
+      getWith decodeFactRawBody
         ( baseUrl <> "/tokens/" <> tokenId
             <> "/facts/"
             <> key
@@ -352,8 +364,35 @@ decodeRequestsBody body = do
 
 decodeFactBody :: String -> Either ClientError Hex
 decodeFactBody body = do
-  response :: FactResponse <- decodeBody body
+  response <- decodeFactRawBody body
   pure response.value
+
+type FactSnapshot =
+  { chainpoint :: { slot :: Int }
+  , utxo_root :: Hex
+  }
+
+type RawFactResponse =
+  { value :: Hex
+  , raw :: Json
+  , snapshot :: FactSnapshot
+  }
+
+type FactResponseWithSnapshot =
+  { value :: Hex
+  , snapshot :: FactSnapshot
+  }
+
+decodeFactRawBody :: String -> Either ClientError RawFactResponse
+decodeFactRawBody body = do
+  json <- lmap DecodeError (jsonParser body)
+  response :: FactResponseWithSnapshot <-
+    lmap (show >>> DecodeError) (decodeJson json)
+  pure
+    { value: response.value
+    , raw: json
+    , snapshot: response.snapshot
+    }
 
 decodeTrustedRootBody :: String -> Either ClientError TrustedRoot
 decodeTrustedRootBody body = do

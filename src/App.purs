@@ -366,18 +366,41 @@ handleAction = case _ of
       Just _ | state.factLookup.key == "" ->
         H.modify_ (Facts.failFactLookup "Enter a fact key.")
       Just token -> do
+        let
+          client = Client.mkClient state.baseUrl
+          clientToken = fromAppTokenId token
+          lookupKey = state.factLookup.key
         H.modify_ (Facts.startFactLookup state.factLookup.key)
         result <-
-          liftAff
-            ( (Client.mkClient state.baseUrl).getTokenFact
-                (fromAppTokenId token)
-                state.factLookup.key
-            )
+          liftAff (client.getTokenFactRaw clientToken lookupKey)
         case result of
           Left error ->
             H.modify_ (Facts.failFactLookup (show error))
-          Right value ->
-            H.modify_ (Facts.finishFactLookup value)
+          Right fact -> do
+            H.modify_ (Facts.finishFactLookup fact.value)
+            H.modify_ Verification.startVerification
+            rootResult <- liftAff do
+              rootsResult <- SecondOracleClient.defaultClient.getMerkleRoots
+              pure case rootsResult of
+                Left error ->
+                  Left (show error)
+                Right roots ->
+                  Verification.anchorFactSnapshotRoot roots fact
+            case rootResult of
+              Left message ->
+                H.modify_
+                  ( Verification.finishVerification
+                      (Left message)
+                  )
+              Right trustedRoot -> do
+                verificationResult <-
+                  liftAff
+                    ( Verification.verifyFactInclusion
+                        trustedRoot
+                        fact.raw
+                        lookupKey
+                    )
+                H.modify_ (Verification.finishVerification verificationResult)
 
   UpdateFactProofEnvelope envelope ->
     H.modify_ (Facts.setFactProofEnvelope envelope)

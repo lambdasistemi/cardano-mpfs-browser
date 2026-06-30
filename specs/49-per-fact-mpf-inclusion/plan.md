@@ -22,7 +22,9 @@ Relevant modules:
 
 The implementation must consume `MPFS.Reactor.verifyEnvelope` as-is. The only
 envelope construction done in PureScript is JSON packaging around raw data:
-`op`, `trusted_root`, `facts`, and `key`.
+`op`, `trusted_root`, `facts`, and `key`. Per A-001, `trusted_root` is the
+independently anchored UTxO-CSMT root at the fact response snapshot slot, not
+the selected token facts root.
 
 ## Slice 1 - Repin Offchain Verify Reactor
 
@@ -76,24 +78,30 @@ Expected approach:
 
 1. RED: add a captured real fixture from `umpfs.plutimus.com`, using token
    `98207724b0ea59b96c0eba16cb09e91da10f8bdc54ad36da4a2e40104a59a32b`, key
-   `70616f6c696e6f`, and facts root
-   `07e7e0b25afcd0684d5c086d173491975ee1f3296c89cd50ed28d963349a4461`.
-   The fixture must contain a non-empty `fact.mpf_proof`.
+   `70616f6c696e6f`. The fixture must contain a non-empty `fact.mpf_proof`,
+   `snapshot.chainpoint.slot`, and `snapshot.utxo_root`.
 2. RED: prove `verifyEnvelope` accepts the honest
-   `verify_fact_inclusion` envelope and rejects the same raw response after
-   tampering `fact.mpf_proof`.
+   `verify_fact_inclusion` envelope when `trusted_root` is the independently
+   anchored UTxO-CSMT root for the fixture slot, and rejects the same raw
+   response after tampering `fact.mpf_proof`.
 3. RED: add focused client/state tests showing the lookup path preserves both
    the raw JSON response and the value, and that successful lookup can complete
    with a verification verdict.
 4. GREEN: add the raw fact fetch/decode path in `MPFS.Client` without removing
    compatibility for value decoding.
-5. GREEN: in `LookupFact`, obtain the selected token facts root from the
-   current token state, or fetch `GET /tokens/:id` if the state has not been
-   loaded, then build and submit the `verify_fact_inclusion` envelope.
-6. GREEN: update the UI so lookup automatically reports `Verified` or rejected
+5. GREEN: in `LookupFact`, fetch the independent UTxO-CSMT merkle roots via
+   existing `MPFS.SecondOracle.Client.getMerkleRoots`, find the root at
+   `facts.snapshot.chainpoint.slot`, and require it to equal the raw response's
+   `snapshot.utxo_root`.
+6. GREEN: only after that independent root check passes, build and submit the
+   `verify_fact_inclusion` envelope using the independently anchored UTxO-CSMT
+   root as `trusted_root`.
+7. GREEN: update the UI so lookup automatically reports `Verified` or rejected
    after the lookup; do not require a manual proof envelope for the normal fact
    lookup path.
-7. Run focused tests, then `./gate.sh`.
+8. GREEN: prove root mismatch fails as not anchored before a trusted success can
+   be reported.
+9. Run focused tests, then `./gate.sh`.
 
 Owned files:
 
