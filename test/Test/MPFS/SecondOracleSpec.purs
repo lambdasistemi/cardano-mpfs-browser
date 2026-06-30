@@ -9,6 +9,7 @@ import Data.Argonaut.Decode.Class (decodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
+import Data.String.CodeUnits as String
 import Effect (Effect)
 import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
@@ -18,6 +19,7 @@ import MPFS.SecondOracle
   , verdictFromFixture
   )
 import MPFS.SecondOracle.Client as OracleClient
+import MPFS.SecondOracle.CsmtVerify as CsmtVerify
 import MPFS.SecondOracle.Types
   ( MerkleRootEntry
   , OutputRef
@@ -81,7 +83,7 @@ spec = describe "second-oracle verdict" do
           , attestedFactsRoot: fixture.expectedFactsRoot
           }
 
-  it "reports verifier false before trusting the datum" do
+  it "reports verifier false as a mismatch" do
     fixture <- readFixture
     verdictFromFixture
       { expectedFactsRoot: fixture.expectedFactsRoot
@@ -90,9 +92,11 @@ spec = describe "second-oracle verdict" do
       , inclusionVerified: false
       }
       `shouldEqual`
-        SecondOracleVerifierFalse
+        SecondOracleMismatch
           { chainPoint: chainPoint fixture
           , merkleRoot: fixture.merkleRoot
+          , expectedFactsRoot: fixture.expectedFactsRoot
+          , attestedFactsRoot: fixture.expectedFactsRoot
           }
 
   it "reports a missing chainpoint root" do
@@ -131,6 +135,65 @@ spec = describe "second-oracle verdict" do
           { chainPoint: chainPoint fixture
           , merkleRoot: fixture.merkleRoot
           , factsRoot: fixture.expectedFactsRoot
+          }
+
+  it "verifies a real MPFS token fixture through checkOutputRef and the real verifier" do
+    fixture <- readFixture
+    verdict <- checkOutputRef
+      (realVerifierDeps fixture)
+      (outputRef fixture)
+      fixture.expectedFactsRoot
+    verdict
+      `shouldEqual`
+        SecondOracleVerified
+          { chainPoint: chainPoint fixture
+          , merkleRoot: fixture.merkleRoot
+          , factsRoot: fixture.expectedFactsRoot
+          }
+
+  it "reports mismatch for a tampered proof through checkOutputRef and the real verifier" do
+    fixture <- readFixture
+    verdict <- checkOutputRef
+      (tamperedProofDeps fixture)
+      (outputRef fixture)
+      fixture.expectedFactsRoot
+    verdict
+      `shouldEqual`
+        SecondOracleMismatch
+          { chainPoint: chainPoint fixture
+          , merkleRoot: fixture.merkleRoot
+          , expectedFactsRoot: fixture.expectedFactsRoot
+          , attestedFactsRoot: fixture.expectedFactsRoot
+          }
+
+  it "reports mismatch for a wrong merkle root through checkOutputRef and the real verifier" do
+    fixture <- readFixture
+    verdict <- checkOutputRef
+      (wrongMerkleRootDeps fixture)
+      (outputRef fixture)
+      fixture.expectedFactsRoot
+    verdict
+      `shouldEqual`
+        SecondOracleMismatch
+          { chainPoint: chainPoint fixture
+          , merkleRoot: wrongMerkleRoot
+          , expectedFactsRoot: fixture.expectedFactsRoot
+          , attestedFactsRoot: fixture.expectedFactsRoot
+          }
+
+  it "reports mismatch for a wrong expected datum root through checkOutputRef and the real verifier" do
+    fixture <- readFixture
+    verdict <- checkOutputRef
+      (realVerifierDeps fixture)
+      (outputRef fixture)
+      wrongFactsRoot
+    verdict
+      `shouldEqual`
+        SecondOracleMismatch
+          { chainPoint: chainPoint fixture
+          , merkleRoot: fixture.merkleRoot
+          , expectedFactsRoot: wrongFactsRoot
+          , attestedFactsRoot: fixture.expectedFactsRoot
           }
 
   it "selects the merkle root by the proof chainpoint" do
@@ -266,9 +329,44 @@ rootsUnavailableDeps fixture =
   , verifyInclusion: \_ _ -> pure true
   }
 
+realVerifierDeps :: Fixture -> SecondOracleDeps
+realVerifierDeps fixture =
+  { getMerkleRoots: pure (Right [ rootEntry fixture ])
+  , getProof: \_ -> pure (Right (proofResponse fixture))
+  , verifyInclusion: CsmtVerify.verifyInclusion
+  }
+
+tamperedProofDeps :: Fixture -> SecondOracleDeps
+tamperedProofDeps fixture =
+  (realVerifierDeps fixture)
+    { getProof = \_ ->
+        pure (Right ((proofResponse fixture) { proof = tamperProof fixture.proof }))
+    }
+
+wrongMerkleRootDeps :: Fixture -> SecondOracleDeps
+wrongMerkleRootDeps fixture =
+  (realVerifierDeps fixture)
+    { getMerkleRoots =
+        pure (Right [ (rootEntry fixture) { merkleRoot = wrongMerkleRoot } ])
+    }
+
 wrongFactsRoot :: String
 wrongFactsRoot =
   "0000000000000000000000000000000000000000000000000000000000000000"
+
+wrongMerkleRoot :: String
+wrongMerkleRoot =
+  "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+
+tamperProof :: String -> String
+tamperProof proofHex =
+  let
+    finalOffset = String.length proofHex - 1
+    replacement =
+      if String.drop finalOffset proofHex == "0" then "1"
+      else "0"
+  in
+    String.take finalOffset proofHex <> replacement
 
 decoyBeforeRootEntry :: Fixture -> MerkleRootEntry
 decoyBeforeRootEntry fixture =

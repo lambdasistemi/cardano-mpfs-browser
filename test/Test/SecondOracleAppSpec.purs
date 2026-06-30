@@ -53,7 +53,6 @@ spec = describe "MPFS App Second Oracle UI" do
       , Failure "Output reference unavailable"
       , Success verifiedVerdict
       , Success mismatchVerdict
-      , Success verifierFalseVerdict
       , Success missingRootVerdict
       , Success malformedDatumVerdict
       , Success oracleUnavailableVerdict
@@ -64,7 +63,6 @@ spec = describe "MPFS App Second Oracle UI" do
         , "Output reference unavailable"
         , "Verified"
         , "Mismatch"
-        , "Verifier rejected inclusion proof"
         , "Merkle root missing"
         , "Malformed datum: not MPFS datum"
         , "Oracle unavailable: offline"
@@ -85,13 +83,6 @@ mismatchVerdict =
     , merkleRoot: "merkle-root"
     , expectedFactsRoot: "expected-root"
     , attestedFactsRoot: "attested-root"
-    }
-
-verifierFalseVerdict :: SecondOracleVerdict
-verifierFalseVerdict =
-  SecondOracleVerifierFalse
-    { chainPoint
-    , merkleRoot: "merkle-root"
     }
 
 missingRootVerdict :: SecondOracleVerdict

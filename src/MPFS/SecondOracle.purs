@@ -105,27 +105,24 @@ verdictWithRoot expectedFactsRoot merkleRootEntry proofResponse inclusionVerifie
     chainPoint = proofChainPoint proofResponse
     merkleRoot = merkleRootEntry.merkleRoot
   in
-    if not inclusionVerified then
-      SecondOracleVerifierFalse { chainPoint, merkleRoot }
-    else
-      case extractAttestedFactsRoot proofResponse.txOut of
-        Nothing ->
-          SecondOracleMalformedDatum
-            "attested txOut does not contain an MPFS state datum"
-        Just attestedFactsRoot ->
-          if attestedFactsRoot == expectedFactsRoot then
-            SecondOracleVerified
-              { chainPoint
-              , merkleRoot
-              , factsRoot: expectedFactsRoot
-              }
-          else
-            SecondOracleMismatch
-              { chainPoint
-              , merkleRoot
-              , expectedFactsRoot
-              , attestedFactsRoot
-              }
+    case extractAttestedFactsRoot proofResponse.txOut of
+      Nothing ->
+        SecondOracleMalformedDatum
+          "attested txOut does not contain an MPFS state datum"
+      Just attestedFactsRoot ->
+        if inclusionVerified && attestedFactsRoot == expectedFactsRoot then
+          SecondOracleVerified
+            { chainPoint
+            , merkleRoot
+            , factsRoot: expectedFactsRoot
+            }
+        else
+          SecondOracleMismatch
+            { chainPoint
+            , merkleRoot
+            , expectedFactsRoot
+            , attestedFactsRoot
+            }
 
 findMatchingRoot
   :: ProofResponse -> Array MerkleRootEntry -> Maybe MerkleRootEntry
