@@ -1,25 +1,30 @@
 module MPFS.App.Verification
   ( VerificationStatus(..)
   , anchorFactSnapshotRoot
+  , anchorTokenSnapshotRoot
   , buildFactInclusionEnvelope
+  , buildTokensVerificationEnvelope
   , finishVerification
   , startVerification
   , verifyFactEnvelope
   , verifyFactInclusion
+  , verifyTokenList
   ) where
 
 import Prelude
 
 import Data.Array as Array
-import Data.Argonaut.Core (Json, fromObject, fromString, stringify)
+import Data.Argonaut.Core (Json, fromNumber, fromObject, fromString, stringify)
 import Data.Either (Either(..))
+import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Foreign.Object as Object
-import MPFS.Client (RawFactResponse)
+import MPFS.Client (RawFactResponse, RawTokensResponse)
 import MPFS.Reactor as Reactor
 import MPFS.SecondOracle.Types (MerkleRootEntry)
+import MPFS.Types (CageConfig)
 
 data VerificationStatus
   = VerificationNotAsked
@@ -98,6 +103,29 @@ anchorFactSnapshotRoot roots fact =
   matchesSlot root =
     root.slotNo == slot
 
+anchorTokenSnapshotRoot
+  :: Array MerkleRootEntry
+  -> RawTokensResponse
+  -> Either String String
+anchorTokenSnapshotRoot roots tokens =
+  case Array.find matchesSlot roots of
+    Nothing ->
+      Left
+        ( "Token list snapshot slot "
+            <> show slot
+            <> " is not anchored by the second oracle"
+        )
+    Just root
+      | root.merkleRoot == tokens.snapshot.utxo_root ->
+          Right root.merkleRoot
+      | otherwise ->
+          Left "Token list snapshot UTxO root is not anchored by the second oracle"
+  where
+  slot = tokens.snapshot.chainpoint.slot
+
+  matchesSlot root =
+    root.slotNo == slot
+
 buildFactInclusionEnvelope :: String -> Json -> String -> String
 buildFactInclusionEnvelope trustedRoot facts key =
   stringify
@@ -114,3 +142,41 @@ buildFactInclusionEnvelope trustedRoot facts key =
 verifyFactInclusion :: String -> Json -> String -> Aff (Either String Unit)
 verifyFactInclusion trustedRoot facts key =
   verifyFactEnvelope (buildFactInclusionEnvelope trustedRoot facts key)
+
+buildTokensVerificationEnvelope :: String -> Json -> CageConfig -> String
+buildTokensVerificationEnvelope trustedRoot facts cfg =
+  stringify
+    ( fromObject
+        ( Object.fromFoldable
+            [ Tuple "op" (fromString "verify_tokens")
+            , Tuple "trusted_root" (fromString trustedRoot)
+            , Tuple "facts" facts
+            , Tuple "cage_config" (cageConfigJson cfg)
+            ]
+        )
+    )
+
+verifyTokenList :: String -> Json -> CageConfig -> Aff (Either String Unit)
+verifyTokenList trustedRoot facts cfg =
+  verifyFactEnvelope (buildTokensVerificationEnvelope trustedRoot facts cfg)
+
+cageConfigJson :: CageConfig -> Json
+cageConfigJson cfg =
+  fromObject
+    ( Object.fromFoldable
+        [ Tuple "cage_script_bytes" (fromString cfg.cageScriptBytes)
+        , Tuple "request_script_bytes" (fromString cfg.requestScriptBytes)
+        , Tuple "default_process_time" (intJson cfg.defaultProcessTime)
+        , Tuple "default_retract_time" (intJson cfg.defaultRetractTime)
+        , Tuple "default_tip" (intJson cfg.defaultTip)
+        , Tuple "network" (fromString (reactorNetworkName cfg.network))
+        ]
+    )
+
+intJson :: Int -> Json
+intJson = fromNumber <<< toNumber
+
+reactorNetworkName :: String -> String
+reactorNetworkName = case _ of
+  "preprod" -> "testnet"
+  network -> network

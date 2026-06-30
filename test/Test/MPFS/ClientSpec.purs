@@ -22,6 +22,7 @@ import MPFS.Client
   , decodeFactRawBody
   , decodeFactsBody
   , decodeTokensBody
+  , decodeTokensRawBody
   , decodeRequestsBody
   , decodeTokenBody
   , decodeTokenRootBody
@@ -91,6 +92,25 @@ spec mBaseUrl = describe "MPFS Client" do
           [ "976821dbd0922f93cda689da92a6faf1894c8151bc86d6c8f725ec089aaacbc6"
           , "98207724b0ea59b96c0eba16cb09e91da10f8bdc54ad36da4a2e40104a59a32b"
           ]
+
+  it "preserves raw real GET /tokens JSON while decoding token ids" do
+    body <- FS.readTextFile UTF8 realTokensFixturePath
+    case decodeTokensRawBody body, jsonParser body of
+      Right decoded, Right raw -> do
+        decoded.tokenIds
+          `shouldEqual`
+            [ "976821dbd0922f93cda689da92a6faf1894c8151bc86d6c8f725ec089aaacbc6"
+            , "98207724b0ea59b96c0eba16cb09e91da10f8bdc54ad36da4a2e40104a59a32b"
+            ]
+        decoded.snapshot.chainpoint.slot `shouldEqual` 127142874
+        decoded.snapshot.utxo_root
+          `shouldEqual`
+            "20d78f11f7b0b32ac4e5608e92310bded182d43ed9c52eab35f75451c514cf9f"
+        stringify decoded.raw `shouldEqual` stringify raw
+      Left err, _ ->
+        fail $ show err
+      _, Left err ->
+        fail err
 
   it "decodes real GET /tokens/:id state envelope from inline datum" do
     body <- FS.readTextFile UTF8 realTokenStateFixturePath

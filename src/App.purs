@@ -194,12 +194,41 @@ handleAction = case _ of
 
   LoadTokens -> do
     state <- H.modify Tokens.startTokenLoad
-    result <- liftAff (Client.mkClient state.baseUrl).getTokens
+    let
+      client = Client.mkClient state.baseUrl
+    result <- liftAff client.getTokensRaw
     case result of
       Left error ->
         H.modify_ (Tokens.failTokenLoad (show error))
-      Right tokenIds ->
-        H.modify_ (Tokens.finishTokenLoad (fromClientTokenIds tokenIds))
+      Right tokenResponse -> do
+        rootResult <- liftAff do
+          rootsResult <- SecondOracleClient.defaultClient.getMerkleRoots
+          pure case rootsResult of
+            Left error ->
+              Left (show error)
+            Right roots ->
+              Verification.anchorTokenSnapshotRoot roots tokenResponse
+        verificationResult <- case rootResult of
+          Left message ->
+            pure (Left message)
+          Right trustedRoot ->
+            liftAff
+              ( Verification.verifyTokenList
+                  trustedRoot
+                  tokenResponse.raw
+                  AppConfig.defaultCageConfig
+              )
+        let
+          tokenCompleteness = case verificationResult of
+            Right _ ->
+              Verification.VerificationVerified
+            Left message ->
+              Verification.VerificationFailed message
+        H.modify_
+          ( Tokens.finishTokenLoadWithCompleteness
+              tokenCompleteness
+              (fromClientTokenIds tokenResponse.tokenIds)
+          )
 
   SelectToken token ->
     H.modify_ \state ->
