@@ -30,7 +30,16 @@ bundle:
     spago bundle --module Main --outfile dist/index.js
     cat dist/deps.js dist/index.js > dist/bundle.js
     mv dist/bundle.js dist/index.js
+    blueprint_out="$(nix build --fallback --quiet --no-link --print-out-paths .#cage-blueprint)"
+    node scripts/substitute-cage-config.mjs substitute "$blueprint_out" dist/index.js
     rm dist/deps.js
+
+# Verify the bundled cage config was substituted from the pinned blueprint
+verify-cage-config:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    blueprint_out="$(nix build --fallback --quiet --no-link --print-out-paths .#cage-blueprint)"
+    node scripts/substitute-cage-config.mjs verify "$blueprint_out" dist/index.js
 
 # Watch and rebuild
 dev:
@@ -58,6 +67,7 @@ ci:
     just lint
     just build
     just bundle
+    just verify-cage-config
     just test
 
 # Prepare the WASM reactors and run tests
