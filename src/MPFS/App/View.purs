@@ -868,8 +868,6 @@ secondOracleVerdictLabel = case _ of
     "Verified"
   SecondOracleMismatch _ ->
     "Mismatch"
-  SecondOracleVerifierFalse _ ->
-    "Verifier rejected inclusion proof"
   SecondOracleMissingRoot _ ->
     "Merkle root missing"
   SecondOracleMalformedDatum message ->

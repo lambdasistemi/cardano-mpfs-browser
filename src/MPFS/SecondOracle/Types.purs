@@ -78,10 +78,6 @@ data SecondOracleVerdict
       , expectedFactsRoot :: Hex
       , attestedFactsRoot :: Hex
       }
-  | SecondOracleVerifierFalse
-      { chainPoint :: ChainPoint
-      , merkleRoot :: MerkleRoot
-      }
   | SecondOracleMissingRoot ChainPoint
   | SecondOracleMalformedDatum String
   | SecondOracleUnavailable SecondOracleUnavailable
@@ -93,8 +89,6 @@ instance Show SecondOracleVerdict where
     "(SecondOracleVerified " <> show verdict <> ")"
   show (SecondOracleMismatch verdict) =
     "(SecondOracleMismatch " <> show verdict <> ")"
-  show (SecondOracleVerifierFalse verdict) =
-    "(SecondOracleVerifierFalse " <> show verdict <> ")"
   show (SecondOracleMissingRoot chainPoint) =
     "(SecondOracleMissingRoot " <> show chainPoint <> ")"
   show (SecondOracleMalformedDatum message) =

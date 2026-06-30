@@ -8,17 +8,17 @@
 
 ## Slice 1 - Real Verifier Verdict Hardening
 
-- [ ] T048-S1 Add real-data full verdict tests using
+- [X] T048-S1 Add real-data full verdict tests using
   `test/fixtures/csmt-utxo-verdict-real-mpfs-token.json` and real
   `CsmtVerify.verifyInclusion`.
-- [ ] T048-S1 Prove the original fixture returns verified through
+- [X] T048-S1 Prove the original fixture returns verified through
   `checkOutputRef`.
-- [ ] T048-S1 Prove a tampered proof, wrong merkle root, and mismatched expected
+- [X] T048-S1 Prove a tampered proof, wrong merkle root, and mismatched expected
   datum root return mismatch through `checkOutputRef`.
-- [ ] T048-S1 Normalize verifier false / wrong-root outcomes to the mismatch
+- [X] T048-S1 Normalize verifier false / wrong-root outcomes to the mismatch
   verdict class while keeping unavailable for client/fetch/decode failures.
-- [ ] T048-S1 Keep the UI label distinct: verified vs mismatch vs unavailable.
-- [ ] T048-S1 Run the focused real-path tests and `./gate.sh`, then commit the
+- [X] T048-S1 Keep the UI label distinct: verified vs mismatch vs unavailable.
+- [X] T048-S1 Run the focused real-path tests and `./gate.sh`, then commit the
   slice.
 
 ## Orchestrator Finalization
