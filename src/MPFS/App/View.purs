@@ -1,5 +1,6 @@
 module MPFS.App.View
   ( render
+  , factsSetStatusLabel
   , secondOracleStatusLabel
   , tokenCompletenessStatusLabel
   , verificationStatusLabel
@@ -195,6 +196,7 @@ factsPanel actions state =
     , fieldLine "Pending requests" (remoteStatus state.pendingRequests)
     , fieldLine "Facts" (remoteStatus state.facts)
     , fieldLine "Trusted root" (remoteStatus state.trustedRoot)
+    , fieldLine "Facts set" (verificationStatusLabel state.factsSetVerification)
     , fieldLine "Second oracle" (secondOracleStatusLabel state.secondOracle)
     , tokenStateRemoteView state.tokenState
     , trustedRootRemoteView state.trustedRoot
@@ -877,6 +879,10 @@ tokenCompletenessStatusLabel = case _ of
   VerificationLoading -> "checking"
   VerificationVerified -> "complete"
   VerificationFailed _ -> "incomplete"
+
+factsSetStatusLabel :: VerificationStatus -> String
+factsSetStatusLabel status =
+  "Facts set: " <> verificationStatusLabel status
 
 secondOracleStatusLabel :: Remote SecondOracleVerdict -> String
 secondOracleStatusLabel = case _ of

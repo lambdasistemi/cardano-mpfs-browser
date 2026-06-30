@@ -21,6 +21,7 @@ import MPFS.Client
   ( decodeFactBody
   , decodeFactRawBody
   , decodeFactsBody
+  , decodeFactsRawBody
   , decodeTokensBody
   , decodeTokensRawBody
   , decodeRequestsBody
@@ -151,7 +152,34 @@ spec mBaseUrl = describe "MPFS Client" do
     case decodeFactsBody body of
       Left err -> fail $ show err
       Right facts ->
-        facts `shouldEqual` []
+        facts
+          `shouldEqual`
+            [ { key: "70616f6c696e6f", value: "3432" }
+            , { key: "6c6976652d736d6f6b652d31373830373433343836333136"
+              , value: "6f6b2d31373830373433343836333136"
+              }
+            ]
+
+  it "preserves raw real GET /tokens/:id/facts JSON while decoding facts" do
+    body <- FS.readTextFile UTF8 realFactsFixturePath
+    case decodeFactsRawBody body, jsonParser body of
+      Right decoded, Right raw -> do
+        decoded.facts
+          `shouldEqual`
+            [ { key: "70616f6c696e6f", value: "3432" }
+            , { key: "6c6976652d736d6f6b652d31373830373433343836333136"
+              , value: "6f6b2d31373830373433343836333136"
+              }
+            ]
+        decoded.snapshot.chainpoint.slot `shouldEqual` 127144417
+        decoded.snapshot.utxo_root
+          `shouldEqual`
+            "db8b966a98a6db0a8a6d043016dd5abee38d034827ebd458882387f8757490fe"
+        stringify decoded.raw `shouldEqual` stringify raw
+      Left err, _ ->
+        fail $ show err
+      _, Left err ->
+        fail err
 
   it "decodes real GET /tokens/:id/root quoted root" do
     body <- FS.readTextFile UTF8 realTokenRootFixturePath

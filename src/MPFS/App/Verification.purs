@@ -1,13 +1,16 @@
 module MPFS.App.Verification
   ( VerificationStatus(..)
   , anchorFactSnapshotRoot
+  , anchorFactsSnapshotRoot
   , anchorTokenSnapshotRoot
   , buildFactInclusionEnvelope
+  , buildFactsVerificationEnvelope
   , buildTokensVerificationEnvelope
   , finishVerification
   , startVerification
   , verifyFactEnvelope
   , verifyFactInclusion
+  , verifyFactsSet
   , verifyTokenList
   ) where
 
@@ -21,7 +24,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Foreign.Object as Object
-import MPFS.Client (RawFactResponse, RawTokensResponse)
+import MPFS.Client (RawFactResponse, RawFactsResponse, RawTokensResponse)
 import MPFS.Reactor as Reactor
 import MPFS.SecondOracle.Types (MerkleRootEntry)
 import MPFS.Types (CageConfig)
@@ -126,6 +129,29 @@ anchorTokenSnapshotRoot roots tokens =
   matchesSlot root =
     root.slotNo == slot
 
+anchorFactsSnapshotRoot
+  :: Array MerkleRootEntry
+  -> RawFactsResponse
+  -> Either String String
+anchorFactsSnapshotRoot roots facts =
+  case Array.find matchesSlot roots of
+    Nothing ->
+      Left
+        ( "Facts snapshot slot "
+            <> show slot
+            <> " is not anchored by the second oracle"
+        )
+    Just root
+      | root.merkleRoot == facts.snapshot.utxo_root ->
+          Right root.merkleRoot
+      | otherwise ->
+          Left "Facts snapshot UTxO root is not anchored by the second oracle"
+  where
+  slot = facts.snapshot.chainpoint.slot
+
+  matchesSlot root =
+    root.slotNo == slot
+
 buildFactInclusionEnvelope :: String -> Json -> String -> String
 buildFactInclusionEnvelope trustedRoot facts key =
   stringify
@@ -159,6 +185,22 @@ buildTokensVerificationEnvelope trustedRoot facts cfg =
 verifyTokenList :: String -> Json -> CageConfig -> Aff (Either String Unit)
 verifyTokenList trustedRoot facts cfg =
   verifyFactEnvelope (buildTokensVerificationEnvelope trustedRoot facts cfg)
+
+buildFactsVerificationEnvelope :: String -> Json -> String
+buildFactsVerificationEnvelope trustedRoot facts =
+  stringify
+    ( fromObject
+        ( Object.fromFoldable
+            [ Tuple "op" (fromString "verify_facts")
+            , Tuple "trusted_root" (fromString trustedRoot)
+            , Tuple "facts" facts
+            ]
+        )
+    )
+
+verifyFactsSet :: String -> Json -> Aff (Either String Unit)
+verifyFactsSet trustedRoot facts =
+  verifyFactEnvelope (buildFactsVerificationEnvelope trustedRoot facts)
 
 cageConfigJson :: CageConfig -> Json
 cageConfigJson cfg =

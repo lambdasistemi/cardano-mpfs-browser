@@ -10,6 +10,7 @@ import MPFS.App.Facts
   , failFactLookup
   , finishSecondOracleCheck
   , finishFactLookup
+  , finishFactsSetVerification
   , finishFactsLoad
   , finishFactsLoadAt
   , finishFactsLoadWithRootAt
@@ -18,6 +19,7 @@ import MPFS.App.Facts
   , resetSecondOracle
   , startSecondOracleCheck
   , startFactLookup
+  , startFactsSetVerification
   , startFactsLoad
   )
 import MPFS.App.State (defaultState)
@@ -143,6 +145,27 @@ spec = describe "MPFS App Facts" do
     failed.factLookup.verification
       `shouldEqual`
         VerificationFailed "root mismatch"
+
+  it "tracks facts-set verification independently from fact lookup" do
+    let
+      loading = startFactsSetVerification defaultState
+      verified = finishFactsSetVerification (Right unit) loading
+      rejected = finishFactsSetVerification (Left "root mismatch") loading
+
+    loading.factsSetVerification `shouldEqual` VerificationLoading
+    verified.factsSetVerification `shouldEqual` VerificationVerified
+    rejected.factsSetVerification
+      `shouldEqual`
+        VerificationFailed "root mismatch"
+    rejected.factLookup.verification `shouldEqual` VerificationNotAsked
+
+  it "renders facts-set verifier labels" do
+    View.factsSetStatusLabel VerificationVerified
+      `shouldEqual`
+        "Facts set: Verified"
+    View.factsSetStatusLabel (VerificationFailed "root mismatch")
+      `shouldEqual`
+        "Facts set: Rejected: root mismatch"
 
   it "keeps looked-up values while automatic verification resolves" do
     let

@@ -5,6 +5,7 @@ module MPFS.App.Facts
   , failFactsLoad
   , finishSecondOracleCheck
   , finishFactLookup
+  , finishFactsSetVerification
   , finishFactsLoad
   , finishFactsLoadAt
   , finishFactsLoadWithRootAt
@@ -15,11 +16,13 @@ module MPFS.App.Facts
   , setFactProofEnvelope
   , startSecondOracleCheck
   , startFactLookup
+  , startFactsSetVerification
   , startFactsLoad
   ) where
 
 import Prelude
 
+import Data.Either (Either(..))
 import MPFS.App.State (AppState)
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
@@ -48,6 +51,7 @@ startFactsLoad state =
     , pendingRequests = Loading
     , trustedRoot = Loading
     , secondOracle = Loading
+    , factsSetVerification = VerificationLoading
     }
 
 finishFactsLoad
@@ -94,7 +98,20 @@ failFactsLoad message state =
     , pendingRequests = Failure message
     , trustedRoot = Failure message
     , secondOracle = Failure message
+    , factsSetVerification = VerificationFailed message
     }
+
+startFactsSetVerification :: AppState -> AppState
+startFactsSetVerification state =
+  state { factsSetVerification = VerificationLoading }
+
+finishFactsSetVerification :: Either String Unit -> AppState -> AppState
+finishFactsSetVerification result state =
+  state { factsSetVerification = status }
+  where
+  status = case result of
+    Right _ -> VerificationVerified
+    Left message -> VerificationFailed message
 
 resetSecondOracle :: AppState -> AppState
 resetSecondOracle state =

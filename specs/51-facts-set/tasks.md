@@ -8,22 +8,22 @@
 
 ## Slice 1 - Forward Facts Response To WASM Verifier
 
-- [ ] T051-S1 Add or refresh a captured real `/tokens/:id/facts` fixture with a
+- [X] T051-S1 Add or refresh a captured real `/tokens/:id/facts` fixture with a
   non-empty `facts` array.
-- [ ] T051-S1 Add real reactor tests proving the honest fixture returns
+- [X] T051-S1 Add real reactor tests proving the honest fixture returns
   `verify_ok` after independent UTxO-CSMT root anchoring.
-- [ ] T051-S1 Add real reactor tests proving a tampered facts response returns
+- [X] T051-S1 Add real reactor tests proving a tampered facts response returns
   `verify_error`.
-- [ ] T051-S1 Prove a mismatched independent UTxO-CSMT root fails as not
+- [X] T051-S1 Prove a mismatched independent UTxO-CSMT root fails as not
   anchored before trusted verification succeeds.
-- [ ] T051-S1 Preserve the raw facts response JSON in the client facts-load
+- [X] T051-S1 Preserve the raw facts response JSON in the client facts-load
   path while keeping decoded facts available to the app.
-- [ ] T051-S1 Build the `verify_facts` envelope from the independently anchored
+- [X] T051-S1 Build the `verify_facts` envelope from the independently anchored
   UTxO-CSMT root and raw facts response object.
-- [ ] T051-S1 Automatically run `verifyEnvelope` after facts load and map
+- [X] T051-S1 Automatically run `verifyEnvelope` after facts load and map
   success to `Verified`, failure to rejected.
-- [ ] T051-S1 Show the Facts tab `Facts set: Verified` / rejected indicator.
-- [ ] T051-S1 Run focused tests and `./gate.sh`, then commit the slice.
+- [X] T051-S1 Show the Facts tab `Facts set: Verified` / rejected indicator.
+- [X] T051-S1 Run focused tests and `./gate.sh`, then commit the slice.
 
 ## Orchestrator Finalization
 
