@@ -77,10 +77,14 @@ data Action
   | UpdateFactProofEnvelope String
   | VerifyFactEnvelope
 
-component :: forall q i o m. MonadAff m => H.Component q i o m
+type Input =
+  { baseUrl :: String
+  }
+
+component :: forall q o m. MonadAff m => H.Component q Input o m
 component =
   H.mkComponent
-    { initialState: const defaultState
+    { initialState
     , render:
         View.render
           { selectTab: SelectTab
@@ -118,6 +122,9 @@ component =
           , handleAction = handleAction
           }
     }
+
+initialState :: Input -> AppState
+initialState input = defaultState { baseUrl = input.baseUrl }
 
 handleAction
   :: forall slots output m
