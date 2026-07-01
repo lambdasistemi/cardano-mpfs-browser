@@ -22,9 +22,9 @@
             background: var(--bg);
             color: var(--fg);
             line-height: 1.5;
+            min-height: 100vh;
         }
         button { font: inherit; }
-        #app { min-height: 100vh; }
         .app-shell {
             width: min(1120px, calc(100vw - 32px));
             margin: 0 auto;
@@ -32,7 +32,7 @@
         }
         .shell-header {
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: space-between;
             gap: 24px;
             padding-bottom: 18px;
@@ -63,6 +63,7 @@
             background: var(--surface);
             padding: 8px 10px;
             border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(31, 41, 51, 0.05);
         }
         .status-pill span,
         .field-line span {
@@ -124,6 +125,7 @@
             border-radius: 8px;
             min-height: 360px;
             padding: 22px;
+            box-shadow: 0 2px 10px rgba(31, 41, 51, 0.05);
         }
         .panel-layout {
             display: grid;
@@ -166,6 +168,73 @@
             padding: 0 14px;
             cursor: not-allowed;
         }
+        .primary-button {
+            min-height: 40px;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            background: var(--accent);
+            color: #fff;
+            padding: 0 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s ease, border-color 0.15s ease;
+        }
+        .primary-button:hover:not(:disabled) {
+            background: #0b5d56;
+            border-color: #0b5d56;
+        }
+        .primary-button:disabled {
+            background: var(--surface-2);
+            border-color: var(--border);
+            color: var(--disabled);
+            cursor: not-allowed;
+        }
+        .token-list {
+            grid-column: 1 / -1;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 4px;
+        }
+        .token-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .token-list li strong {
+            overflow-wrap: anywhere;
+            font-weight: 600;
+        }
+        .token-row {
+            flex: 1 1 auto;
+            text-align: left;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            padding: 10px 12px;
+            cursor: pointer;
+            overflow-wrap: anywhere;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.82rem;
+            transition: border-color 0.15s ease, background 0.15s ease;
+        }
+        .token-row:hover { border-color: var(--accent); }
+        .token-row.is-selected {
+            border-color: var(--accent);
+            background: #e0f2ef;
+            color: #063f3b;
+        }
+        .empty-state,
+        .loading-state,
+        .error-state {
+            grid-column: 1 / -1;
+            color: var(--muted);
+            padding: 4px 0;
+        }
+        .error-state { color: var(--accent-2); }
         @media (max-width: 720px) {
             .app-shell {
                 width: min(100vw - 20px, 1120px);
@@ -192,7 +261,7 @@
     </style>
 </head>
 <body>
-    <div id="app"></div>
+    <script src="config.js"></script>
     <script src="index.js"></script>
 </body>
 </html>
