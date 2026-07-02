@@ -5,3 +5,6 @@
 - T60-S2: `.github/workflows/preview.yml` parses locally with `yq '.' .github/workflows/preview.yml`.
 - T60-S2: `nix develop -c ./gate.sh` passed locally, including bundle, cage config verification, and 121/121 tests.
 - T60-S2: preview CI build step now runs `npm ci && just bundle` inside `nix develop` so fresh checkouts install `@bjorn3/browser_wasi_shim` before esbuild.
+- T64-S1: RED intentionally skipped because this slice is a render retrofit over the already-tested `HashChip`/`truncateMiddle` Material primitives; proof is focused compile plus `./gate.sh`.
+- T64-S1: converted `View.purs` sites to `HashChip`: header Token status pill; Connect wallet Address; Tokens Selected token; Facts Token; End Token; End wallet address; token list rows; token state Owner and Root; trusted root hash; pending request id/key/value rows; fact key/value rows; fact lookup value; submitted transaction id.
+- T64-S1: constrained overflow contexts in `dist/index.html` for panel/grid/list/field/control/hash-row children so long request/fact bytes live inside bounded `.hash-chip` elements.
