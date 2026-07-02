@@ -3,6 +3,8 @@ name: PR Preview
 on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
+  push:
+    branches: [epic/72-ui-redesign]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,6 +38,8 @@ jobs:
         uses: paolino/dev-assets/static-preview@main
         with:
           path: dist
+          pr-number: ${{ github.event.number || 'epic-72' }}
+          comment: ${{ github.event_name == 'pull_request' }}
           comment-marker: "<!-- mpfs-spa-preview-url -->"
 
   cleanup:
