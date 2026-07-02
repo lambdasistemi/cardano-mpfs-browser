@@ -39,6 +39,8 @@
         button { font: inherit; }
         .app-shell {
             width: min(1120px, calc(100vw - 32px));
+            max-width: 100%;
+            min-width: 0;
             margin: 0 auto;
             padding: 28px 0;
         }
@@ -68,9 +70,11 @@
             flex-wrap: wrap;
             justify-content: flex-end;
             gap: 8px;
+            min-width: 0;
         }
         .status-pill {
             min-width: 132px;
+            max-width: 100%;
             border: 1px solid var(--border);
             background: var(--surface);
             padding: 8px 10px;
@@ -91,6 +95,8 @@
             display: block;
             color: var(--fg);
             font-size: 0.95rem;
+            max-width: 100%;
+            min-width: 0;
             overflow-wrap: anywhere;
         }
         .tab-strip {
@@ -136,6 +142,9 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             min-height: 360px;
+            min-width: 0;
+            max-width: 100%;
+            overflow-x: clip;
             padding: 22px;
             box-shadow: 0 2px 10px rgba(31, 41, 51, 0.05);
         }
@@ -143,6 +152,12 @@
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 14px;
+            min-width: 0;
+            max-width: 100%;
+        }
+        .panel-layout > * {
+            min-width: 0;
+            max-width: 100%;
         }
         .panel-heading {
             grid-column: 1 / -1;
@@ -162,6 +177,8 @@
             border-radius: 6px;
             background: #faf8f2;
             min-height: 74px;
+            min-width: 0;
+            max-width: 100%;
             padding: 12px;
         }
         .control-row {
@@ -169,7 +186,20 @@
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            min-width: 0;
+            max-width: 100%;
             padding-top: 8px;
+        }
+        .control-row > *,
+        .field-group,
+        .field-group > * {
+            min-width: 0;
+            max-width: 100%;
+        }
+        input,
+        textarea {
+            max-width: 100%;
+            min-width: 0;
         }
         .inert-button {
             min-height: 40px;
@@ -207,6 +237,8 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            min-width: 0;
+            max-width: 100%;
             margin-top: 4px;
         }
         .token-list li {
@@ -215,13 +247,19 @@
             justify-content: space-between;
             flex-wrap: wrap;
             gap: 10px;
+            min-width: 0;
+            max-width: 100%;
         }
         .token-list li strong {
+            min-width: 0;
+            max-width: 100%;
             overflow-wrap: anywhere;
             font-weight: 600;
         }
         .token-row {
-            flex: 1 1 auto;
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: 100%;
             text-align: left;
             border: 1px solid var(--border);
             border-radius: 6px;
@@ -250,6 +288,7 @@
         .hash-chip {
             display: inline-flex;
             align-items: center;
+            flex: 0 1 auto;
             gap: var(--mui-spacing-0-5);
             max-width: 100%;
             min-width: 0;
@@ -263,10 +302,29 @@
             line-height: 1.4;
         }
         .hash-chip__value {
+            flex: 1 1 auto;
             min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .hash-pair {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--mui-spacing-0-5);
+            min-width: 0;
+            max-width: 100%;
+        }
+        .hash-pair__label {
+            flex: 0 0 auto;
+            color: var(--muted);
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0;
+            text-transform: uppercase;
+        }
+        .hash-pair > .hash-chip {
+            flex: 1 1 auto;
         }
         .copy-button {
             min-width: 28px;

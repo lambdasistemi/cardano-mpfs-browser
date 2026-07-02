@@ -11,6 +11,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
+import Effect.Aff.Class (class MonadAff)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -27,8 +28,17 @@ import MPFS.SecondOracle.Types
   , SecondOracleVerdict(..)
   )
 import MPFS.Types (RequestId, TokenId(..), TrustedRoot(..))
+import MPFS.UI.Material.HashChip as HashChip
 import MPFS.UI.Remote (Remote(..), remoteStatus)
 import MPFS.Wallet.Cip30 (WalletInfo)
+import Type.Proxy (Proxy(..))
+
+type Slots =
+  ( hashChip :: forall query. H.Slot query Void String
+  )
+
+_hashChip :: Proxy "hashChip"
+_hashChip = Proxy
 
 type AppActions action =
   { loadWallets :: action
@@ -63,9 +73,10 @@ type AppActions action =
 
 render
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> AppState
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 render actions state =
   HH.main
     [ HP.class_ (HH.ClassName "app-shell") ]
@@ -82,7 +93,7 @@ render actions state =
         [ tabPanel actions state ]
     ]
 
-header :: forall action m. AppState -> H.ComponentHTML action () m
+header :: forall action m. MonadAff m => AppState -> H.ComponentHTML action Slots m
 header state =
   HH.header
     [ HP.class_ (HH.ClassName "shell-header") ]
@@ -96,16 +107,17 @@ header state =
         [ HP.class_ (HH.ClassName "status-row") ]
         [ statusPill "Client" state.baseUrl
         , statusPill "Wallet" (walletSessionLabel state)
-        , statusPill "Token" (selectedTokenLabel state.selectedToken)
+        , selectedTokenStatusPill "Token" "header-selected-token" state.selectedToken
         ]
     ]
 
 tabButton
   :: forall action m
-   . (AppTab -> action)
+   . MonadAff m
+  => (AppTab -> action)
   -> AppTab
   -> AppTab
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 tabButton toAction activeTab tab =
   HH.button
     [ HP.type_ HP.ButtonButton
@@ -131,7 +143,7 @@ tabButton toAction activeTab tab =
     else
       [ "tab-button" ]
 
-tabPanel :: forall action m. AppActions action -> AppState -> H.ComponentHTML action () m
+tabPanel :: forall action m. MonadAff m => AppActions action -> AppState -> H.ComponentHTML action Slots m
 tabPanel actions state = case state.activeTab of
   ConnectTab -> connectPanel actions state
   TokensTab -> tokensPanel actions state
@@ -140,14 +152,15 @@ tabPanel actions state = case state.activeTab of
 
 connectPanel
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> AppState
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 connectPanel actions state =
   panelLayout "Connect" "Wallet session"
     [ fieldLine "Session" (walletSessionLabel state)
     , fieldLine "Network" (maybeText state.walletSession.network)
-    , fieldLine "Address" (maybeText state.walletSession.selectedAddress)
+    , maybeHashFieldLine "Address" "connect-wallet-address" state.walletSession.selectedAddress
     , fieldLine "Balance" (lovelaceText state.walletSession.lovelace)
     , walletFeedback state.walletSession.feedback
     , walletControls actions state
@@ -155,15 +168,16 @@ connectPanel actions state =
 
 tokensPanel
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> AppState
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 tokensPanel actions state =
   panelLayout "Tokens" "Token registry"
     [ fieldLine "Load status" (remoteStatus state.tokens)
     , fieldLine "Token list" (tokenCompletenessStatusLabel state.tokenCompleteness)
     , tokenCompletenessMessageView state.tokenCompleteness
-    , fieldLine "Selected token" (selectedTokenLabel state.selectedToken)
+    , selectedTokenFieldLine "Selected token" "tokens-selected-token" state.selectedToken
     , tokenRemoteView actions state.selectedToken state.tokens
     , writeStatusView state.writeStatus
     , HH.div
@@ -187,12 +201,13 @@ tokensPanel actions state =
 
 factsPanel
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> AppState
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 factsPanel actions state =
   panelLayout "Facts" "Selected token facts"
-    [ fieldLine "Token" (selectedTokenLabel state.selectedToken)
+    [ selectedTokenFieldLine "Token" "facts-selected-token" state.selectedToken
     , fieldLine "Token state" (remoteStatus state.tokenState)
     , fieldLine "Pending requests" (remoteStatus state.pendingRequests)
     , fieldLine "Facts" (remoteStatus state.facts)
@@ -245,13 +260,13 @@ factsPanel actions state =
         ]
     ]
 
-endPanel :: forall action m. AppActions action -> AppState -> H.ComponentHTML action () m
+endPanel :: forall action m. MonadAff m => AppActions action -> AppState -> H.ComponentHTML action Slots m
 endPanel actions state =
   panelLayout "End" "Cage lifecycle"
-    [ fieldLine "Token" (selectedTokenLabel state.selectedToken)
+    [ selectedTokenFieldLine "Token" "end-selected-token" state.selectedToken
     , fieldLine "Wallet" (walletSessionLabel state)
     , fieldLine "Wallet network" (maybeText state.walletSession.network)
-    , fieldLine "Wallet address" (maybeText state.walletSession.selectedAddress)
+    , maybeHashFieldLine "Wallet address" "end-wallet-address" state.walletSession.selectedAddress
     , writeStatusView state.writeStatus
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
@@ -269,8 +284,8 @@ panelLayout
   :: forall action m
    . String
   -> String
-  -> Array (H.ComponentHTML action () m)
-  -> H.ComponentHTML action () m
+  -> Array (H.ComponentHTML action Slots m)
+  -> H.ComponentHTML action Slots m
 panelLayout title subtitle children =
   HH.div
     [ HP.class_ (HH.ClassName "panel-layout") ]
@@ -283,7 +298,7 @@ panelLayout title subtitle children =
         <> children
     )
 
-fieldLine :: forall action m. String -> String -> H.ComponentHTML action () m
+fieldLine :: forall action m. String -> String -> H.ComponentHTML action Slots m
 fieldLine label value =
   HH.div
     [ HP.class_ (HH.ClassName "field-line") ]
@@ -291,7 +306,7 @@ fieldLine label value =
     , HH.strong_ [ HH.text value ]
     ]
 
-statusPill :: forall action m. String -> String -> H.ComponentHTML action () m
+statusPill :: forall action m. String -> String -> H.ComponentHTML action Slots m
 statusPill label value =
   HH.div
     [ HP.class_ (HH.ClassName "status-pill") ]
@@ -299,12 +314,99 @@ statusPill label value =
     , HH.strong_ [ HH.text value ]
     ]
 
+selectedTokenStatusPill
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> Maybe TokenId
+  -> H.ComponentHTML action Slots m
+selectedTokenStatusPill label slotId = case _ of
+  Nothing ->
+    statusPill label "None"
+  Just (TokenId tokenId) ->
+    HH.div
+      [ HP.class_ (HH.ClassName "status-pill") ]
+      [ HH.span_ [ HH.text label ]
+      , HH.strong_ [ hashChip slotId tokenId ]
+      ]
+
+selectedTokenFieldLine
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> Maybe TokenId
+  -> H.ComponentHTML action Slots m
+selectedTokenFieldLine label slotId = case _ of
+  Nothing ->
+    fieldLine label "None"
+  Just (TokenId tokenId) ->
+    hashFieldLine label slotId tokenId
+
+maybeHashFieldLine
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> Maybe String
+  -> H.ComponentHTML action Slots m
+maybeHashFieldLine label slotId = case _ of
+  Nothing ->
+    fieldLine label "Unavailable"
+  Just value ->
+    hashFieldLine label slotId value
+
+hashFieldLine
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> String
+  -> H.ComponentHTML action Slots m
+hashFieldLine label slotId value =
+  HH.div
+    [ HP.class_ (HH.ClassName "field-line") ]
+    [ HH.span_ [ HH.text label ]
+    , HH.strong_ [ hashChip slotId value ]
+    ]
+
+hashPair
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> String
+  -> H.ComponentHTML action Slots m
+hashPair label slotId value =
+  HH.span
+    [ HP.class_ (HH.ClassName "hash-pair") ]
+    [ HH.span
+        [ HP.class_ (HH.ClassName "hash-pair__label") ]
+        [ HH.text label ]
+    , hashChip slotId value
+    ]
+
+hashChip
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> H.ComponentHTML action Slots m
+hashChip slotId value =
+  HH.slot_
+    _hashChip
+    slotId
+    HashChip.component
+    { value, flank: 8 }
+
 tokenRemoteView
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> Maybe TokenId
   -> Remote (Array TokenId)
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 tokenRemoteView actions selectedToken = case _ of
   NotAsked ->
     HH.p
@@ -332,7 +434,7 @@ walletControls
   :: forall action m
    . AppActions action
   -> AppState
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 walletControls actions state = case state.walletSession.status of
   WalletConnected ->
     HH.div
@@ -371,7 +473,7 @@ walletRemoteView
    . AppActions action
   -> WalletStatus
   -> Remote (Array WalletInfo)
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 walletRemoteView actions status = case _ of
   NotAsked ->
     HH.p
@@ -400,7 +502,7 @@ walletRow
    . AppActions action
   -> WalletStatus
   -> WalletInfo
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 walletRow actions status wallet =
   HH.li
     [ HP.attr (HH.AttrName "data-wallet") wallet.key ]
@@ -422,7 +524,7 @@ walletRow actions status wallet =
 walletFeedback
   :: forall action m
    . Maybe String
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 walletFeedback = case _ of
   Nothing ->
     HH.text ""
@@ -433,8 +535,9 @@ walletFeedback = case _ of
 
 tokenStateRemoteView
   :: forall action m
-   . Remote TokenState
-  -> H.ComponentHTML action () m
+   . MonadAff m
+  => Remote TokenState
+  -> H.ComponentHTML action Slots m
 tokenStateRemoteView = case _ of
   NotAsked ->
     HH.p
@@ -451,8 +554,8 @@ tokenStateRemoteView = case _ of
   Success tokenState ->
     HH.div
       [ HP.class_ (HH.ClassName "field-group") ]
-      [ fieldLine "Owner" (shortText tokenState.owner)
-      , fieldLine "Root" (shortText tokenState.root)
+      [ hashFieldLine "Owner" "token-state-owner" tokenState.owner
+      , hashFieldLine "Root" "token-state-root" tokenState.root
       , fieldLine "Max fee" (show tokenState.max_fee)
       , fieldLine "Process window" (show tokenState.process_time)
       , fieldLine "Retract window" (show tokenState.retract_time)
@@ -460,8 +563,9 @@ tokenStateRemoteView = case _ of
 
 trustedRootRemoteView
   :: forall action m
-   . Remote TrustedRoot
-  -> H.ComponentHTML action () m
+   . MonadAff m
+  => Remote TrustedRoot
+  -> H.ComponentHTML action Slots m
 trustedRootRemoteView = case _ of
   NotAsked ->
     HH.p
@@ -476,16 +580,17 @@ trustedRootRemoteView = case _ of
       [ HP.class_ (HH.ClassName "error-state") ]
       [ HH.text ("Error loading trusted root: " <> message) ]
   Success (TrustedRoot trustedRoot) ->
-    fieldLine "Trusted root hash" (shortText trustedRoot)
+    hashFieldLine "Trusted root hash" "trusted-root-hash" trustedRoot
 
 pendingRequestsRemoteView
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> Number
   -> Remote TokenState
   -> Array RequestId
   -> Remote (Array PendingRequest)
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 pendingRequestsRemoteView actions nowMillis tokenStateRemote selectedRequestIds = case _ of
   NotAsked ->
     HH.p
@@ -509,7 +614,7 @@ pendingRequestsRemoteView actions nowMillis tokenStateRemote selectedRequestIds 
           Success tokenState ->
             HH.ul
               [ HP.class_ (HH.ClassName "token-list") ]
-              (map (requestRow actions nowMillis tokenState selectedRequestIds) requests)
+              (Array.mapWithIndex (requestRow actions nowMillis tokenState selectedRequestIds) requests)
           _ ->
             HH.p
               [ HP.class_ (HH.ClassName "empty-state") ]
@@ -517,8 +622,9 @@ pendingRequestsRemoteView actions nowMillis tokenStateRemote selectedRequestIds 
 
 factsRemoteView
   :: forall action m
-   . Remote (Array FactEntry)
-  -> H.ComponentHTML action () m
+   . MonadAff m
+  => Remote (Array FactEntry)
+  -> H.ComponentHTML action Slots m
 factsRemoteView = case _ of
   NotAsked ->
     HH.p
@@ -540,13 +646,14 @@ factsRemoteView = case _ of
     | otherwise ->
         HH.ul
           [ HP.class_ (HH.ClassName "token-list") ]
-          (map factRow facts)
+          (Array.mapWithIndex factRow facts)
 
 factLookupView
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> AppState
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 factLookupView actions state =
   HH.div
     [ HP.class_ (HH.ClassName "field-group") ]
@@ -599,7 +706,7 @@ factWriteForms
   :: forall action m
    . AppActions action
   -> AppState
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 factWriteForms actions state =
   HH.div
     [ HP.class_ (HH.ClassName "field-group") ]
@@ -692,8 +799,9 @@ factWriteForms actions state =
 
 factLookupRemoteView
   :: forall action m
-   . Remote String
-  -> H.ComponentHTML action () m
+   . MonadAff m
+  => Remote String
+  -> H.ComponentHTML action Slots m
 factLookupRemoteView = case _ of
   NotAsked ->
     HH.p
@@ -708,12 +816,12 @@ factLookupRemoteView = case _ of
       [ HP.class_ (HH.ClassName "error-state") ]
       [ HH.text ("Error looking up fact: " <> message) ]
   Success value ->
-    fieldLine "Lookup value" value
+    hashFieldLine "Lookup value" "fact-lookup-value" value
 
 tokenCompletenessMessageView
   :: forall action m
    . VerificationStatus
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 tokenCompletenessMessageView = case _ of
   VerificationFailed message ->
     HH.p
@@ -724,18 +832,21 @@ tokenCompletenessMessageView = case _ of
 
 requestRow
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> Number
   -> TokenState
   -> Array RequestId
+  -> Int
   -> PendingRequest
-  -> H.ComponentHTML action () m
-requestRow actions nowMillis tokenState selectedRequestIds request =
+  -> H.ComponentHTML action Slots m
+requestRow actions nowMillis tokenState selectedRequestIds index request =
   HH.li
     [ HP.attr (HH.AttrName "data-request-key") request.key ]
     ( [ HH.strong_ [ HH.text request.operation ]
-      , HH.span_ [ HH.text (" key " <> request.key) ]
-      , HH.span_ [ HH.text (" value " <> requestValueText request) ]
+      , requestIdView
+      , hashPair "Key" (requestSlot "key") request.key
+      , requestValueView
       , HH.span_
           [ HH.text
               ( " phase "
@@ -746,9 +857,30 @@ requestRow actions nowMillis tokenState selectedRequestIds request =
         <> requestControls
     )
   where
+  requestSlot suffix =
+    "request-" <> show index <> "-" <> suffix
+
+  requestIdView =
+    if request.request_id == "" then
+      HH.span_ [ HH.text " missing request id" ]
+    else
+      hashPair "Request" (requestSlot "id") request.request_id
+
+  requestValueView = case request.value of
+    Nothing ->
+      HH.span
+        [ HP.class_ (HH.ClassName "hash-pair") ]
+        [ HH.span
+            [ HP.class_ (HH.ClassName "hash-pair__label") ]
+            [ HH.text "Value" ]
+        , HH.text "none"
+        ]
+    Just value ->
+      hashPair "Value" (requestSlot "value") value
+
   requestControls = case Write.requestIdOf request of
     Nothing ->
-      [ HH.span_ [ HH.text " missing request id" ] ]
+      []
     Just requestId ->
       [ HH.button
           [ HP.type_ HP.ButtonButton
@@ -769,20 +901,21 @@ requestRow actions nowMillis tokenState selectedRequestIds request =
           [ HH.text "Retract" ]
       ]
 
-factRow :: forall action m. FactEntry -> H.ComponentHTML action () m
-factRow fact =
+factRow :: forall action m. MonadAff m => Int -> FactEntry -> H.ComponentHTML action Slots m
+factRow index fact =
   HH.li
     [ HP.attr (HH.AttrName "data-fact-key") fact.key ]
-    [ HH.strong_ [ HH.text fact.key ]
-    , HH.span_ [ HH.text (" " <> fact.value) ]
+    [ hashPair "Key" ("fact-" <> show index <> "-key") fact.key
+    , hashPair "Value" ("fact-" <> show index <> "-value") fact.value
     ]
 
 tokenRow
   :: forall action m
-   . AppActions action
+   . MonadAff m
+  => AppActions action
   -> Maybe TokenId
   -> TokenId
-  -> H.ComponentHTML action () m
+  -> H.ComponentHTML action Slots m
 tokenRow actions selectedToken token@(TokenId tokenId) =
   HH.li
     [ HP.attr (HH.AttrName "data-token") tokenId ]
@@ -792,7 +925,13 @@ tokenRow actions selectedToken token@(TokenId tokenId) =
         , HP.attr (HH.AttrName "aria-pressed") pressed
         , HE.onClick \_ -> actions.selectToken token
         ]
-        [ HH.text tokenId ]
+        [ HH.text
+            if isSelected then
+              "Selected"
+            else
+              "Select"
+        ]
+    , hashChip ("token-row-" <> tokenId) tokenId
     ]
   where
   isSelected = selectedToken == Just token
@@ -832,7 +971,7 @@ remoteIsLoading = case _ of
   Loading -> true
   _ -> false
 
-writeStatusView :: forall action m. WriteStatus -> H.ComponentHTML action () m
+writeStatusView :: forall action m. MonadAff m => WriteStatus -> H.ComponentHTML action Slots m
 writeStatusView = case _ of
   WriteIdle ->
     HH.text ""
@@ -847,7 +986,11 @@ writeStatusView = case _ of
   WriteSubmitting _ _ _ ->
     HH.p [ HP.class_ (HH.ClassName "loading-state") ] [ HH.text "Submitting transaction..." ]
   WriteSubmitted _ _ _ txId ->
-    HH.p [ HP.class_ (HH.ClassName "empty-state") ] [ HH.text ("Submitted transaction " <> txId) ]
+    HH.p
+      [ HP.class_ (HH.ClassName "empty-state") ]
+      [ HH.text "Submitted transaction "
+      , hashChip "write-submitted-tx-id" txId
+      ]
   WriteFailed message ->
     HH.p [ HP.class_ (HH.ClassName "error-state") ] [ HH.text message ]
 
@@ -917,14 +1060,6 @@ secondOracleUnavailableMessage = case _ of
   MerkleRootsUnavailable message -> message
   ProofUnavailable message -> message
 
-requestValueText :: PendingRequest -> String
-requestValueText request = case request.value of
-  Nothing -> "none"
-  Just value -> value
-
-shortText :: String -> String
-shortText = identity
-
 walletStatusLabel :: WalletStatus -> String
 walletStatusLabel = case _ of
   WalletDisconnected -> "Not connected"
@@ -941,11 +1076,6 @@ lovelaceText :: Maybe String -> String
 lovelaceText = case _ of
   Nothing -> "Unavailable"
   Just value -> value <> " lovelace"
-
-selectedTokenLabel :: Maybe TokenId -> String
-selectedTokenLabel = case _ of
-  Nothing -> "None"
-  Just (TokenId tokenId) -> tokenId
 
 maybeText :: Maybe String -> String
 maybeText = case _ of
