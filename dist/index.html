@@ -15,6 +15,18 @@
             --accent: #0f766e;
             --accent-2: #8f3d5f;
             --disabled: #8a8f95;
+            --mui-palette-background-default: #f7f8f9;
+            --mui-palette-background-paper: #ffffff;
+            --mui-palette-text-primary: #1f2933;
+            --mui-palette-text-secondary: #56616b;
+            --mui-palette-divider: #d7dde2;
+            --mui-palette-primary-main: #255f85;
+            --mui-palette-success-main: #2f6f50;
+            --mui-palette-warning-main: #b46a1c;
+            --mui-shape-border-radius: 6px;
+            --mui-spacing-0-5: 4px;
+            --mui-spacing-1: 8px;
+            --mui-spacing-1-5: 12px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -235,6 +247,65 @@
             padding: 4px 0;
         }
         .error-state { color: var(--accent-2); }
+        .hash-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--mui-spacing-0-5);
+            max-width: 100%;
+            min-width: 0;
+            border: 1px solid var(--mui-palette-divider);
+            border-radius: var(--mui-shape-border-radius);
+            background: var(--mui-palette-background-paper);
+            color: var(--mui-palette-text-primary);
+            padding: 2px 4px 2px var(--mui-spacing-1);
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.82rem;
+            line-height: 1.4;
+        }
+        .hash-chip__value {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .copy-button {
+            min-width: 28px;
+            min-height: 28px;
+            border: 1px solid transparent;
+            border-radius: var(--mui-shape-border-radius);
+            background: transparent;
+            color: var(--mui-palette-primary-main);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 2px 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .copy-button:hover:not(:disabled),
+        .copy-button:focus-visible {
+            border-color: var(--mui-palette-primary-main);
+            background: #e8f1f6;
+            outline: none;
+        }
+        .copy-button.is-copied {
+            color: var(--mui-palette-success-main);
+        }
+        .copy-button__icon {
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+        .hash-chip__copy .copy-button__label {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+        }
         @media (max-width: 720px) {
             .app-shell {
                 width: min(100vw - 20px, 1120px);

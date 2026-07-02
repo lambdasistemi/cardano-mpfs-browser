@@ -15,6 +15,7 @@ import Test.FactsSpec as FactsSpec
 import Test.MPFS.CageSpec as CageSpec
 import Test.MPFS.ClientSpec as ClientSpec
 import Test.MPFS.App.RuntimeConfigSpec as RuntimeConfigSpec
+import Test.MPFS.MaterialTextSpec as MaterialTextSpec
 import Test.MPFS.ProofSpec as ProofSpec
 import Test.MPFS.SecondOracleCsmtVerifySpec as SecondOracleCsmtVerifySpec
 import Test.MPFS.SecondOracleClientSpec as SecondOracleClientSpec
@@ -38,6 +39,7 @@ main = do
       RuntimeConfigSpec.spec
       FactsSpec.spec
       ProofSpec.spec
+      MaterialTextSpec.spec
       SecondOracleClientSpec.spec
       SecondOracleCsmtVerifySpec.spec
       SecondOracleAppSpec.spec
