@@ -29,7 +29,9 @@ import MPFS.SecondOracle.Types
   )
 import MPFS.Types (RequestId, TokenId(..), TrustedRoot(..))
 import MPFS.UI.Material.HashChip as HashChip
+import MPFS.UI.Material.TextArea as TextArea
 import MPFS.UI.Material.Text (decodeHexUtf8)
+import MPFS.UI.Material.TextField as TextField
 import MPFS.UI.Remote (Remote(..), remoteStatus)
 import MPFS.Wallet.Cip30 (WalletInfo)
 import Type.Proxy (Proxy(..))
@@ -703,12 +705,13 @@ factLookupView actions state =
     [ HP.class_ (HH.ClassName "field-group") ]
     [ HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
-        [ HH.input
-            [ HP.type_ HP.InputText
-            , HP.value state.factLookup.key
-            , HP.placeholder "Fact key"
-            , HE.onValueInput actions.updateFactLookupKey
-            ]
+        [ TextField.textField
+            { label: "Fact key"
+            , value: state.factLookup.key
+            , placeholder: Just "Fact key"
+            , onInput: actions.updateFactLookupKey
+            , disabled: false
+            }
         , HH.button
             [ HP.type_ HP.ButtonButton
             , HP.class_ (HH.ClassName "primary-button")
@@ -722,12 +725,13 @@ factLookupView actions state =
             [ HH.text "Look up" ]
         ]
     , factLookupRemoteView state.factLookup.value
-    , HH.textarea
-        [ HP.value state.factLookup.proofEnvelope
-        , HP.rows 4
-        , HP.placeholder "Proof envelope"
-        , HE.onValueInput actions.updateFactProofEnvelope
-        ]
+    , TextArea.textArea
+        { label: "Proof envelope"
+        , value: state.factLookup.proofEnvelope
+        , placeholder: Just "Proof envelope"
+        , onInput: actions.updateFactProofEnvelope
+        , disabled: false
+        }
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
         [ HH.button
@@ -756,18 +760,20 @@ factWriteForms actions state =
     [ HP.class_ (HH.ClassName "field-group") ]
     [ HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
-        [ HH.input
-            [ HP.type_ HP.InputText
-            , HP.value state.writeForms.insertKey
-            , HP.placeholder "Insert key"
-            , HE.onValueInput actions.updateInsertKey
-            ]
-        , HH.input
-            [ HP.type_ HP.InputText
-            , HP.value state.writeForms.insertValue
-            , HP.placeholder "Insert value"
-            , HE.onValueInput actions.updateInsertValue
-            ]
+        [ TextField.textField
+            { label: "Insert key"
+            , value: state.writeForms.insertKey
+            , placeholder: Just "Insert key"
+            , onInput: actions.updateInsertKey
+            , disabled: false
+            }
+        , TextField.textField
+            { label: "Insert value"
+            , value: state.writeForms.insertValue
+            , placeholder: Just "Insert value"
+            , onInput: actions.updateInsertValue
+            , disabled: false
+            }
         , HH.button
             [ HP.type_ HP.ButtonButton
             , HP.class_ (HH.ClassName "primary-button")
@@ -782,24 +788,27 @@ factWriteForms actions state =
         ]
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
-        [ HH.input
-            [ HP.type_ HP.InputText
-            , HP.value state.writeForms.updateKey
-            , HP.placeholder "Update key"
-            , HE.onValueInput actions.updateUpdateKey
-            ]
-        , HH.input
-            [ HP.type_ HP.InputText
-            , HP.value state.writeForms.updateOldValue
-            , HP.placeholder "Old value"
-            , HE.onValueInput actions.updateUpdateOldValue
-            ]
-        , HH.input
-            [ HP.type_ HP.InputText
-            , HP.value state.writeForms.updateNewValue
-            , HP.placeholder "New value"
-            , HE.onValueInput actions.updateUpdateNewValue
-            ]
+        [ TextField.textField
+            { label: "Update key"
+            , value: state.writeForms.updateKey
+            , placeholder: Just "Update key"
+            , onInput: actions.updateUpdateKey
+            , disabled: false
+            }
+        , TextField.textField
+            { label: "Old value"
+            , value: state.writeForms.updateOldValue
+            , placeholder: Just "Old value"
+            , onInput: actions.updateUpdateOldValue
+            , disabled: false
+            }
+        , TextField.textField
+            { label: "New value"
+            , value: state.writeForms.updateNewValue
+            , placeholder: Just "New value"
+            , onInput: actions.updateUpdateNewValue
+            , disabled: false
+            }
         , HH.button
             [ HP.type_ HP.ButtonButton
             , HP.class_ (HH.ClassName "primary-button")
@@ -815,18 +824,20 @@ factWriteForms actions state =
         ]
     , HH.div
         [ HP.class_ (HH.ClassName "control-row") ]
-        [ HH.input
-            [ HP.type_ HP.InputText
-            , HP.value state.writeForms.deleteKey
-            , HP.placeholder "Delete key"
-            , HE.onValueInput actions.updateDeleteKey
-            ]
-        , HH.input
-            [ HP.type_ HP.InputText
-            , HP.value state.writeForms.deleteValue
-            , HP.placeholder "Delete value"
-            , HE.onValueInput actions.updateDeleteValue
-            ]
+        [ TextField.textField
+            { label: "Delete key"
+            , value: state.writeForms.deleteKey
+            , placeholder: Just "Delete key"
+            , onInput: actions.updateDeleteKey
+            , disabled: false
+            }
+        , TextField.textField
+            { label: "Delete value"
+            , value: state.writeForms.deleteValue
+            , placeholder: Just "Delete value"
+            , onInput: actions.updateDeleteValue
+            , disabled: false
+            }
         , HH.button
             [ HP.type_ HP.ButtonButton
             , HP.class_ (HH.ClassName "primary-button")
