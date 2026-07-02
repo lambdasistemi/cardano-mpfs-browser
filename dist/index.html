@@ -81,8 +81,8 @@
             border-radius: 6px;
             box-shadow: 0 1px 2px rgba(31, 41, 51, 0.05);
         }
-        .status-pill span,
-        .field-line span {
+        .status-pill > span,
+        .field-line > span {
             display: block;
             color: var(--muted);
             font-size: 0.76rem;
@@ -288,10 +288,12 @@
         .hash-chip {
             display: inline-flex;
             align-items: center;
+            flex-wrap: nowrap;
             flex: 0 1 auto;
             gap: var(--mui-spacing-0-5);
             max-width: 100%;
             min-width: 0;
+            overflow: hidden;
             border: 1px solid var(--mui-palette-divider);
             border-radius: var(--mui-shape-border-radius);
             background: var(--mui-palette-background-paper);
@@ -307,6 +309,9 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+        }
+        .hash-chip__copy {
+            flex: 0 0 auto;
         }
         .hash-pair {
             display: inline-flex;
@@ -327,6 +332,7 @@
             flex: 1 1 auto;
         }
         .copy-button {
+            flex: 0 0 auto;
             min-width: 28px;
             min-height: 28px;
             border: 1px solid transparent;
@@ -342,6 +348,7 @@
             font-size: 0.78rem;
             font-weight: 700;
             line-height: 1;
+            white-space: nowrap;
         }
         .copy-button:hover:not(:disabled),
         .copy-button:focus-visible {

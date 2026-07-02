@@ -29,6 +29,7 @@ import MPFS.SecondOracle.Types
   )
 import MPFS.Types (RequestId, TokenId(..), TrustedRoot(..))
 import MPFS.UI.Material.HashChip as HashChip
+import MPFS.UI.Material.Text (decodeHexUtf8)
 import MPFS.UI.Remote (Remote(..), remoteStatus)
 import MPFS.Wallet.Cip30 (WalletInfo)
 import Type.Proxy (Proxy(..))
@@ -371,6 +372,20 @@ hashFieldLine label slotId value =
     , HH.strong_ [ hashChip slotId value ]
     ]
 
+dataFieldLine
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> String
+  -> H.ComponentHTML action Slots m
+dataFieldLine label slotId value =
+  HH.div
+    [ HP.class_ (HH.ClassName "field-line") ]
+    [ HH.span_ [ HH.text label ]
+    , HH.strong_ [ dataChip slotId value ]
+    ]
+
 hashPair
   :: forall action m
    . MonadAff m
@@ -387,6 +402,22 @@ hashPair label slotId value =
     , hashChip slotId value
     ]
 
+dataPair
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> String
+  -> H.ComponentHTML action Slots m
+dataPair label slotId value =
+  HH.span
+    [ HP.class_ (HH.ClassName "hash-pair") ]
+    [ HH.span
+        [ HP.class_ (HH.ClassName "hash-pair__label") ]
+        [ HH.text label ]
+    , dataChip slotId value
+    ]
+
 hashChip
   :: forall action m
    . MonadAff m
@@ -399,6 +430,19 @@ hashChip slotId value =
     slotId
     HashChip.component
     { value, flank: 8 }
+
+dataChip
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> H.ComponentHTML action Slots m
+dataChip slotId value =
+  case decodeHexUtf8 value of
+    Just decoded ->
+      hashChip slotId decoded
+    Nothing ->
+      hashChip slotId value
 
 tokenRemoteView
   :: forall action m
@@ -816,7 +860,7 @@ factLookupRemoteView = case _ of
       [ HP.class_ (HH.ClassName "error-state") ]
       [ HH.text ("Error looking up fact: " <> message) ]
   Success value ->
-    hashFieldLine "Lookup value" "fact-lookup-value" value
+    dataFieldLine "Lookup value" "fact-lookup-value" value
 
 tokenCompletenessMessageView
   :: forall action m
@@ -845,7 +889,7 @@ requestRow actions nowMillis tokenState selectedRequestIds index request =
     [ HP.attr (HH.AttrName "data-request-key") request.key ]
     ( [ HH.strong_ [ HH.text request.operation ]
       , requestIdView
-      , hashPair "Key" (requestSlot "key") request.key
+      , dataPair "Key" (requestSlot "key") request.key
       , requestValueView
       , HH.span_
           [ HH.text
@@ -876,7 +920,7 @@ requestRow actions nowMillis tokenState selectedRequestIds index request =
         , HH.text "none"
         ]
     Just value ->
-      hashPair "Value" (requestSlot "value") value
+      dataPair "Value" (requestSlot "value") value
 
   requestControls = case Write.requestIdOf request of
     Nothing ->
@@ -905,8 +949,8 @@ factRow :: forall action m. MonadAff m => Int -> FactEntry -> H.ComponentHTML ac
 factRow index fact =
   HH.li
     [ HP.attr (HH.AttrName "data-fact-key") fact.key ]
-    [ hashPair "Key" ("fact-" <> show index <> "-key") fact.key
-    , hashPair "Value" ("fact-" <> show index <> "-value") fact.value
+    [ dataPair "Key" ("fact-" <> show index <> "-key") fact.key
+    , dataPair "Value" ("fact-" <> show index <> "-value") fact.value
     ]
 
 tokenRow
