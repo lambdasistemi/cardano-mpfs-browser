@@ -9,5 +9,5 @@
       in `dist/index.html`. Gate green. One commit.
 
 ## Slice 2 — layout + control primitives
-- [ ] T63-S2 `Button`, `IconButton`, `Chip`, `StatusChip`, `Paper`,
+- [X] T63-S2 `Button`, `IconButton`, `Chip`, `StatusChip`, `Paper`,
       `SectionHeader`, `Alert`, `Dialog`, `DataTable` components + CSS. One commit.
