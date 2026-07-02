@@ -1,0 +1,731 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://lambdasistemi.github.io/cardano-mpfs-browser/UI-EVALUATION/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>UI/UX Evaluation: cardano-mpfs-browser SPA - Cardano MPFS Browser</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#uiux-evaluation-cardano-mpfs-browser-spa" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Cardano MPFS Browser" class="md-header__button md-logo" aria-label="Cardano MPFS Browser" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Cardano MPFS Browser
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              UI/UX Evaluation: cardano-mpfs-browser SPA
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/lambdasistemi/cardano-mpfs-browser" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    lambdasistemi/cardano-mpfs-browser
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Cardano MPFS Browser" class="md-nav__button md-logo" aria-label="Cardano MPFS Browser" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Cardano MPFS Browser
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/lambdasistemi/cardano-mpfs-browser" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    lambdasistemi/cardano-mpfs-browser
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Executive Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-findings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Findings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-the-mpfs-requestproofretract-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. The MPFS Request/Proof/Retract Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-redesign-proposal-house-material-style" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Redesign Proposal: House Material Style
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-framework-recommendation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Framework Recommendation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-proposed-implementation-breakdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Proposed Implementation Breakdown
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="uiux-evaluation-cardano-mpfs-browser-spa">UI/UX Evaluation: cardano-mpfs-browser SPA</h1>
+<p>Evidence used: <code>/tmp/uieval/brief.md</code>, <code>src/MPFS/App/View.purs</code>, <code>src/App.purs</code>, <code>src/MPFS/App/Facts.purs</code>, <code>src/MPFS/Client*.purs</code>, <code>src/MPFS/Cage/Wasm.purs</code>, <code>dist/index.html</code>, screenshots <code>/code/moog/final-connect.png</code>, <code>/code/moog/final-tokens.png</code>, <code>/code/moog/final-facts.png</code>, and sibling references in <code>purescript-spa-kit/mui</code>, <code>cardano-mpfs-offchain-ui-redesign/mpfs-spa</code>, <code>cquisitor</code>, and <code>cardano-ledger-inspector</code>. No browser MCP was available.</p>
+<h2 id="1-executive-summary">1. Executive Summary</h2>
+<ul>
+<li>The current SPA is functionally wired but visually still a placeholder. It uses one generic two-column panel for every workflow, so token/fact/request management has weak hierarchy and poor action guidance.</li>
+<li>The operator's overflow complaint is confirmed. In <code>final-facts.png</code>, request values sprawl far beyond the panel and screenshot width because request/fact rows render raw hex in unbounded flex spans.</li>
+<li>Requests are the largest UX failure. The UI shows operation/key/value/phase only; it does not clearly show requester, request id, age/deadlines, proof coverage, or who may retract.</li>
+<li>Hash/key/value handling needs a first-class component: show <code>xxxx…yyyy</code>, keep full value in tooltip/title/detail, and provide one-click copy with copied feedback.</li>
+<li>Recommendation: choose path A. Keep Halogen and implement the house Material design language with Halogen components plus plain CSS. Do not adopt react-basic+MUI for this asset-managing app.</li>
+<li>Use the redesigned <code>mpfs-spa</code> and <code>purescript-spa-kit/mui</code> as design/behavior references, not as runtime dependencies. The current app has 1 runtime npm package; the MUI sibling has 86.</li>
+</ul>
+<h2 id="2-findings">2. Findings</h2>
+<table>
+<thead>
+<tr>
+<th>Severity</th>
+<th>Where</th>
+<th>What's wrong</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Critical</td>
+<td>Facts screenshot <code>final-facts.png</code>; <code>src/MPFS/App/View.purs:725</code>; <code>dist/index.html:200</code></td>
+<td>Pending requests render as <code>ul.token-list &gt; li</code> flex rows with raw <code>key</code> and <code>value</code> spans. The long value span has no truncation, copy affordance, or constrained width, so it stretches past the panel.</td>
+<td>The core request management view becomes unreadable. Users cannot compare or safely act on pending changes.</td>
+</tr>
+<tr>
+<td>Critical</td>
+<td><code>src/MPFS/App/View.purs:725</code>; <code>src/MPFS/Client/Types.purs:77</code></td>
+<td>Request rows omit request id, requester/owner, fee, submitted time, deadline, and proof coverage, despite those fields existing in the decoded model.</td>
+<td>A user cannot tell what the request will do, who made it, whether it is trustworthy, or which row a transaction will consume.</td>
+</tr>
+<tr>
+<td>High</td>
+<td><code>src/MPFS/App/View.purs:764</code>; <code>src/MPFS/App/Facts.purs:148</code>; reference <code>mpfs-spa/src/MpfsSpa/App.purs:1469</code></td>
+<td><code>Retract</code> is always rendered for every request. The current UI does not gate or explain that only the requester can retract, and only during the retract window.</td>
+<td>The UI invites invalid transactions and fails to explain the protocol's authority model.</td>
+</tr>
+<tr>
+<td>High</td>
+<td><code>src/MPFS/App/View.purs:753</code>; <code>src/App.purs:405</code>; <code>src/App.purs:419</code>; reference <code>mpfs-spa/src/MpfsSpa/App.purs:1379</code></td>
+<td>Any request can be selected, and <code>Process selected</code> / <code>Reject expired</code> only require a non-empty selection in the app action. The Material reference checks that all selected rows are in the right phase.</td>
+<td>Users can build/sign transactions that are predictably invalid or semantically wrong.</td>
+</tr>
+<tr>
+<td>High</td>
+<td><code>src/MPFS/App/View.purs:925</code>; <code>src/MPFS/App/View.purs:786</code>; <code>src/MPFS/App/View.purs:773</code></td>
+<td><code>shortText = identity</code>, and token/fact/request values render raw. There is no copy-to-clipboard path in the view actions.</td>
+<td>Long identifiers dominate the screen, cannot be copied reliably, and make visual scanning impossible.</td>
+</tr>
+<tr>
+<td>High</td>
+<td><code>src/MPFS/App/View.purs:193</code>; <code>src/MPFS/App/View.purs:598</code></td>
+<td>The Facts tab puts token state, trusted roots, requests, facts, lookup, write forms, verification, and global actions into one long generic panel.</td>
+<td>Token/fact management feels like a dump of internal state rather than a workflow.</td>
+</tr>
+<tr>
+<td>High</td>
+<td><code>src/App.purs:241</code>; <code>src/MPFS/App/View.purs:156</code></td>
+<td>Selecting a token only updates state; it does not guide the user to Facts or load facts. Tokens are a list of raw IDs plus two buttons.</td>
+<td>The main path "load tokens -&gt; select token -&gt; load facts -&gt; process requests" is not discoverable.</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td><code>src/MPFS/App/View.purs:195</code>; <code>src/MPFS/App/View.purs:286</code></td>
+<td>Verification statuses are presented as generic field cards: "Facts set Verified", "Pending requests: Verified", "Second oracle Verified".</td>
+<td>Users see "Verified" but not what was verified, at which snapshot, by which proof, or what would make it unsafe.</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td><code>src/MPFS/App/View.purs:550</code>; <code>src/App.purs:446</code>; spec <code>specs/49-per-fact-mpf-inclusion/spec.md:60</code></td>
+<td>Fact lookup now auto-verifies looked-up facts in code, but the UI still prominently asks for a manual "Proof envelope".</td>
+<td>The proof model looks manual and obscure even when the happy path is automatic.</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td><code>dist/index.html:7</code>; <code>src/MPFS/App/View.purs:545</code>; <code>src/MPFS/App/View.purs:598</code></td>
+<td><code>dist/index.html</code> styles panels/buttons/lists but not <code>.field-group</code>, <code>input</code>, or <code>textarea</code>. In <code>final-facts.png</code>, bottom forms fall back to native browser controls.</td>
+<td>The most important write controls look least integrated and are harder to scan.</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td><code>dist/index.html:122</code>; reference <code>mpfs-spa/src/MpfsSpa/App.purs:1225</code>; reference <code>mpfs-spa/src/MpfsSpa/App.purs:1317</code></td>
+<td>The current panel has no bounded table/list regions. The Material reference uses table containers and sticky headers for facts/requests.</td>
+<td>Long request/fact lists create a very tall page and bury actions at the bottom.</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td><code>dist/index.html:8</code>; reference <code>purescript-spa-kit/mui/src/SpaKit/MUI.js:146</code>; reference <code>mpfs-spa/src/MpfsSpa/App.purs:409</code></td>
+<td>The app palette is beige/teal/magenta and does not match the house MUI theme vocabulary of neutral background, primary blue, success/warning chips, dense Paper/Table/Card structure.</td>
+<td>It does not yet read as the same family as the sibling browser tools.</td>
+</tr>
+<tr>
+<td>Medium</td>
+<td><code>src/App.purs:639</code>; <code>src/App.purs:642</code>; <code>src/MPFS/App/View.purs:835</code></td>
+<td>Write flow status moves from built to wallet signing without a decoded transaction intent review screen.</td>
+<td>For an asset-managing app, users need to see what they are about to sign, not just "Waiting for wallet signature".</td>
+</tr>
+<tr>
+<td>Low</td>
+<td><code>src/MPFS/App/View.purs:162</code>; <code>src/MPFS/App/View.purs:188</code>; <code>src/MPFS/App/View.purs:248</code></td>
+<td>Tab names are coarse, while the actual workbench is mostly token/fact/request management.</td>
+<td>The app can be clearer with a persistent token list plus workspace sections instead of treating each workflow as a separate page.</td>
+</tr>
+</tbody>
+</table>
+<p>Overflow/clipping/no-wrap inventory:</p>
+<ul>
+<li>Confirmed page overflow: request value spans in <code>requestRow</code> (<code>View.purs:737-738</code>) inside flex <code>li</code> rows (<code>dist/index.html:200-206</code>).</li>
+<li>Likely same failure: fact values in <code>factRow</code> (<code>View.purs:776-777</code>) because the value span is not wrapped/truncated.</li>
+<li>Current long token/root/owner fields mostly wrap because <code>.field-line strong</code> uses <code>overflow-wrap:anywhere</code> (<code>dist/index.html:77-83</code>), but they should still be truncated/copyable rather than wrapped into multi-line blocks.</li>
+<li>Token rows use <code>overflow-wrap:anywhere</code> (<code>dist/index.html:211-220</code>), so they do not explode the page, but they are not scan-friendly or copyable.</li>
+<li>Inputs and textareas have no app-level styling; pasted long proof JSON should be contained in a monospace, scrollable proof panel rather than a plain textarea.</li>
+</ul>
+<h2 id="3-the-mpfs-requestproofretract-model">3. The MPFS Request/Proof/Retract Model</h2>
+<p>An MPFS request is a pending on-chain fact operation for a selected token. It is created by a requester and contains:</p>
+<ul>
+<li><code>request_id</code>: the request UTxO reference (<code>txid#ix</code>), derived in <code>src/MPFS/Client.purs:539</code>.</li>
+<li><code>owner</code>: the requester/owner key hash from the request datum (<code>src/MPFS/Client.purs:532-539</code>).</li>
+<li><code>operation</code>: <code>insert</code>, <code>update</code>, or <code>delete</code>, derived from the request datum (<code>src/MPFS/Client.purs:564-573</code>).</li>
+<li><code>key</code>, <code>value</code>, <code>fee</code>, and <code>submitted_at</code> (<code>src/MPFS/Client/Types.purs:77-87</code>).</li>
+</ul>
+<p>The request set is proof-bearing. The browser preserves the raw <code>/tokens/:id/requests</code> response (<code>src/MPFS/Client.purs:435-459</code>), independently anchors its snapshot root against the second oracle (<code>src/MPFS/App/Verification.purs:163-184</code>), then calls the WASM verifier with <code>op = verify_snapshot</code> (<code>src/MPFS/App/Verification.purs:236-263</code>). The UI should say "Request set verified" and expose proof details: snapshot slot, trusted root, verifier op, verdict, and raw proof/envelope copy.</p>
+<p>The request phase is computed from token timing:</p>
+<ul>
+<li><code>processable</code>: <code>now - submitted_at &lt;= process_time</code></li>
+<li><code>retractable</code>: after process time, until <code>process_time + retract_time</code></li>
+<li><code>expired</code>: after both windows</li>
+</ul>
+<p>That logic is in <code>src/MPFS/App/Facts.purs:148-158</code>. The UI must make authority explicit: the requester can retract during the retract window. Processing belongs to the token/agent path for processable requests; rejecting belongs to expired requests. A row should show both the row's requester and whether the connected wallet is "you", then enable only the actions the connected wallet and phase allow.</p>
+<h2 id="4-redesign-proposal-house-material-style">4. Redesign Proposal: House Material Style</h2>
+<p>Keep the first screen as the actual workbench, not a landing page. Use a Material-like app shell, but implement it in Halogen and CSS:</p>
+<div class="highlight"><pre><span></span><code>+-----------------------------------------------------------------------+
+| MPFS Browser                              Wallet chip | Network | API |
++----------------------------+------------------------------------------+
+| Tokens                     | Token 976821db…aaacbc6     Verified chips |
+| [Refresh] [Register]       | owner 8da87507…526f0c9f (not you)        |
+| [Mine only toggle]         +------------------------------------------+
+| &gt; 976821db…aaacbc6  Mine   | Facts                                    |
+|   98207724…59a32b Read     | Key        Value              Actions    |
+|                            | schema…   7b2261…7d       [edit][delete]|
+|                            +------------------------------------------+
+|                            | Pending Requests                         |
+|                            | [Process selected] [Reject expired]      |
+|                            | Op  Key  Value  Requester  Phase Actions |
+|                            | Ins cfg  {...}  you        Expired       |
++----------------------------+------------------------------------------+
+</code></pre></div>
+<p>Concrete components:</p>
+<ul>
+<li>App shell: <code>top-app-bar</code>, <code>token-sidebar</code>, <code>workspace</code>, <code>section-header</code>, <code>paper</code>, <code>table</code>, <code>status-chip</code>, <code>alert</code>, <code>dialog</code>, <code>icon-button</code>.</li>
+<li>Theme tokens: copy the visual language from <code>purescript-spa-kit/mui</code> and <code>mpfs-spa</code>: neutral <code>#f7f8f9</code> background, white paper, primary <code>#255f85</code>, success <code>#2f6f50</code>, warning <code>#b46a1c</code>, 6px radius, dense spacing.</li>
+<li>Tokens: persistent left rail with selected row, owner chip, "Mine" / "Read-only", refresh/register icons, empty states with next action. Do not require the user to remember to switch tabs after selecting.</li>
+<li>Facts: table with bounded height and sticky header. Columns: decoded key label, key hash chip, decoded value/summary, value hash chip, proof status, actions. Use dialogs for insert/update/delete instead of three always-visible raw forms.</li>
+<li>Requests: table on desktop, stacked cards on mobile. Columns: select, operation chip, key, value, requester, age/deadline, phase, proof, actions. The row title should read like "Insert cfg -&gt; <value summary>", not raw concatenated text.</li>
+<li>Request cards on mobile:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>[Insert] [expired] [request set verified]
+Key      7b227479…6669677d  [copy]
+Value    7b226167…317d7d    [copy]
+Requester 8da87507…526f0c9f (you)
+Submitted 2h 14m ago | Process window ended | Retract window ended
+Actions: disabled with reason, or Retract when requester + retractable
+</code></pre></div>
+<ul>
+<li>Proof detail: a collapsible drawer/dialog per request set and per fact lookup. Show:</li>
+<li>verifier verdict chip</li>
+<li>snapshot slot and root</li>
+<li>trusted root source</li>
+<li>verifier operation (<code>verify_snapshot</code>, <code>verify_fact_inclusion</code>, etc.)</li>
+<li>raw proof/envelope with copy/download</li>
+<li>failure reason when rejected</li>
+<li>Hash chip pattern: render full values as <code>front…back</code>, e.g. <code>7b227479…6669677d</code>. Use monospace text, max-width, <code>overflow:hidden</code>, and a visible copy button. Hover/focus can show a tooltip with the full value; click copies full value. CQuisitor's pattern is the right behavior reference (<code>HashWithTooltip.tsx:17</code>, <code>CopyButton.tsx:11</code>, <code>globals.css:7394</code>, <code>globals.css:8998</code>).</li>
+<li>Overflow handling:</li>
+<li>No raw hash should be a bare flex item.</li>
+<li>Every table cell containing untrusted or user-provided bytes must use <code>min-width:0</code>.</li>
+<li>Desktop tables may scroll horizontally inside their own container; the page itself should not.</li>
+<li>Mobile request/fact cards should stack fields and use chips, not tables squeezed below readability.</li>
+</ul>
+<h2 id="5-framework-recommendation">5. Framework Recommendation</h2>
+<p>Recommend A: keep Halogen; implement the Material design language in Halogen + CSS.</p>
+<p>Rationale:</p>
+<ul>
+<li>Trust boundary wins for this app. <code>cardano-mpfs-browser</code> is asset-managing and signs/submits wallet transactions. Its current runtime npm tree is one package: <code>@bjorn3/browser_wasi_shim</code>. The redesigned React+MUI <code>mpfs-spa</code> lockfile has 86 runtime packages, including MUI, Emotion, React, and transitive Babel/utility packages.</li>
+<li>The existing project spec already points this way: <code>specs/32-port-mpfs-spa/spec.md:12-21</code> says the target architecture is Halogen with a small npm runtime surface and that <code>mpfs-spa</code> is reference behavior only; <code>specs/32-port-mpfs-spa/spec.md:42</code> explicitly excludes react-basic, MUI, and Emotion.</li>
+<li>Exact MUI component reuse is not worth increasing the signing-page JS surface. A compromised presentation dependency can alter what the page asks the wallet to sign.</li>
+<li>Visual consistency does not require importing MUI. The Material language is mostly layout, density, typography, color tokens, elevation/borders, chips, tables, dialogs, and icon-button patterns. Those are straightforward in Halogen/plain CSS.</li>
+<li>Effort is moderate but bounded. The current UI is centralized in <code>src/MPFS/App/View.purs</code> and one inline CSS block. Rebuilding a small Halogen component kit is less risky than moving the app back to React or embedding React islands.</li>
+</ul>
+<p>What to reuse:</p>
+<ul>
+<li>From <code>purescript-spa-kit/mui</code>: the component vocabulary and theme constants, not the MUI bindings.</li>
+<li>From <code>cardano-mpfs-offchain-ui-redesign/mpfs-spa</code>: the two-pane workbench, token ownership filtering, owner chips, request/fact tables, phase chips, dialogs, and action gating ideas.</li>
+<li>From CQuisitor: truncating/copyable hash chips and proof/detail inspection patterns.</li>
+<li>From <code>cardano-ledger-inspector</code>: Halogen clipboard/action patterns for copied state.</li>
+</ul>
+<p>When B would be acceptable:</p>
+<ul>
+<li>Only for a read-only inspector or demo surface that never requests wallet signatures, or if the organization explicitly relaxes the asset-app npm boundary. For this SPA, B should not be chosen.</li>
+</ul>
+<h2 id="6-proposed-implementation-breakdown">6. Proposed Implementation Breakdown</h2>
+<ol>
+<li>Foundation ticket: add Halogen/plain-CSS Material primitives.</li>
+<li>Components: <code>Button</code>, <code>IconButton</code>, <code>Chip</code>, <code>StatusChip</code>, <code>HashChip</code>, <code>CopyButton</code>, <code>Paper</code>, <code>SectionHeader</code>, <code>DataTable</code>, <code>Dialog</code>, <code>Alert</code>.</li>
+<li>Add clipboard FFI and copied feedback.</li>
+<li>
+<p>Move CSS out of inline-only growth if desired, but keep zero runtime CSS/JS dependencies.</p>
+</li>
+<li>
+<p>Overflow and hash ticket.</p>
+</li>
+<li>Replace <code>shortText = identity</code> with a real middle truncation helper using the required <code>xxxx…yyyy</code> display.</li>
+<li>Use <code>HashChip</code> for token IDs, owners, roots, request IDs, keys, values, tx IDs, proof roots, and submitted transaction IDs.</li>
+<li>
+<p>Add screenshot/golden checks with long request values.</p>
+</li>
+<li>
+<p>App shell and responsive layout ticket.</p>
+</li>
+<li>Replace tab-centric page flow with top app bar + token sidebar + workspace.</li>
+<li>Preserve mobile as single-column: token selector first, workspace below.</li>
+<li>
+<p>Keep Connect/End workflows reachable but not dominant.</p>
+</li>
+<li>
+<p>Token management ticket.</p>
+</li>
+<li>Add ownership chips, "Mine only" filter, selected token summary, refresh/register actions, and clear empty states.</li>
+<li>
+<p>After selecting a token, load or prompt to load facts in the workspace.</p>
+</li>
+<li>
+<p>Facts management ticket.</p>
+</li>
+<li>Replace raw fact list with a bounded table/card layout.</li>
+<li>Use dialogs for insert/update/delete.</li>
+<li>
+<p>Show pending-change blockers per fact when a request exists for that key.</p>
+</li>
+<li>
+<p>Pending request UX ticket.</p>
+</li>
+<li>Render request table/cards with operation, key, value, requester, request id, fee, submitted age, process/retract deadlines, phase, proof status, and permitted actions.</li>
+<li>Gate selection/actions by phase and connected wallet authority.</li>
+<li>
+<p>Show disabled reasons in tooltips or helper text.</p>
+</li>
+<li>
+<p>Proof inspector ticket.</p>
+</li>
+<li>Add request-set and per-fact proof detail views.</li>
+<li>Surface snapshot slot/root, trusted root, verifier op, raw proof/envelope copy, and rejection messages.</li>
+<li>
+<p>De-emphasize manual proof-envelope paste; keep it under an advanced section if still needed.</p>
+</li>
+<li>
+<p>Transaction intent/review ticket.</p>
+</li>
+<li>Before CIP-30 signing, show decoded operation intent: token, request id(s), fact key/value changes, requester/agent role, fees, inputs/outputs/proof statuses.</li>
+<li>
+<p>Make wallet signing a deliberate final action from that review.</p>
+</li>
+<li>
+<p>Accessibility/responsive verification ticket.</p>
+</li>
+<li>Keyboard reachability for tables, dialogs, copy buttons, and action menus.</li>
+<li>Viewport checks around 360px, 720px, 1280px, and long-value fixtures.</li>
+<li>Assert no page-level horizontal overflow; only intended local table/proof scroll areas may scroll.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/gh/paolino/dev-assets@55d2de7/mkdocs/docs/js/read-aloud.js"></script>
+      
+    
+  </body>
+</html>
