@@ -44,11 +44,7 @@ finishWalletDiscovery wallets state =
     { walletSession =
         state.walletSession
           { wallets = Success wallets
-          , feedback =
-              if Array.null wallets then
-                Just "No CIP-30 wallet found."
-              else
-                Nothing
+          , feedback = Nothing
           }
     }
 
