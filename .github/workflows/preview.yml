@@ -31,6 +31,11 @@ jobs:
       - name: Point preview at live UMPFS
         run: printf 'window.MPFS_BASE_URL = "https://umpfs.plutimus.com";\n' > dist/config.js
 
+      - name: Cache-bust asset refs
+        run: |
+          ver="${GITHUB_SHA::8}"
+          sed -i "s#src=\"index.js\"#src=\"index.js?v=$ver\"#; s#src=\"config.js\"#src=\"config.js?v=$ver\"#" dist/index.html
+
       - name: Verify cage config
         run: nix develop --quiet --command just verify-cage-config
 
