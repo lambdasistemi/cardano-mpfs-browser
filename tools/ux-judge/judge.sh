@@ -8,7 +8,7 @@ shopt -s nullglob
 : > "$out/judge.err"
 for img in "$out"/[0-9]*.png; do
   name="$(basename "$img" .png)"
-  prompt="You are a strict UX judge. Use the Read tool to view the screenshot at ${img} and read the rubric at ${rubric}. The screenshot is scenario '${name}' of the MPFS Browser SPA (a full-page capture). Score it against every rubric dimension and output ONLY the JSON object the rubric specifies — no prose, no markdown fences."
+  prompt="You are a strict UX judge. Use the Read tool to view the screenshot at ${img} and read the rubric at ${rubric}. The screenshot is scenario '${name}' of the MPFS Browser SPA (a full-page capture). The scenario name ends with the viewport (mobile≈390, tablet≈768, or desktop≈1440 CSS px wide) — penalize horizontal overflow, cramped or overlapping controls, wrapped chips, or large dead space at that width. Score it against every rubric dimension and output ONLY the JSON object the rubric specifies — no prose, no markdown fences."
   echo "judging ${name} ..."
   if ! claude -p "$prompt" --allowedTools "Read" > "$out/${name}.judge.txt" 2>>"$out/judge.err"; then
     echo "  claude failed for ${name} (see out/judge.err)"
