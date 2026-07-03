@@ -1,0 +1,16 @@
+{
+  "name": "ux-judge",
+  "version": "1.0.0",
+  "description": "An automated UX/UI feedback loop for the MPFS Browser SPA. It replaces \"the operator opens a preview and reacts\" with a repeatable, scored punch-list a machine produces on every run — so \"usable\" becomes a number that trends, not a vibe.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright": "^1.48.0"
+  }
+}
