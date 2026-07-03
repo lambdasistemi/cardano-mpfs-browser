@@ -64,7 +64,7 @@ render state =
         [ HP.class_ (HH.ClassName "copy-button__icon")
         , HP.attr (HH.AttrName "aria-hidden") "true"
         ]
-        [ HH.text "⧉" ]
+        []
     , HH.span
         [ HP.class_ (HH.ClassName "copy-button__label") ]
         [ HH.text (buttonLabel state.copyState) ]

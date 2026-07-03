@@ -32,7 +32,7 @@ spec = describe "MPFS App Wallet" do
     loaded.walletSession.wallets `shouldEqual` Success [ lace ]
     loaded.walletSession.feedback `shouldEqual` Nothing
     empty.walletSession.wallets `shouldEqual` Success []
-    empty.walletSession.feedback `shouldEqual` Just "No CIP-30 wallet found."
+    empty.walletSession.feedback `shouldEqual` Nothing
     failed.walletSession.wallets `shouldEqual` Failure "wallet discovery failed"
     failed.walletSession.feedback `shouldEqual` Just "wallet discovery failed"
 
