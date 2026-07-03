@@ -10,3 +10,5 @@
 - T64-S1: constrained overflow contexts in `dist/index.html` for panel/grid/list/field/control/hash-row children so long request/fact bytes live inside bounded `.hash-chip` elements.
 - T75-S1: before, fact/request key and value chips rendered UTF-8 JSON as raw hex and some constrained contexts let hash-chip copy buttons wrap; after, those data fields decode to readable copyable text when valid while identifier hashes stay hash chips, and hash-chip copy buttons use a fixed inline flex footprint.
 - T77-S1: RED intentionally skipped because this slice is a presentational form-control retrofit with no new pure logic; proof is navigator review plus `./gate.sh` green.
+- T80-S1: RED covered the pure wallet-message dedupe path (`finishWalletDiscovery []` no longer sets duplicate feedback); SVG icon, onboarding hint, and disabled-reason captions are presentational and covered by navigator review plus `./gate.sh`.
+- T80-S1 correction: swapped the copy icon from inline Halogen `elementNS` SVG to a CSS `currentColor` mask in `dist/index.html` because the bundled output dropped the inline SVG.

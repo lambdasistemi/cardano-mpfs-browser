@@ -105,6 +105,9 @@ header state =
             [ HP.class_ (HH.ClassName "eyebrow") ]
             [ HH.text "MPFS Browser" ]
         , HH.h1_ [ HH.text "Fact workbench" ]
+        , HH.p
+            [ HP.class_ (HH.ClassName "title-explainer") ]
+            [ HH.text "Inspect MPFS tokens, facts and pending requests, and verify them on-chain." ]
         ]
     , HH.div
         [ HP.class_ (HH.ClassName "status-row") ]
@@ -177,30 +180,34 @@ tokensPanel
   -> H.ComponentHTML action Slots m
 tokensPanel actions state =
   panelLayout "Tokens" "Token registry"
-    [ fieldLine "Load status" (remoteStatus state.tokens)
-    , fieldLine "Token list" (tokenCompletenessStatusLabel state.tokenCompleteness)
-    , tokenCompletenessMessageView state.tokenCompleteness
-    , selectedTokenFieldLine "Selected token" "tokens-selected-token" state.selectedToken
-    , tokenRemoteView actions state.selectedToken state.tokens
-    , writeStatusView state.writeStatus
-    , HH.div
-        [ HP.class_ (HH.ClassName "control-row") ]
-        [ HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled (state.tokens == Loading)
-            , HE.onClick \_ -> actions.loadTokens
-            ]
-            [ HH.text (tokenLoadLabel state.tokens) ]
-        , HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled (not (canWriteWithoutToken state))
-            , HE.onClick \_ -> actions.registerToken
-            ]
-            [ HH.text "Register token" ]
-        ]
-    ]
+    ( [ fieldLine "Load status" (remoteStatus state.tokens)
+      , fieldLine "Token list" (tokenCompletenessStatusLabel state.tokenCompleteness)
+      , tokenCompletenessMessageView state.tokenCompleteness
+      , selectedTokenFieldLine "Selected token" "tokens-selected-token" state.selectedToken
+      , tokenRemoteView actions state.selectedToken state.tokens
+      , writeStatusView state.writeStatus
+      , HH.div
+          [ HP.class_ (HH.ClassName "control-row") ]
+          [ HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "primary-button")
+              , HP.disabled (state.tokens == Loading)
+              , HE.onClick \_ -> actions.loadTokens
+              ]
+              [ HH.text (tokenLoadLabel state.tokens) ]
+          , HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "primary-button")
+              , HP.disabled (not (canWriteWithoutToken state))
+              , HE.onClick \_ -> actions.registerToken
+              ]
+              [ HH.text "Register token" ]
+          ]
+      ]
+        <> disabledReasonWhen
+          (not (canWriteWithoutToken state))
+          "Connect a wallet to submit changes."
+    )
 
 factsPanel
   :: forall action m
@@ -210,58 +217,63 @@ factsPanel
   -> H.ComponentHTML action Slots m
 factsPanel actions state =
   panelLayout "Facts" "Selected token facts"
-    [ selectedTokenFieldLine "Token" "facts-selected-token" state.selectedToken
-    , fieldLine "Token state" (remoteStatus state.tokenState)
-    , fieldLine "Pending requests" (remoteStatus state.pendingRequests)
-    , fieldLine "Facts" (remoteStatus state.facts)
-    , fieldLine "Trusted root" (remoteStatus state.trustedRoot)
-    , fieldLine "Facts set" (verificationStatusLabel state.factsSetVerification)
-    , fieldLine
-        "Pending requests verifier"
-        (pendingRequestsStatusLabel state.pendingRequestsVerification)
-    , fieldLine "Second oracle" (secondOracleStatusLabel state.secondOracle)
-    , tokenStateRemoteView state.tokenState
-    , trustedRootRemoteView state.trustedRoot
-    , pendingRequestsRemoteView
-        actions
-        state.requestNowMillis
-        state.tokenState
-        state.selectedRequestIds
-        state.pendingRequests
-    , factsRemoteView state.facts
-    , factLookupView actions state
-    , factWriteForms actions state
-    , writeStatusView state.writeStatus
-    , HH.div
-        [ HP.class_ (HH.ClassName "control-row") ]
-        [ HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled
-                ( state.selectedToken == Nothing
-                    || remoteIsLoading state.facts
-                    || remoteIsLoading state.tokenState
-                    || remoteIsLoading state.pendingRequests
-                )
-            , HE.onClick \_ -> actions.loadFacts
-            ]
-            [ HH.text (factsLoadLabel state.facts) ]
-        , HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled (not (canWriteSelected state))
-            , HE.onClick \_ -> actions.updateToken
-            ]
-            [ HH.text "Process selected" ]
-        , HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "inert-button")
-            , HP.disabled (not (canWriteSelected state))
-            , HE.onClick \_ -> actions.rejectExpired
-            ]
-            [ HH.text "Reject expired" ]
-        ]
-    ]
+    ( [ selectedTokenFieldLine "Token" "facts-selected-token" state.selectedToken
+      , fieldLine "Token state" (remoteStatus state.tokenState)
+      , fieldLine "Pending requests" (remoteStatus state.pendingRequests)
+      , fieldLine "Facts" (remoteStatus state.facts)
+      , fieldLine "Trusted root" (remoteStatus state.trustedRoot)
+      , fieldLine "Facts set" (verificationStatusLabel state.factsSetVerification)
+      , fieldLine
+          "Pending requests verifier"
+          (pendingRequestsStatusLabel state.pendingRequestsVerification)
+      , fieldLine "Second oracle" (secondOracleStatusLabel state.secondOracle)
+      , tokenStateRemoteView state.tokenState
+      , trustedRootRemoteView state.trustedRoot
+      , pendingRequestsRemoteView
+          actions
+          state
+          state.requestNowMillis
+          state.tokenState
+          state.selectedRequestIds
+          state.pendingRequests
+      , factsRemoteView state.facts
+      , factLookupView actions state
+      , factWriteForms actions state
+      , writeStatusView state.writeStatus
+      , HH.div
+          [ HP.class_ (HH.ClassName "control-row") ]
+          [ HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "primary-button")
+              , HP.disabled
+                  ( state.selectedToken == Nothing
+                      || remoteIsLoading state.facts
+                      || remoteIsLoading state.tokenState
+                      || remoteIsLoading state.pendingRequests
+                  )
+              , HE.onClick \_ -> actions.loadFacts
+              ]
+              [ HH.text (factsLoadLabel state.facts) ]
+          , HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "primary-button")
+              , HP.disabled (not (canWriteSelected state))
+              , HE.onClick \_ -> actions.updateToken
+              ]
+              [ HH.text "Process selected" ]
+          , HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "inert-button")
+              , HP.disabled (not (canWriteSelected state))
+              , HE.onClick \_ -> actions.rejectExpired
+              ]
+              [ HH.text "Reject expired" ]
+          ]
+      ]
+        <> disabledReasonWhen
+          (not (canWriteSelected state))
+          "Connect a wallet and select a token to submit changes."
+    )
 
 endPanel :: forall action m. MonadAff m => AppActions action -> AppState -> H.ComponentHTML action Slots m
 endPanel actions state =
@@ -308,6 +320,18 @@ fieldLine label value =
     [ HH.span_ [ HH.text label ]
     , HH.strong_ [ HH.text value ]
     ]
+
+disabledReasonWhen
+  :: forall action m
+   . Boolean
+  -> String
+  -> Array (H.ComponentHTML action Slots m)
+disabledReasonWhen false _ = []
+disabledReasonWhen true message =
+  [ HH.p
+      [ HP.classes (map HH.ClassName [ "help-text", "disabled-reason" ]) ]
+      [ HH.text message ]
+  ]
 
 statusPill :: forall action m. String -> String -> H.ComponentHTML action Slots m
 statusPill label value =
@@ -535,9 +559,14 @@ walletRemoteView actions status = case _ of
       [ HH.text ("Error discovering wallets: " <> message) ]
   Success wallets
     | Array.null wallets ->
-        HH.p
-          [ HP.class_ (HH.ClassName "empty-state") ]
-          [ HH.text "No CIP-30 wallet found." ]
+        HH.div_
+          [ HH.p
+              [ HP.class_ (HH.ClassName "empty-state") ]
+              [ HH.text "No CIP-30 wallet found." ]
+          , HH.p
+              [ HP.classes (map HH.ClassName [ "help-text", "read-only-hint" ]) ]
+              [ HH.text "Tokens and Facts are browsable read-only. Connect Nami, Eternl, or Lace only to submit changes." ]
+          ]
     | otherwise ->
         HH.ul
           [ HP.class_ (HH.ClassName "token-list") ]
@@ -632,12 +661,13 @@ pendingRequestsRemoteView
   :: forall action m
    . MonadAff m
   => AppActions action
+  -> AppState
   -> Number
   -> Remote TokenState
   -> Array RequestId
   -> Remote (Array PendingRequest)
   -> H.ComponentHTML action Slots m
-pendingRequestsRemoteView actions nowMillis tokenStateRemote selectedRequestIds = case _ of
+pendingRequestsRemoteView actions state nowMillis tokenStateRemote selectedRequestIds = case _ of
   NotAsked ->
     HH.p
       [ HP.class_ (HH.ClassName "empty-state") ]
@@ -658,9 +688,16 @@ pendingRequestsRemoteView actions nowMillis tokenStateRemote selectedRequestIds 
     | otherwise ->
         case tokenStateRemote of
           Success tokenState ->
-            HH.ul
-              [ HP.class_ (HH.ClassName "token-list") ]
-              (Array.mapWithIndex (requestRow actions nowMillis tokenState selectedRequestIds) requests)
+            HH.div
+              [ HP.classes (map HH.ClassName [ "field-group", "full-span" ]) ]
+              ( [ HH.ul
+                    [ HP.class_ (HH.ClassName "token-list") ]
+                    (Array.mapWithIndex (requestRow actions nowMillis tokenState selectedRequestIds) requests)
+                ]
+                  <> disabledReasonWhen
+                    (not (canWriteSelected state))
+                    "Connect a wallet and select a token to retract pending requests."
+              )
           _ ->
             HH.p
               [ HP.class_ (HH.ClassName "empty-state") ]
@@ -703,52 +740,56 @@ factLookupView
 factLookupView actions state =
   HH.div
     [ HP.class_ (HH.ClassName "field-group") ]
-    [ HH.div
-        [ HP.class_ (HH.ClassName "control-row") ]
-        [ TextField.textField
-            { label: "Fact key"
-            , value: state.factLookup.key
-            , placeholder: Just "Fact key"
-            , onInput: actions.updateFactLookupKey
-            , disabled: false
-            }
-        , HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled
-                ( state.selectedToken == Nothing
-                    || state.factLookup.key == ""
-                    || remoteIsLoading state.factLookup.value
-                )
-            , HE.onClick \_ -> actions.lookupFact
-            ]
-            [ HH.text "Look up" ]
-        ]
-    , factLookupRemoteView state.factLookup.value
-    , TextArea.textArea
-        { label: "Proof envelope"
-        , value: state.factLookup.proofEnvelope
-        , placeholder: Just "Proof envelope"
-        , onInput: actions.updateFactProofEnvelope
-        , disabled: false
-        }
-    , HH.div
-        [ HP.class_ (HH.ClassName "control-row") ]
-        [ HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled
-                ( state.factLookup.proofEnvelope == ""
-                    || state.factLookup.verification == VerificationLoading
-                )
-            , HE.onClick \_ -> actions.verifyFactEnvelope
-            ]
-            [ HH.text "Verify proof" ]
-        , fieldLine
-            "Verification"
-            (verificationStatusLabel state.factLookup.verification)
-        ]
-    ]
+    ( [ HH.div
+          [ HP.class_ (HH.ClassName "control-row") ]
+          [ TextField.textField
+              { label: "Fact key"
+              , value: state.factLookup.key
+              , placeholder: Just "Fact key"
+              , onInput: actions.updateFactLookupKey
+              , disabled: false
+              }
+          , HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "primary-button")
+              , HP.disabled
+                  ( state.selectedToken == Nothing
+                      || state.factLookup.key == ""
+                      || remoteIsLoading state.factLookup.value
+                  )
+              , HE.onClick \_ -> actions.lookupFact
+              ]
+              [ HH.text "Look up" ]
+          ]
+      , factLookupRemoteView state.factLookup.value
+      , TextArea.textArea
+          { label: "Proof envelope"
+          , value: state.factLookup.proofEnvelope
+          , placeholder: Just "Proof envelope"
+          , onInput: actions.updateFactProofEnvelope
+          , disabled: false
+          }
+      , HH.div
+          [ HP.class_ (HH.ClassName "control-row") ]
+          [ HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "primary-button")
+              , HP.disabled
+                  ( state.factLookup.proofEnvelope == ""
+                      || state.factLookup.verification == VerificationLoading
+                  )
+              , HE.onClick \_ -> actions.verifyFactEnvelope
+              ]
+              [ HH.text "Verify proof" ]
+          , fieldLine
+              "Verification"
+              (verificationStatusLabel state.factLookup.verification)
+          ]
+      ]
+        <> disabledReasonWhen
+          (state.factLookup.proofEnvelope == "")
+          "Paste a proof envelope to verify."
+    )
 
 factWriteForms
   :: forall action m
@@ -758,99 +799,113 @@ factWriteForms
 factWriteForms actions state =
   HH.div
     [ HP.class_ (HH.ClassName "field-group") ]
-    [ HH.div
-        [ HP.class_ (HH.ClassName "control-row") ]
-        [ TextField.textField
-            { label: "Insert key"
-            , value: state.writeForms.insertKey
-            , placeholder: Just "Insert key"
-            , onInput: actions.updateInsertKey
-            , disabled: false
-            }
-        , TextField.textField
-            { label: "Insert value"
-            , value: state.writeForms.insertValue
-            , placeholder: Just "Insert value"
-            , onInput: actions.updateInsertValue
-            , disabled: false
-            }
-        , HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled
-                ( not (canWriteSelected state)
-                    || state.writeForms.insertKey == ""
-                    || state.writeForms.insertValue == ""
-                )
-            , HE.onClick \_ -> actions.submitInsertFact
-            ]
-            [ HH.text "Insert fact" ]
-        ]
-    , HH.div
-        [ HP.class_ (HH.ClassName "control-row") ]
-        [ TextField.textField
-            { label: "Update key"
-            , value: state.writeForms.updateKey
-            , placeholder: Just "Update key"
-            , onInput: actions.updateUpdateKey
-            , disabled: false
-            }
-        , TextField.textField
-            { label: "Old value"
-            , value: state.writeForms.updateOldValue
-            , placeholder: Just "Old value"
-            , onInput: actions.updateUpdateOldValue
-            , disabled: false
-            }
-        , TextField.textField
-            { label: "New value"
-            , value: state.writeForms.updateNewValue
-            , placeholder: Just "New value"
-            , onInput: actions.updateUpdateNewValue
-            , disabled: false
-            }
-        , HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled
-                ( not (canWriteSelected state)
-                    || state.writeForms.updateKey == ""
-                    || state.writeForms.updateOldValue == ""
-                    || state.writeForms.updateNewValue == ""
-                )
-            , HE.onClick \_ -> actions.submitUpdateFact
-            ]
-            [ HH.text "Update fact" ]
-        ]
-    , HH.div
-        [ HP.class_ (HH.ClassName "control-row") ]
-        [ TextField.textField
-            { label: "Delete key"
-            , value: state.writeForms.deleteKey
-            , placeholder: Just "Delete key"
-            , onInput: actions.updateDeleteKey
-            , disabled: false
-            }
-        , TextField.textField
-            { label: "Delete value"
-            , value: state.writeForms.deleteValue
-            , placeholder: Just "Delete value"
-            , onInput: actions.updateDeleteValue
-            , disabled: false
-            }
-        , HH.button
-            [ HP.type_ HP.ButtonButton
-            , HP.class_ (HH.ClassName "primary-button")
-            , HP.disabled
-                ( not (canWriteSelected state)
-                    || state.writeForms.deleteKey == ""
-                    || state.writeForms.deleteValue == ""
-                )
-            , HE.onClick \_ -> actions.submitDeleteFact
-            ]
-            [ HH.text "Delete fact" ]
-        ]
-    ]
+    ( [ HH.div
+          [ HP.class_ (HH.ClassName "control-row") ]
+          [ TextField.textField
+              { label: "Insert key"
+              , value: state.writeForms.insertKey
+              , placeholder: Just "Insert key"
+              , onInput: actions.updateInsertKey
+              , disabled: false
+              }
+          , TextField.textField
+              { label: "Insert value"
+              , value: state.writeForms.insertValue
+              , placeholder: Just "Insert value"
+              , onInput: actions.updateInsertValue
+              , disabled: false
+              }
+          , HH.button
+              [ HP.type_ HP.ButtonButton
+              , HP.class_ (HH.ClassName "primary-button")
+              , HP.disabled
+                  ( not (canWriteSelected state)
+                      || state.writeForms.insertKey == ""
+                      || state.writeForms.insertValue == ""
+                  )
+              , HE.onClick \_ -> actions.submitInsertFact
+              ]
+              [ HH.text "Insert fact" ]
+          ]
+      ]
+        <> disabledReasonWhen
+          (not (canWriteSelected state))
+          "Connect a wallet and select a token to submit changes."
+        <>
+          [ HH.div
+              [ HP.class_ (HH.ClassName "control-row") ]
+              [ TextField.textField
+                  { label: "Update key"
+                  , value: state.writeForms.updateKey
+                  , placeholder: Just "Update key"
+                  , onInput: actions.updateUpdateKey
+                  , disabled: false
+                  }
+              , TextField.textField
+                  { label: "Old value"
+                  , value: state.writeForms.updateOldValue
+                  , placeholder: Just "Old value"
+                  , onInput: actions.updateUpdateOldValue
+                  , disabled: false
+                  }
+              , TextField.textField
+                  { label: "New value"
+                  , value: state.writeForms.updateNewValue
+                  , placeholder: Just "New value"
+                  , onInput: actions.updateUpdateNewValue
+                  , disabled: false
+                  }
+              , HH.button
+                  [ HP.type_ HP.ButtonButton
+                  , HP.class_ (HH.ClassName "primary-button")
+                  , HP.disabled
+                      ( not (canWriteSelected state)
+                          || state.writeForms.updateKey == ""
+                          || state.writeForms.updateOldValue == ""
+                          || state.writeForms.updateNewValue == ""
+                      )
+                  , HE.onClick \_ -> actions.submitUpdateFact
+                  ]
+                  [ HH.text "Update fact" ]
+              ]
+          ]
+        <> disabledReasonWhen
+          (not (canWriteSelected state))
+          "Connect a wallet and select a token to submit changes."
+        <>
+          [ HH.div
+              [ HP.class_ (HH.ClassName "control-row") ]
+              [ TextField.textField
+                  { label: "Delete key"
+                  , value: state.writeForms.deleteKey
+                  , placeholder: Just "Delete key"
+                  , onInput: actions.updateDeleteKey
+                  , disabled: false
+                  }
+              , TextField.textField
+                  { label: "Delete value"
+                  , value: state.writeForms.deleteValue
+                  , placeholder: Just "Delete value"
+                  , onInput: actions.updateDeleteValue
+                  , disabled: false
+                  }
+              , HH.button
+                  [ HP.type_ HP.ButtonButton
+                  , HP.class_ (HH.ClassName "primary-button")
+                  , HP.disabled
+                      ( not (canWriteSelected state)
+                          || state.writeForms.deleteKey == ""
+                          || state.writeForms.deleteValue == ""
+                      )
+                  , HE.onClick \_ -> actions.submitDeleteFact
+                  ]
+                  [ HH.text "Delete fact" ]
+              ]
+          ]
+        <> disabledReasonWhen
+          (not (canWriteSelected state))
+          "Connect a wallet and select a token to submit changes."
+    )
 
 factLookupRemoteView
   :: forall action m
