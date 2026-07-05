@@ -54,6 +54,8 @@ data Action
   | RefreshWallet
   | DisconnectWallet
   | LoadTokens
+  | UpdateTokenSearch String
+  | ToggleMineOnly
   | SelectToken TokenId
   | LoadFacts
   | RegisterToken
@@ -93,6 +95,8 @@ component =
           , refreshWallet: RefreshWallet
           , disconnectWallet: DisconnectWallet
           , loadTokens: LoadTokens
+          , updateTokenSearch: UpdateTokenSearch
+          , toggleMineOnly: ToggleMineOnly
           , selectToken: SelectToken
           , loadFacts: LoadFacts
           , registerToken: RegisterToken
@@ -237,6 +241,12 @@ handleAction = case _ of
               tokenCompleteness
               (fromClientTokenIds tokenResponse.tokenIds)
           )
+
+  UpdateTokenSearch search ->
+    H.modify_ _ { tokenSearch = search }
+
+  ToggleMineOnly ->
+    H.modify_ \state -> state { tokenMineOnly = not state.tokenMineOnly }
 
   SelectToken token ->
     H.modify_ \state ->

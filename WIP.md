@@ -12,3 +12,4 @@
 - T77-S1: RED intentionally skipped because this slice is a presentational form-control retrofit with no new pure logic; proof is navigator review plus `./gate.sh` green.
 - T80-S1: RED covered the pure wallet-message dedupe path (`finishWalletDiscovery []` no longer sets duplicate feedback); SVG icon, onboarding hint, and disabled-reason captions are presentational and covered by navigator review plus `./gate.sh`.
 - T80-S1 correction: swapped the copy icon from inline Halogen `elementNS` SVG to a CSS `currentColor` mask in `dist/index.html` because the bundled output dropped the inline SVG.
+2026-07-05T06:45:14+01:00 T65-S1: RED targets app shell workspace tab model and token-select tab reset. Presentational pixel/layout changes will be covered by navigator review and gate.
