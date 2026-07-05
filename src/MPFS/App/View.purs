@@ -20,16 +20,18 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import MPFS.App.Facts as Facts
+import MPFS.App.Pending as Pending
 import MPFS.App.State (AppState, WalletStatus(..))
 import MPFS.App.Tab (AppTab(..), allTabs, tabLabel, tabSlug)
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.App.Write (WriteStatus(..))
-import MPFS.Client.Types (FactEntry, TokenState)
+import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
 import MPFS.SecondOracle.Types
   ( SecondOracleUnavailable(..)
   , SecondOracleVerdict(..)
   )
-import MPFS.Types (RequestId, TokenId(..))
+import MPFS.Types (RequestId(..), TokenId(..))
+import MPFS.UI.Material.Chip as Chip
 import MPFS.UI.Material.DataTable as DataTable
 import MPFS.UI.Material.HashChip as HashChip
 import MPFS.UI.Material.Paper as Paper
@@ -329,7 +331,7 @@ workspace actions state =
         [ tokenHeader actions state token
         , summaryStrip state
         , workspaceTabs actions state
-        , activePanel state
+        , activePanel actions state
         ]
 
 emptyWorkspace
@@ -434,11 +436,12 @@ tabButton actions state tab =
 activePanel
   :: forall action m
    . MonadAff m
-  => AppState
+  => AppActions action
+  -> AppState
   -> H.ComponentHTML action Slots m
-activePanel state = case state.activeTab of
+activePanel actions state = case state.activeTab of
   FactsTab -> factsPanel state
-  PendingTab -> placeholderPanel PendingTab
+  PendingTab -> pendingPanel actions state
   VerificationTab -> placeholderPanel VerificationTab
 
 factsPanel
@@ -619,6 +622,271 @@ dimmedFactsState title message =
     , HH.p_ [ HH.text message ]
     ]
 
+pendingPanel
+  :: forall action m
+   . MonadAff m
+  => AppActions action
+  -> AppState
+  -> H.ComponentHTML action Slots m
+pendingPanel actions state =
+  Paper.paper
+    [ HH.div
+        [ HP.class_ (HH.ClassName "pending-notice") ]
+        [ HH.span [ HP.class_ (HH.ClassName "pending-notice__icon") ] [ HH.text "i" ]
+        , HH.span_
+            [ HH.text "Requests are not yet applied to the forest. A request is processable, then retractable, then expired per the token windows. Only the original requester may retract, and only during the retract window." ]
+        ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "facts-panel__header") ]
+        [ HH.div_
+            [ HH.div [ HP.class_ (HH.ClassName "facts-panel__eyebrow") ] [ HH.text "Pending fact operations" ]
+            , HH.div [ HP.class_ (HH.ClassName "facts-panel__proof-summary") ] [ HH.text (pendingRequestsStatusLabel state.pendingRequestsVerification) ]
+            ]
+        , HH.div [ HP.class_ (HH.ClassName "facts-panel__count") ] [ HH.text pendingCount ]
+        ]
+    , pendingPanelBody actions state
+    ]
+  where
+  pendingCount = case state.pendingRequests of
+    Success requests -> show (Array.length requests) <> " " <> if Array.length requests == 1 then "request" else "requests"
+    Loading -> "Loading"
+    Failure _ -> "Unavailable"
+    NotAsked -> "Not loaded"
+
+pendingPanelBody
+  :: forall action m
+   . MonadAff m
+  => AppActions action
+  -> AppState
+  -> H.ComponentHTML action Slots m
+pendingPanelBody actions state = case state.tokenState, state.pendingRequests of
+  _, Failure message ->
+    pendingDimmedState "Pending requests unavailable" message
+  Failure message, _ ->
+    pendingDimmedState "Token timing unavailable" message
+  Loading, _ ->
+    pendingDimmedState "Loading pending requests" "Fetching token timing and pending request data."
+  _, Loading ->
+    pendingDimmedState "Loading pending requests" "Fetching token timing and pending request data."
+  Success tokenState, Success requests ->
+    if Array.null requests then
+      pendingDimmedState
+        "No pending requests"
+        "Every proposed change has been applied or expired. New requests appear here until processed."
+    else
+      pendingRequestsView actions state tokenState requests
+  _, _ ->
+    pendingDimmedState
+      "No pending requests loaded"
+      "Load details to inspect pending changes for the selected token."
+
+pendingRequestsView
+  :: forall action m
+   . MonadAff m
+  => AppActions action
+  -> AppState
+  -> TokenState
+  -> Array PendingRequest
+  -> H.ComponentHTML action Slots m
+pendingRequestsView actions state tokenState requests =
+  HH.div
+    [ HP.class_ (HH.ClassName "pending-requests") ]
+    [ HH.div
+        [ HP.class_ (HH.ClassName "pending-table-shell") ]
+        [ HH.table
+            [ HP.class_ (HH.ClassName "pending-table") ]
+            [ HH.thead_
+                [ HH.tr_
+                    [ HH.th_ [ HH.text "Op - Key -> Value" ]
+                    , HH.th_ [ HH.text "Requester" ]
+                    , HH.th_ [ HH.text "Age" ]
+                    , HH.th_ [ HH.text "Fee" ]
+                    , HH.th_ [ HH.text "Phase" ]
+                    , HH.th_ [ HH.text "Proof" ]
+                    , HH.th_ [ HH.text "Action" ]
+                    ]
+                ]
+            , HH.tbody_ (Array.mapWithIndex (pendingTableRow actions state tokenState) requests)
+            ]
+        ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "pending-card-list") ]
+        (Array.mapWithIndex (pendingCard actions state tokenState) requests)
+    ]
+
+pendingTableRow
+  :: forall action m
+   . MonadAff m
+  => AppActions action
+  -> AppState
+  -> TokenState
+  -> Int
+  -> PendingRequest
+  -> H.ComponentHTML action Slots m
+pendingTableRow actions state tokenState index request =
+  HH.tr_
+    [ HH.td_ [ pendingOperationCell vm ]
+    , HH.td_ [ pendingRequesterCell index vm ]
+    , HH.td_ [ HH.span [ HP.class_ (HH.ClassName "pending-age") ] [ HH.text vm.ageLabel ] ]
+    , HH.td_ [ HH.span [ HP.class_ (HH.ClassName "pending-fee") ] [ HH.text vm.feeLabel ] ]
+    , HH.td_ [ pendingPhaseCell vm ]
+    , HH.td_ [ pendingProofChip vm ]
+    , HH.td_ [ pendingRetractAction actions vm ]
+    ]
+  where
+  vm = pendingViewModel state tokenState request
+
+pendingCard
+  :: forall action m
+   . MonadAff m
+  => AppActions action
+  -> AppState
+  -> TokenState
+  -> Int
+  -> PendingRequest
+  -> H.ComponentHTML action Slots m
+pendingCard actions state tokenState index request =
+  HH.article
+    [ HP.class_ (HH.ClassName cardClass) ]
+    [ HH.div
+        [ HP.class_ (HH.ClassName "pending-card__topline") ]
+        [ chip vm.opLabel vm.opTone
+        , HH.span [ HP.class_ (HH.ClassName "pending-card__title") ] [ HH.text "Key -> Value" ]
+        , HH.span [ HP.class_ (HH.ClassName "pending-card__age") ] [ HH.text vm.ageLabel ]
+        ]
+    , HH.code [ HP.class_ (HH.ClassName "pending-json-summary") ] [ HH.text vm.keyValueSummary ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "pending-card__requester") ]
+        [ pendingRequesterCell index vm
+        , HH.span [ HP.class_ (HH.ClassName "pending-fee") ] [ HH.text ("fee " <> vm.feeLabel) ]
+        ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "pending-card__phase") ]
+        [ chip vm.phaseLabel vm.phaseTone
+        , HH.span_ [ HH.text vm.deadlineLabel ]
+        ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "pending-card__actions") ]
+        [ pendingProofChip vm
+        , pendingRetractAction actions vm
+        ]
+    ]
+  where
+  vm = pendingViewModel state tokenState request
+
+  cardClass = case vm.retractDecision of
+    Pending.RetractEnabled -> "pending-card pending-card--retractable"
+    Pending.RetractDisabled _ -> "pending-card"
+
+pendingViewModel :: AppState -> TokenState -> PendingRequest -> Pending.PendingRowViewModel
+pendingViewModel state tokenState request =
+  Pending.pendingRowViewModel
+    state.requestNowMillis
+    tokenState
+    state.pendingRequestsVerification
+    (requesterIsWallet state request.owner)
+    (connectedWalletForRequester state request.owner)
+    request
+
+pendingOperationCell
+  :: forall action m
+   . Pending.PendingRowViewModel
+  -> H.ComponentHTML action Slots m
+pendingOperationCell vm =
+  HH.div
+    [ HP.class_ (HH.ClassName "pending-operation-cell") ]
+    [ HH.div
+        [ HP.class_ (HH.ClassName "pending-operation-cell__line") ]
+        [ chip vm.opLabel vm.opTone
+        , HH.span [ HP.class_ (HH.ClassName "pending-key-value-label") ] [ HH.text "Decoded key -> value" ]
+        ]
+    , HH.code [ HP.class_ (HH.ClassName "pending-json-summary") ] [ HH.text vm.keyValueSummary ]
+    ]
+
+pendingRequesterCell
+  :: forall action m
+   . MonadAff m
+  => Int
+  -> Pending.PendingRowViewModel
+  -> H.ComponentHTML action Slots m
+pendingRequesterCell index vm =
+  HH.div
+    [ HP.class_ (HH.ClassName "pending-requester") ]
+    [ hashChip ("pending-requester-" <> show index <> "-" <> vm.requestId) vm.requester
+    , if vm.requesterIsWallet then
+        HH.span [ HP.class_ (HH.ClassName "you-badge") ] [ HH.text "YOU" ]
+      else
+        HH.text ""
+    ]
+
+pendingPhaseCell
+  :: forall action m
+   . Pending.PendingRowViewModel
+  -> H.ComponentHTML action Slots m
+pendingPhaseCell vm =
+  HH.div
+    [ HP.class_ (HH.ClassName "pending-phase-cell") ]
+    [ chip vm.phaseLabel vm.phaseTone
+    , HH.div [ HP.class_ (HH.ClassName "pending-deadline") ] [ HH.text vm.deadlineLabel ]
+    ]
+
+pendingProofChip
+  :: forall action m
+   . Pending.PendingRowViewModel
+  -> H.ComponentHTML action Slots m
+pendingProofChip vm =
+  HH.span
+    [ HP.class_ (HH.ClassName "pending-proof-chip")
+    , HP.title "Proof drawer placeholder (#69)"
+    ]
+    [ chip vm.proofLabel vm.proofTone ]
+
+pendingRetractAction
+  :: forall action m
+   . AppActions action
+  -> Pending.PendingRowViewModel
+  -> H.ComponentHTML action Slots m
+pendingRetractAction actions vm =
+  HH.div
+    [ HP.class_ (HH.ClassName "pending-retract") ]
+    case vm.retractDecision of
+      Pending.RetractEnabled ->
+        [ HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.classes (map HH.ClassName [ "material-button", "pending-retract__button", "pending-retract__button--enabled" ])
+            , HP.title "Retract this request"
+            , HE.onClick \_ -> actions.retractRequest (RequestId vm.requestId)
+            ]
+            [ HH.text "Retract" ]
+        ]
+      Pending.RetractDisabled reason ->
+        [ HH.button
+            [ HP.type_ HP.ButtonButton
+            , HP.classes (map HH.ClassName [ "material-button", "pending-retract__button" ])
+            , HP.disabled true
+            , HP.title reason
+            ]
+            [ HH.text "Retract" ]
+        , HH.div [ HP.class_ (HH.ClassName "pending-retract__reason") ] [ HH.text reason ]
+        ]
+
+pendingDimmedState :: forall action m. String -> String -> H.ComponentHTML action Slots m
+pendingDimmedState title message =
+  HH.div
+    [ HP.class_ (HH.ClassName "facts-empty pending-empty") ]
+    [ HH.div [ HP.class_ (HH.ClassName "empty-glyph") ] [ HH.text "..." ]
+    , HH.h2_ [ HH.text title ]
+    , HH.p_ [ HH.text message ]
+    ]
+
+chip :: forall action m. String -> Chip.ChipTone -> H.ComponentHTML action Slots m
+chip label tone =
+  Chip.chip
+    { label
+    , tone
+    , leading: Just (HH.span [ HP.class_ (HH.ClassName "pending-chip-dot") ] [])
+    }
+
 placeholderPanel :: forall action m. AppTab -> H.ComponentHTML action Slots m
 placeholderPanel tab =
   HH.section
@@ -744,15 +1012,32 @@ tokenIsMine :: AppState -> TokenId -> Boolean
 tokenIsMine state token = case ownerForToken state token of
   Nothing -> false
   Just owner ->
-    Array.elem owner walletRefs
+    Array.elem owner (walletRefs state)
+
+requesterIsWallet :: AppState -> String -> Boolean
+requesterIsWallet state requester =
+  state.walletSession.status == WalletConnected
+    && Array.elem requester (walletRefs state)
+
+connectedWalletForRequester :: AppState -> String -> Maybe String
+connectedWalletForRequester state requester =
+  if state.walletSession.status /= WalletConnected then
+    Nothing
+  else if Array.elem requester refs then
+    Just requester
+  else
+    Array.head refs
   where
-  walletRefs =
-    Array.catMaybes
-      [ state.walletSession.selectedAddress
-      , state.walletSession.changeAddress
-      , state.walletSession.walletKey
-      ]
-      <> state.walletSession.usedAddresses
+  refs = walletRefs state
+
+walletRefs :: AppState -> Array String
+walletRefs state =
+  Array.catMaybes
+    [ state.walletSession.selectedAddress
+    , state.walletSession.changeAddress
+    , state.walletSession.walletKey
+    ]
+    <> state.walletSession.usedAddresses
 
 tokenCountLabel :: forall a. Remote (Array a) -> String
 tokenCountLabel = case _ of

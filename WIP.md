@@ -14,3 +14,4 @@
 - T80-S1: RED covered the pure wallet-message dedupe path (`finishWalletDiscovery []` no longer sets duplicate feedback); SVG icon, onboarding hint, and disabled-reason captions are presentational and covered by navigator review plus `./gate.sh`.
 - T80-S1 correction: swapped the copy icon from inline Halogen `elementNS` SVG to a CSS `currentColor` mask in `dist/index.html` because the bundled output dropped the inline SVG.
 2026-07-05T06:45:14+01:00 T65-S1: RED targets app shell workspace tab model and token-select tab reset. Presentational pixel/layout changes will be covered by navigator review and gate.
+- T68-S1: Pending Retract buttons call the existing `RetractRequest` action when gated enabled; review/sign UX remains #70. Pending proof chips are placeholders for the #69 proof drawer.
