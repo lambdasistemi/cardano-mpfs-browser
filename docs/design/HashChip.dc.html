@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<span onClick="{{ copy }}" title="Copy full identifier" style="display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:2px 6px 2px 8px;border:1px solid #d3d8e0;border-radius:6px;background:#eef1f5;cursor:pointer;font-size:12px;line-height:1;user-select:none;vertical-align:middle;" style-hover="background:#e3e8ef;border-color:#c2c9d4;">
+  <sc-if value="{{ hasLabel }}" hint-placeholder-val="{{ true }}"><span style="color:#5b636e;font-family:'Roboto','Segoe UI',system-ui,sans-serif;font-size:11px;">{{ label }}</span></sc-if>
+  <span style="font-family:'Roboto Mono','SFMono-Regular',ui-monospace,monospace;color:#191c20;letter-spacing:.2px;white-space:nowrap;">{{ display }}</span>
+  <sc-if value="{{ notCopied }}" hint-placeholder-val="{{ true }}"><span aria-hidden="true" style="color:#8a919c;font-size:12px;">⧉</span></sc-if>
+  <sc-if value="{{ copied }}" hint-placeholder-val="{{ false }}"><span style="color:#1f8a4c;font-size:12px;font-weight:600;">✓</span></sc-if>
+</span>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:180,&quot;height&quot;:32},&quot;full&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;9f3c7b1e0a44d6b2c8e15af0937bd2c1a6e4880fa02b7e11c9d34f5608ade0c1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;label&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;head&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:6,&quot;tsType&quot;:&quot;number&quot;},&quot;tail&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:4,&quot;tsType&quot;:&quot;number&quot;},&quot;display&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { copied: false };
+  renderVals() {
+    const full = (this.props.full ?? '').toString();
+    const n = full.length;
+    const head = Number(this.props.head ?? 6);
+    const tail = Number(this.props.tail ?? 4);
+    const display = this.props.display ?? (n > head + tail + 1 ? full.slice(0, head) + '…' + full.slice(-tail) : full);
+    const label = this.props.label ?? '';
+    return {
+      display,
+      label,
+      hasLabel: !!label,
+      copied: this.state.copied,
+      notCopied: !this.state.copied,
+      copy: (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        try { if (navigator.clipboard) navigator.clipboard.writeText(full); } catch (_) {}
+        this.setState({ copied: true });
+        clearTimeout(this._t);
+        this._t = setTimeout(() => this.setState({ copied: false }), 1200);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

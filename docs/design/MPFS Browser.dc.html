@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Roboto','Segoe UI',system-ui,sans-serif; color: #191c20; background: #eceef2; -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #c6ccd5; border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: #aab2bd; background-clip: padding-box; }
+  @keyframes mpfs-spin { to { transform: rotate(360deg); } }
+  @keyframes mpfs-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes mpfs-slide { from { transform: translateX(24px); opacity: .4; } to { transform: none; opacity: 1; } }
+</style>
+</helmet>
+<div style="min-height:100vh;background:#eceef2;">
+
+  <div style="display:flex;align-items:center;gap:2px;padding:5px 12px;background:#14171c;color:#aeb6c2;font-size:12px;font-family:'Roboto Mono',ui-monospace,monospace;position:sticky;top:0;z-index:60;">
+    <span style="color:#6b7480;margin-right:8px;letter-spacing:.4px;">DESIGN&nbsp;VIEWS</span>
+    <sc-for list="{{ viewTabs }}" as="v" hint-placeholder-count="5">
+      <button onClick="{{ v.go }}" style="{{ v.style }}" style-hover="color:#e6e9ee;">{{ v.label }}</button>
+    </sc-for>
+    <span style="flex:1;"></span>
+    <span style="color:#5b6470;">Material 3 · light surface · dark tokens noted in Components</span>
+  </div>
+
+  <sc-if value="{{ isWorkbench }}" hint-placeholder-val="{{ true }}">
+  <div>
+
+    <header style="display:flex;align-items:center;gap:14px;height:56px;padding:0 16px;background:#ffffff;border-bottom:1px solid #e2e6ec;position:sticky;top:29px;z-index:50;">
+      <div style="display:flex;align-items:center;gap:9px;">
+        <div style="width:26px;height:26px;border-radius:6px;background:#2264d1;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;transform:rotate(45deg);"><span style="transform:rotate(-45deg);font-size:13px;">M</span></div>
+        <div style="font-weight:700;font-size:15px;letter-spacing:.2px;">MPFS&nbsp;Browser</div>
+      </div>
+      <span style="flex:1;"></span>
+      <div style="display:none;" data-hide-narrow="1"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid #e2e6ec;border-radius:20px;background:#f6f7f9;font-size:12px;color:#5b636e;"><span style="width:7px;height:7px;border-radius:50%;background:#1f8a4c;"></span>Preprod</span>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border:1px solid #e2e6ec;border-radius:6px;background:#f6f7f9;font-size:12px;color:#5b636e;font-family:'Roboto Mono',ui-monospace,monospace;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">api.mpfs.dev/preprod</span>
+        <sc-if value="{{ noWallet }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ connectWallet }}" style="display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border:0;border-radius:20px;background:#2264d1;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;" style-hover="background:#1b57bd;">Connect wallet</button>
+        </sc-if>
+        <sc-if value="{{ hasWallet }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ openWalletMenu }}" style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 8px;border:1px solid #cfe0fb;border-radius:20px;background:#eaf1fd;color:#123a86;font-size:12px;cursor:pointer;font-family:inherit;" style-hover="background:#dfeafc;">
+            <span style="width:18px;height:18px;border-radius:50%;background:#2264d1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">E</span>
+            <span style="font-weight:500;">{{ walletName }}</span>
+            <span style="font-family:'Roboto Mono',ui-monospace,monospace;color:#3a5da3;">{{ walletShort }}</span>
+          </button>
+        </sc-if>
+      </div>
+    </header>
+
+    <div style="display:grid;grid-template-columns:300px minmax(0,1fr);align-items:start;">
+
+      <aside style="position:sticky;top:85px;height:calc(100vh - 85px);border-right:1px solid #e2e6ec;background:#f6f7f9;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="padding:16px 16px 10px;">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;">
+            <h2 style="margin:0;font-size:13px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#5b636e;">Tokens</h2>
+            <span style="font-size:12px;color:#8a919c;">{{ tokenCountLabel }}</span>
+          </div>
+          <div style="position:relative;margin-bottom:10px;">
+            <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#8a919c;font-size:14px;">⌕</span>
+            <input value="{{ search }}" onInput="{{ onSearch }}" placeholder="Search token id or owner" style="width:100%;height:36px;padding:0 12px 0 30px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;font-size:13px;font-family:inherit;color:#191c20;outline:none;" style-focus="border-color:#2264d1;box-shadow:0 0 0 3px rgba(34,100,209,.15);" />
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#3d444e;user-select:none;">
+            <span onClick="{{ toggleMine }}" style="{{ mineTrackStyle }}"><span style="{{ mineKnobStyle }}"></span></span>
+            <span onClick="{{ toggleMine }}">Owned by me</span>
+            <span style="margin-left:auto;font-size:11px;color:#8a919c;">{{ mineCountLabel }}</span>
+          </label>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:0 8px 12px;">
+          <sc-for list="{{ tokens }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.select }}" style="{{ t.rowStyle }}" style-hover="{{ t.hoverStyle }}">
+              <div style="display:flex;align-items:center;gap:8px;width:100%;">
+                <span style="{{ t.dotStyle }}"></span>
+                <span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;font-weight:500;color:#191c20;white-space:nowrap;">{{ t.short }}</span>
+                <sc-if value="{{ t.mine }}" hint-placeholder-val="{{ false }}"><span style="margin-left:2px;font-size:10px;font-weight:700;letter-spacing:.4px;color:#0b5a2e;background:#e2f3e8;border-radius:4px;padding:1px 5px;">MINE</span></sc-if>
+                <span style="flex:1;"></span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:6px;padding-left:16px;font-size:11px;color:#8a919c;">
+                <span>{{ t.factsLabel }}</span>
+                <span style="{{ t.pendingLabelStyle }}">{{ t.pendingLabel }}</span>
+              </div>
+            </button>
+          </sc-for>
+          <sc-if value="{{ noTokens }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:28px 14px;text-align:center;color:#8a919c;font-size:13px;">No tokens match <b style="color:#5b636e;">“{{ search }}”</b>.</div>
+          </sc-if>
+        </div>
+      </aside>
+
+      <main style="min-width:0;padding:20px 24px 64px;max-width:1160px;">
+
+        <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:6px;">
+          <div style="min-width:0;">
+            <div style="display:flex;align-items:center;gap:10px;row-gap:8px;flex-wrap:wrap;">
+              <h1 style="margin:0;font-size:20px;font-weight:700;letter-spacing:.2px;">Token</h1>
+              <sc-if value="{{ tk.mine }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:700;letter-spacing:.4px;color:#0b5a2e;background:#e2f3e8;border-radius:4px;padding:3px 7px;">MINE</span></sc-if>
+              <span onClick="{{ copyTokenId }}" title="Copy token id" style="display:inline-flex;align-items:center;gap:6px;padding:3px 8px 3px 10px;border:1px solid #d3d8e0;border-radius:6px;background:#eef1f5;cursor:pointer;font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;color:#191c20;" style-hover="background:#e3e8ef;">{{ tokenShort }}<span style="color:#8a919c;">⧉</span></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;row-gap:6px;flex-wrap:wrap;margin-top:10px;font-size:13px;color:#5b636e;">
+              <span>Owner</span>
+              <span onClick="{{ copyOwner }}" title="Copy owner key hash" style="display:inline-flex;align-items:center;gap:6px;padding:2px 7px 2px 9px;border:1px solid #d3d8e0;border-radius:6px;background:#eef1f5;cursor:pointer;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#191c20;" style-hover="background:#e3e8ef;">{{ ownerShort }}<span style="color:#8a919c;">⧉</span></span>
+            </div>
+          </div>
+          <span style="flex:1;"></span>
+          <button onClick="{{ openVerifyDrawer }}" style="{{ verdictPillStyle }}" style-hover="filter:brightness(.97);">
+            <span style="{{ verdictDotStyle }}"></span>
+            <span style="font-weight:600;">{{ verdictLabel }}</span>
+            <span style="opacity:.6;font-weight:400;">· {{ verifiedAgo }}</span>
+            <span style="opacity:.85;">View proof ›</span>
+          </button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:#e2e6ec;border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;margin:16px 0 22px;">
+          <div style="background:#fff;padding:12px 14px;">
+            <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:6px;">State root</div>
+            <dc-import name="HashChip" full="{{ tk.root }}" hint-size="130px,26px"></dc-import>
+          </div>
+          <div style="background:#fff;padding:12px 14px;">
+            <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:6px;">Max fee</div>
+            <div style="font-size:15px;font-weight:500;">{{ tk.maxFee }} <span style="font-size:12px;color:#8a919c;">ADA</span></div>
+          </div>
+          <div style="background:#fff;padding:12px 14px;">
+            <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:6px;">Process window</div>
+            <div style="font-size:15px;font-weight:500;">{{ tk.processWindow }} <span style="font-size:12px;color:#8a919c;">slots</span></div>
+          </div>
+          <div style="background:#fff;padding:12px 14px;">
+            <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:6px;">Retract window</div>
+            <div style="font-size:15px;font-weight:500;">{{ tk.retractWindow }} <span style="font-size:12px;color:#8a919c;">slots</span></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:4px;border-bottom:1px solid #e2e6ec;margin-bottom:18px;">
+          <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="3">
+            <button onClick="{{ tab.go }}" style="{{ tab.style }}" style-hover="{{ tab.hoverStyle }}">
+              {{ tab.label }}
+              <span style="{{ tab.countStyle }}">{{ tab.count }}</span>
+            </button>
+          </sc-for>
+          <span style="flex:1;"></span>
+          <sc-if value="{{ tk.mine }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ openInsert }}" style="display:inline-flex;align-items:center;gap:7px;margin-bottom:6px;padding:7px 13px;border:0;border-radius:6px;background:#2264d1;color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;" style-hover="background:#1b57bd;"><span style="font-size:15px;line-height:1;">+</span> New fact</button>
+          </sc-if>
+        </div>
+
+        <sc-if value="{{ showFacts }}" hint-placeholder-val="{{ true }}">
+          <div style="border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;background:#fff;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e6ec;background:#f6f7f9;">
+              <div style="font-size:12px;color:#5b636e;">Committed facts · decoded UTF-8 JSON</div>
+              <div style="font-size:12px;color:#8a919c;">{{ factsCountLabel }}</div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:640px;">
+                <thead>
+                  <tr style="text-align:left;color:#8a919c;font-size:11px;letter-spacing:.5px;text-transform:uppercase;">
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;">Key</th>
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;">Value</th>
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;white-space:nowrap;">Proof</th>
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;text-align:right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ facts }}" as="f" hint-placeholder-count="3">
+                    <tr style="border-bottom:1px solid #eef1f5;vertical-align:top;" style-hover="background:#f9fafc;">
+                      <td style="padding:12px 14px;min-width:170px;">
+                        <div style="font-weight:600;color:#123a86;margin-bottom:5px;">{{ f.keyLabel }}</div>
+                        <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#5b636e;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:4px 7px;white-space:pre-wrap;word-break:break-word;max-width:230px;">{{ f.keyJson }}</code>
+                      </td>
+                      <td style="padding:12px 14px;">
+                        <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#2b313a;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:6px 8px;white-space:pre-wrap;word-break:break-word;max-width:380px;max-height:96px;overflow:auto;">{{ f.valueJson }}</code>
+                      </td>
+                      <td style="padding:12px 14px;white-space:nowrap;">
+                        <button onClick="{{ f.openProof }}" style="{{ f.proofChipStyle }}" style-hover="filter:brightness(.97);"><span style="{{ f.proofDotStyle }}"></span>{{ f.proofLabel }}</button>
+                      </td>
+                      <td style="padding:12px 14px;text-align:right;white-space:nowrap;">
+                        <div style="display:inline-flex;gap:6px;">
+                          <button onClick="{{ f.openProof }}" style="padding:6px 10px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;color:#3d444e;font-size:12px;cursor:pointer;font-family:inherit;" style-hover="background:#f1f3f6;">Proof</button>
+                          <sc-if value="{{ f.canEdit }}" hint-placeholder-val="{{ false }}">
+                            <button onClick="{{ f.edit }}" style="padding:6px 10px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;color:#3d444e;font-size:12px;cursor:pointer;font-family:inherit;" style-hover="background:#f1f3f6;">Edit</button>
+                          </sc-if>
+                        </div>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <sc-if value="{{ noFacts }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:44px 20px;text-align:center;color:#8a919c;">
+                <div style="font-size:26px;opacity:.4;margin-bottom:8px;">∅</div>
+                <div style="font-size:14px;color:#5b636e;margin-bottom:4px;">No committed facts yet</div>
+                <div style="font-size:12px;">This token’s forest is empty. Committed key→value facts will appear here.</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showPending }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 13px;margin-bottom:14px;border:1px solid #e2e6ec;border-radius:8px;background:#f6f7f9;font-size:12px;color:#5b636e;line-height:1.5;">
+            <span style="color:#a9680c;font-size:14px;line-height:1.2;">ⓘ</span>
+            <span>Requests are <b style="color:#3d444e;">not yet applied</b> to the forest. A request is <b>processable</b>, then <b>retractable</b>, then <b>expired</b> per the token’s windows. <b>Only the original requester</b> may retract, and only during the retract window.</span>
+          </div>
+          <div style="border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;background:#fff;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e2e6ec;background:#f6f7f9;">
+              <div style="font-size:12px;color:#5b636e;">Pending fact operations</div>
+              <div style="font-size:12px;color:#8a919c;">{{ reqsCountLabel }}</div>
+            </div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:820px;">
+                <thead>
+                  <tr style="text-align:left;color:#8a919c;font-size:11px;letter-spacing:.5px;text-transform:uppercase;">
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;">Op · Key → Value</th>
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;">Requester</th>
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;white-space:nowrap;">Phase · deadline</th>
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;">Proof</th>
+                    <th style="padding:9px 14px;font-weight:600;border-bottom:1px solid #e2e6ec;text-align:right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <sc-for list="{{ reqs }}" as="r" hint-placeholder-count="3">
+                    <tr style="border-bottom:1px solid #eef1f5;vertical-align:top;" style-hover="background:#f9fafc;">
+                      <td style="padding:12px 14px;min-width:280px;">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                          <span style="{{ r.opStyle }}">{{ r.opLabel }}</span>
+                          <span style="font-weight:600;color:#123a86;">{{ r.keyLabel }}</span>
+                          <span style="font-size:11px;color:#b6bcc6;font-family:'Roboto Mono',ui-monospace,monospace;">{{ r.age }}</span>
+                        </div>
+                        <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#5b636e;margin-bottom:4px;white-space:pre-wrap;word-break:break-word;max-width:340px;">{{ r.keyJson }}</code>
+                        <sc-if value="{{ r.hasValue }}" hint-placeholder-val="{{ true }}">
+                          <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#2b313a;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:5px 8px;white-space:pre-wrap;word-break:break-word;max-width:340px;">→ {{ r.valueJson }}</code>
+                        </sc-if>
+                      </td>
+                      <td style="padding:12px 14px;white-space:nowrap;">
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;max-width:180px;">
+                          <span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#3d444e;">{{ r.requesterShort }}</span>
+                          <sc-if value="{{ r.you }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:700;letter-spacing:.4px;color:#123a86;background:#dbe6fb;border-radius:4px;padding:1px 6px;">YOU</span></sc-if>
+                        </div>
+                        <div style="font-size:11px;color:#8a919c;margin-top:5px;">fee {{ r.fee }} ADA</div>
+                      </td>
+                      <td style="padding:12px 14px;">
+                        <span style="{{ r.phaseStyle }}"><span style="{{ r.phaseDot }}"></span>{{ r.phaseLabel }}</span>
+                        <div style="font-size:11px;color:#8a919c;margin-top:6px;max-width:200px;line-height:1.4;">{{ r.deadline }}</div>
+                      </td>
+                      <td style="padding:12px 14px;">
+                        <button onClick="{{ r.openProof }}" style="{{ r.proofChipStyle }}" style-hover="filter:brightness(.97);"><span style="{{ r.proofDot }}"></span>{{ r.proofLabel }}</button>
+                      </td>
+                      <td style="padding:12px 14px;text-align:right;white-space:nowrap;">
+                        <button onClick="{{ r.retract }}" disabled="{{ r.cannotRetract }}" style="{{ r.retractBtnStyle }}" title="{{ r.retractTitle }}">Retract</button>
+                        <sc-if value="{{ r.showReason }}" hint-placeholder-val="{{ true }}">
+                          <div style="font-size:10px;color:#b6bcc6;margin-top:5px;max-width:150px;line-height:1.35;text-align:right;">{{ r.retractReason }}</div>
+                        </sc-if>
+                      </td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <sc-if value="{{ noReqs }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:44px 20px;text-align:center;color:#8a919c;">
+                <div style="font-size:26px;opacity:.4;margin-bottom:8px;">◷</div>
+                <div style="font-size:14px;color:#5b636e;margin-bottom:4px;">No pending requests</div>
+                <div style="font-size:12px;">Every proposed change has been applied or expired. New requests appear here until processed.</div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showVerify }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:16px;">
+            <div style="border:1px solid #b7e0c6;border-radius:10px;overflow:hidden;background:#fff;">
+              <div style="display:flex;align-items:center;gap:12px;padding:16px 18px;background:linear-gradient(0deg,#f2faf5,#eaf6ee);border-bottom:1px solid #d3ecdc;">
+                <div style="width:40px;height:40px;border-radius:50%;background:#1f8a4c;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;">✓</div>
+                <div style="min-width:0;">
+                  <div style="font-size:17px;font-weight:700;color:#0b5a2e;">Verified independently</div>
+                  <div style="font-size:12px;color:#3d7a52;">Recomputed locally via WASM cryptography · {{ verifyAgo }}</div>
+                </div>
+                <span style="flex:1;"></span>
+                <button onClick="{{ openVerifyDrawer }}" style="padding:8px 14px;border:1px solid #b7e0c6;border-radius:6px;background:#fff;color:#0b5a2e;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;" style-hover="background:#f2faf5;">Open proof drawer ›</button>
+              </div>
+              <div style="padding:6px 18px 10px;">
+                <sc-for list="{{ verifyChecks }}" as="c" hint-placeholder-count="3">
+                  <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 0;border-bottom:1px solid #eef1f5;">
+                    <div style="width:22px;height:22px;border-radius:50%;background:#e2f3e8;color:#1f8a4c;display:flex;align-items:center;justify-content:center;font-size:12px;flex:0 0 auto;margin-top:1px;">✓</div>
+                    <div style="min-width:0;">
+                      <div style="font-size:14px;font-weight:600;color:#191c20;">{{ c.name }}</div>
+                      <div style="font-size:12px;color:#5b636e;margin-top:2px;line-height:1.5;">{{ c.detail }}</div>
+                    </div>
+                    <span style="flex:1;"></span>
+                    <span style="font-size:11px;font-weight:700;letter-spacing:.5px;color:#0b5a2e;background:#e2f3e8;border:1px solid #b7e0c6;border-radius:12px;padding:3px 10px;white-space:nowrap;">PASS</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+              <div style="border:1px solid #e2e6ec;border-radius:8px;background:#fff;padding:14px;">
+                <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:8px;">Snapshot slot</div>
+                <div style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:15px;font-weight:500;">{{ verifySnapshot }}</div>
+                <div style="font-size:11px;color:#8a919c;margin-top:4px;">on-chain reference point</div>
+              </div>
+              <div style="border:1px solid #e2e6ec;border-radius:8px;background:#fff;padding:14px;">
+                <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:8px;">Trusted root</div>
+                <dc-import name="HashChip" full="{{ verifyRoot }}" hint-size="150px,26px"></dc-import>
+                <div style="font-size:11px;color:#8a919c;margin-top:8px;">what proofs are checked against</div>
+              </div>
+              <div style="border:1px solid #e2e6ec;border-radius:8px;background:#fff;padding:14px;">
+                <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:8px;">Verifier op</div>
+                <div style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;font-weight:500;word-break:break-all;">{{ verifierOp }}</div>
+                <div style="font-size:11px;color:#8a919c;margin-top:4px;">second independent oracle</div>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+
+      </main>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== FIRST RUN / CONNECT ===================== -->
+  <sc-if value="{{ isFirstrun }}" hint-placeholder-val="{{ false }}">
+  <div style="min-height:calc(100vh - 29px);display:flex;align-items:center;justify-content:center;padding:48px 24px;background:radial-gradient(120% 90% at 50% -10%,#eaf1fd 0%,#eceef2 55%);">
+    <div style="width:100%;max-width:760px;">
+      <div style="display:flex;align-items:center;gap:11px;margin-bottom:20px;">
+        <div style="width:34px;height:34px;border-radius:8px;background:#2264d1;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);"><span style="transform:rotate(-45deg);color:#fff;font-weight:700;font-size:16px;">M</span></div>
+        <div style="font-size:20px;font-weight:700;">MPFS&nbsp;Browser</div>
+        <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border:1px solid #cfe0fb;border-radius:20px;background:#fff;font-size:12px;color:#123a86;"><span style="width:7px;height:7px;border-radius:50%;background:#1f8a4c;"></span>Preprod</span>
+      </div>
+      <h1 style="margin:0 0 10px;font-size:30px;font-weight:700;letter-spacing:-.3px;">Inspect on-chain MPFS data — and verify it yourself.</h1>
+      <p style="margin:0 0 26px;font-size:15px;line-height:1.6;color:#5b636e;max-width:600px;">Browse tokens, their committed key→value facts, and pending change requests. Every value is decoded from UTF-8 JSON and independently re-verified against a second oracle and the on-chain root. <b style="color:#3d444e;">No wallet needed to read.</b></p>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:28px;">
+        <div style="background:#fff;border:1px solid #e2e6ec;border-radius:10px;padding:16px;">
+          <div style="width:30px;height:30px;border-radius:7px;background:#eaf1fd;color:#2264d1;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:10px;">⬚</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:3px;">Browse</div>
+          <div style="font-size:12.5px;color:#5b636e;line-height:1.5;">Tokens, facts and requests — decoded, sortable, copyable.</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e6ec;border-radius:10px;padding:16px;">
+          <div style="width:30px;height:30px;border-radius:7px;background:#e2f3e8;color:#1f8a4c;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:10px;">✓</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:3px;">Verify</div>
+          <div style="font-size:12.5px;color:#5b636e;line-height:1.5;">Second-oracle, completeness and per-fact inclusion proofs — in your browser.</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e6ec;border-radius:10px;padding:16px;">
+          <div style="width:30px;height:30px;border-radius:7px;background:#f8ecd4;color:#a9680c;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:10px;">✎</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:3px;">Act</div>
+          <div style="font-size:12.5px;color:#5b636e;line-height:1.5;">Connect a wallet to submit or retract changes — always with a reviewed signature.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <button onClick="{{ goWorkbench }}" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border:0;border-radius:8px;background:#2264d1;color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;" style-hover="background:#1b57bd;">Browse tokens →</button>
+        <button onClick="{{ connectWallet }}" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border:1px solid #c6ccd5;border-radius:8px;background:#fff;color:#3d444e;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;" style-hover="background:#f1f3f6;">Connect wallet</button>
+        <span style="font-size:12.5px;color:#8a919c;">Nami · Eternl · Lace (CIP-30) — only needed for writes</span>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== PROOF DRAWER ===================== -->
+  <sc-if value="{{ drawer.open }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ drawer.close }}" style="position:fixed;inset:0;background:rgba(20,23,28,.42);z-index:80;animation:mpfs-fade .15s ease;"></div>
+    <div style="position:fixed;top:0;right:0;height:100vh;width:min(480px,94vw);background:#fff;z-index:81;box-shadow:-8px 0 32px rgba(20,23,28,.18);display:flex;flex-direction:column;animation:mpfs-slide .22s ease;">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:16px 20px;border-bottom:1px solid #e2e6ec;">
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;">Proof inspector</div>
+          <div style="font-size:16px;font-weight:700;margin-top:2px;">{{ drawer.title }}</div>
+          <div style="font-size:12px;color:#5b636e;font-family:'Roboto Mono',ui-monospace,monospace;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ drawer.subtitle }}</div>
+        </div>
+        <button onClick="{{ drawer.close }}" style="width:32px;height:32px;flex:0 0 auto;border:1px solid #d7dce3;border-radius:6px;background:#fff;color:#5b636e;font-size:15px;cursor:pointer;line-height:1;" style-hover="background:#f1f3f6;">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:18px 20px 28px;">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:600;{{ drawer.vStyle }}">
+          <span style="width:9px;height:9px;border-radius:50%;{{ drawer.vDot }}"></span>{{ drawer.vTxt }}
+        </div>
+        <sc-if value="{{ drawer.reason }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:12px;padding:10px 13px;border:1px solid #ecd39b;background:#fbf3e0;border-radius:8px;font-size:12px;color:#6e430a;line-height:1.5;">{{ drawer.reason }}</div>
+        </sc-if>
+        <div style="margin-top:18px;display:grid;grid-template-columns:1fr;gap:1px;background:#e2e6ec;border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;">
+          <div style="background:#fff;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <span style="font-size:12px;color:#8a919c;">Snapshot slot</span>
+            <span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;font-weight:500;">{{ drawer.snapshot }}</span>
+          </div>
+          <div style="background:#fff;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <span style="font-size:12px;color:#8a919c;flex:0 0 auto;">Trusted root</span>
+            <dc-import name="HashChip" full="{{ drawer.root }}" hint-size="150px,26px"></dc-import>
+          </div>
+          <div style="background:#fff;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;">
+            <span style="font-size:12px;color:#8a919c;flex:0 0 auto;">Verifier op</span>
+            <span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#2b313a;text-align:right;">{{ drawer.verifierOp }}</span>
+          </div>
+        </div>
+        <sc-if value="{{ drawer.isSet }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;">
+            <div style="font-size:11px;font-weight:700;color:#8a919c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Checks</div>
+            <sc-for list="{{ drawer.checks }}" as="c" hint-placeholder-count="3">
+              <div style="display:flex;gap:10px;padding:11px 0;border-bottom:1px solid #eef1f5;">
+                <span style="width:20px;height:20px;flex:0 0 auto;border-radius:50%;background:#e2f3e8;color:#1f8a4c;display:flex;align-items:center;justify-content:center;font-size:11px;margin-top:1px;">✓</span>
+                <div><div style="font-size:13px;font-weight:600;">{{ c.name }}</div><div style="font-size:12px;color:#5b636e;margin-top:2px;line-height:1.5;">{{ c.detail }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ drawer.leafHash }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:18px;">
+            <div style="font-size:11px;font-weight:700;color:#8a919c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Leaf</div>
+            <div style="border:1px solid #e2e6ec;border-radius:8px;padding:12px 14px;">
+              <div style="font-size:12px;color:#8a919c;margin-bottom:4px;">Decoded key</div>
+              <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:6px 8px;white-space:pre-wrap;word-break:break-word;">{{ drawer.keyJson }}</code>
+              <sc-if value="{{ drawer.hasValue }}" hint-placeholder-val="{{ true }}">
+                <div style="font-size:12px;color:#8a919c;margin:10px 0 4px;">Decoded value</div>
+                <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#2b313a;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:6px 8px;white-space:pre-wrap;word-break:break-word;max-height:130px;overflow:auto;">{{ drawer.valueJson }}</code>
+              </sc-if>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px;">
+                <span style="font-size:12px;color:#8a919c;">Leaf hash</span>
+                <dc-import name="HashChip" full="{{ drawer.leafHash }}" hint-size="150px,26px"></dc-import>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:16px;">
+            <div style="font-size:11px;font-weight:700;color:#8a919c;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Proof path <span style="color:#b6bcc6;font-weight:400;text-transform:none;letter-spacing:0;">· leaf → root</span></div>
+            <sc-for list="{{ drawer.steps }}" as="st" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid #eef1f5;border-radius:6px;margin-bottom:5px;background:#fafbfc;">
+                <span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;color:#8a919c;white-space:nowrap;">nibble {{ st.branch }}</span>
+                <span style="flex:1;"></span>
+                <span style="font-size:11px;color:#8a919c;">sibling</span>
+                <dc-import name="HashChip" full="{{ st.sibling }}" hint-size="130px,24px"></dc-import>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="margin-top:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-size:11px;font-weight:700;color:#8a919c;text-transform:uppercase;letter-spacing:.5px;">Raw proof</div>
+            <div style="display:flex;gap:6px;">
+              <button onClick="{{ drawer.copyRaw }}" style="padding:5px 10px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;color:#3d444e;font-size:12px;cursor:pointer;font-family:inherit;" style-hover="background:#f1f3f6;"><sc-if value="{{ drawer.copiedRaw }}" hint-placeholder-val="{{ false }}"><span style="color:#1f8a4c;">Copied ✓</span></sc-if><sc-if value="{{ drawer.notCopiedRaw }}" hint-placeholder-val="{{ true }}">Copy</sc-if></button>
+              <button onClick="{{ drawer.downloadRaw }}" style="padding:5px 10px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;color:#3d444e;font-size:12px;cursor:pointer;font-family:inherit;" style-hover="background:#f1f3f6;">Download</button>
+            </div>
+          </div>
+          <pre style="margin:0;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;line-height:1.55;background:#14171c;color:#c8d0da;border-radius:8px;padding:14px;overflow:auto;max-height:300px;">{{ drawer.raw }}</pre>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== WRITE / REVIEW / SIGN DIALOG ===================== -->
+  <sc-if value="{{ dialog.open }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ dialog.close }}" style="position:fixed;inset:0;background:rgba(20,23,28,.5);z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;animation:mpfs-fade .15s ease;">
+      <div onClick="{{ dialog.noop }}" style="width:min(560px,100%);max-height:90vh;background:#fff;border-radius:12px;box-shadow:0 24px 64px rgba(20,23,28,.32);display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #e2e6ec;">
+          <span style="{{ dialog.opStyle }}">{{ dialog.opLabel }}</span>
+          <div style="font-size:16px;font-weight:700;">{{ dialog.title }}</div>
+          <span style="flex:1;"></span>
+          <button onClick="{{ dialog.close }}" style="width:30px;height:30px;border:1px solid #d7dce3;border-radius:6px;background:#fff;color:#5b636e;font-size:14px;cursor:pointer;line-height:1;" style-hover="background:#f1f3f6;">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;">
+          <sc-if value="{{ dialog.isConnect }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:22px 20px;">
+              <div style="font-size:14px;color:#3d444e;line-height:1.6;margin-bottom:18px;">Writing to the forest needs a signature. Connect a CIP-30 wallet to continue — reading stays fully available without one.</div>
+              <div style="display:grid;gap:10px;">
+                <button onClick="{{ dialog.connect }}" style="display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid #d7dce3;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;" style-hover="background:#f6f7f9;border-color:#bcd6f7;"><span style="width:28px;height:28px;border-radius:7px;background:#eaf1fd;color:#2264d1;display:flex;align-items:center;justify-content:center;font-weight:700;">E</span><span style="font-size:14px;font-weight:600;flex:1;">Eternl</span><span style="font-size:12px;color:#8a919c;">Connect →</span></button>
+                <button onClick="{{ dialog.connect }}" style="display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid #d7dce3;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;" style-hover="background:#f6f7f9;border-color:#bcd6f7;"><span style="width:28px;height:28px;border-radius:7px;background:#f3edff;color:#5f3dc4;display:flex;align-items:center;justify-content:center;font-weight:700;">N</span><span style="font-size:14px;font-weight:600;flex:1;">Nami</span><span style="font-size:12px;color:#8a919c;">Connect →</span></button>
+                <button onClick="{{ dialog.connect }}" style="display:flex;align-items:center;gap:12px;padding:13px 15px;border:1px solid #d7dce3;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;" style-hover="background:#f6f7f9;border-color:#bcd6f7;"><span style="width:28px;height:28px;border-radius:7px;background:#e2f3e8;color:#1f8a4c;display:flex;align-items:center;justify-content:center;font-weight:700;">L</span><span style="font-size:14px;font-weight:600;flex:1;">Lace</span><span style="font-size:12px;color:#8a919c;">Connect →</span></button>
+              </div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ dialog.isEdit }}" hint-placeholder-val="{{ true }}">
+            <div style="padding:20px;">
+              <sc-if value="{{ dialog.isDelete }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;gap:10px;padding:11px 13px;margin-bottom:16px;border:1px solid #f0c3bd;background:#fdeeec;border-radius:8px;font-size:12.5px;color:#7a1c16;line-height:1.5;"><span>⚠</span><span>Deleting removes the fact from the forest once processed. The key below identifies the entry to remove.</span></div>
+              </sc-if>
+              <label style="display:block;font-size:12px;font-weight:600;color:#3d444e;margin-bottom:6px;">Key <span style="color:#8a919c;font-weight:400;">· UTF-8 JSON</span></label>
+              <textarea value="{{ dialog.keyVal }}" onInput="{{ dialog.onKey }}" placeholder='{&quot;type&quot;:&quot;config&quot;}' rows="2" style="width:100%;padding:10px 12px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;color:#191c20;outline:none;resize:vertical;box-sizing:border-box;" style-focus="border-color:#2264d1;box-shadow:0 0 0 3px rgba(34,100,209,.15);"></textarea>
+              <sc-if value="{{ dialog.keyErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#c0362c;margin-top:5px;">✕ {{ dialog.keyErr }}</div></sc-if>
+              <sc-if value="{{ dialog.needsValue }}" hint-placeholder-val="{{ true }}">
+                <label style="display:block;font-size:12px;font-weight:600;color:#3d444e;margin:16px 0 6px;">Value <span style="color:#8a919c;font-weight:400;">· UTF-8 JSON</span></label>
+                <textarea value="{{ dialog.valueVal }}" onInput="{{ dialog.onValue }}" placeholder='{&quot;agent&quot;:&quot;worker-09&quot;,&quot;idle&quot;:true}' rows="5" style="width:100%;padding:10px 12px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;color:#191c20;outline:none;resize:vertical;box-sizing:border-box;" style-focus="border-color:#2264d1;box-shadow:0 0 0 3px rgba(34,100,209,.15);"></textarea>
+                <sc-if value="{{ dialog.valErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:11.5px;color:#c0362c;margin-top:5px;">✕ {{ dialog.valErr }}</div></sc-if>
+              </sc-if>
+              <label style="display:block;font-size:12px;font-weight:600;color:#3d444e;margin:16px 0 6px;">Fee <span style="color:#8a919c;font-weight:400;">· ADA (≤ token max)</span></label>
+              <input value="{{ dialog.feeVal }}" onInput="{{ dialog.onFee }}" style="width:140px;padding:9px 12px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;color:#191c20;outline:none;box-sizing:border-box;" style-focus="border-color:#2264d1;box-shadow:0 0 0 3px rgba(34,100,209,.15);" />
+            </div>
+          </sc-if>
+          <sc-if value="{{ dialog.isReview }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:20px;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;"><span style="font-size:13px;font-weight:700;color:#191c20;">Review what you're about to sign</span></div>
+              <div style="border:1px solid #e2e6ec;border-radius:10px;overflow:hidden;">
+                <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#f6f7f9;border-bottom:1px solid #e2e6ec;flex-wrap:wrap;">
+                  <span style="{{ dialog.opStyle }}">{{ dialog.opLabel }}</span>
+                  <span style="font-size:12px;color:#5b636e;">on token</span>
+                  <dc-import name="HashChip" full="{{ dialog.tokenFull }}" hint-size="150px,26px"></dc-import>
+                </div>
+                <div style="padding:14px;">
+                  <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:5px;">Key</div>
+                  <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:8px 10px;white-space:pre-wrap;word-break:break-word;">{{ dialog.keyPretty }}</code>
+                  <sc-if value="{{ dialog.needsValue }}" hint-placeholder-val="{{ true }}">
+                    <div style="font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin:14px 0 5px;">Value</div>
+                    <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;color:#2b313a;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:8px 10px;white-space:pre-wrap;word-break:break-word;max-height:160px;overflow:auto;">{{ dialog.valuePretty }}</code>
+                  </sc-if>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#e2e6ec;border-top:1px solid #e2e6ec;">
+                  <div style="background:#fff;padding:11px 14px;"><div style="font-size:11px;color:#8a919c;margin-bottom:3px;">Fee</div><div style="font-size:13px;font-weight:600;font-family:'Roboto Mono',ui-monospace,monospace;">{{ dialog.feeVal }} ADA</div></div>
+                  <div style="background:#fff;padding:11px 14px;"><div style="font-size:11px;color:#8a919c;margin-bottom:3px;">Requester</div><div style="display:flex;align-items:center;gap:6px;"><span style="font-size:13px;font-family:'Roboto Mono',ui-monospace,monospace;">{{ dialog.walletAddr }}</span><span style="font-size:10px;font-weight:700;color:#123a86;background:#dbe6fb;border-radius:4px;padding:1px 5px;">YOU</span></div></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;padding:11px 13px;margin-top:14px;border:1px solid #cfe0fb;background:#eef4fd;border-radius:8px;font-size:12.5px;color:#123a86;line-height:1.5;"><span>🔒</span><span>{{ dialog.walletName }} will open to sign this transaction. Nothing is submitted until you approve it in your wallet.</span></div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ dialog.isSigning }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:44px 20px;text-align:center;">
+              <div style="width:44px;height:44px;margin:0 auto 16px;border:3px solid #dbe6fb;border-top-color:#2264d1;border-radius:50%;animation:mpfs-spin .8s linear infinite;"></div>
+              <div style="font-size:15px;font-weight:600;margin-bottom:4px;">Waiting for {{ dialog.walletName }}…</div>
+              <div style="font-size:13px;color:#5b636e;">Approve the transaction in your wallet to submit the request.</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ dialog.isDone }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:44px 20px;text-align:center;">
+              <div style="width:48px;height:48px;margin:0 auto 16px;border-radius:50%;background:#e2f3e8;color:#1f8a4c;display:flex;align-items:center;justify-content:center;font-size:26px;">✓</div>
+              <div style="font-size:16px;font-weight:700;margin-bottom:4px;">Request submitted</div>
+              <div style="font-size:13px;color:#5b636e;line-height:1.5;max-width:360px;margin:0 auto;">Your <b>{{ dialog.verb }}</b> request is now pending. It will appear in Pending requests as <b>processable</b> until the process window elapses.</div>
+            </div>
+          </sc-if>
+        </div>
+        <sc-if value="{{ dialog.isEdit }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid #e2e6ec;background:#fafbfc;">
+            <span style="flex:1;font-size:11.5px;color:#8a919c;">Step 1 of 2 · edit</span>
+            <button onClick="{{ dialog.close }}" style="padding:9px 16px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;color:#3d444e;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;" style-hover="background:#f1f3f6;">Cancel</button>
+            <button onClick="{{ dialog.toReview }}" disabled="{{ dialog.cannotReview }}" style="{{ dialog.reviewBtnStyle }}">Review →</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ dialog.isReview }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 20px;border-top:1px solid #e2e6ec;background:#fafbfc;">
+            <span style="flex:1;font-size:11.5px;color:#8a919c;">Step 2 of 2 · sign</span>
+            <sc-if value="{{ dialog.canBack }}" hint-placeholder-val="{{ true }}"><button onClick="{{ dialog.back }}" style="padding:9px 16px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;color:#3d444e;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;" style-hover="background:#f1f3f6;">← Back</button></sc-if>
+            <button onClick="{{ dialog.sign }}" style="{{ dialog.signBtnStyle }}">{{ dialog.signLabel }}</button>
+          </div>
+        </sc-if>
+        <sc-if value="{{ dialog.isDone }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid #e2e6ec;background:#fafbfc;">
+            <button onClick="{{ dialog.close }}" style="padding:9px 18px;border:0;border-radius:6px;background:#2264d1;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;" style-hover="background:#1b57bd;">Done</button>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ===================== MOBILE 390 ===================== -->
+  <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:32px 24px 64px;">
+    <div style="max-width:1240px;margin:0 auto;">
+      <h2 style="margin:0 0 4px;font-size:18px;font-weight:700;">Mobile · 390</h2>
+      <p style="margin:0 0 24px;font-size:13px;color:#5b636e;">Sidebar collapses to a token picker; workspace stacks single-column; the pending table becomes stacked cards.</p>
+      <div style="display:flex;gap:28px;flex-wrap:wrap;">
+
+        <!-- A: read-only landing -->
+        <div style="width:390px;flex:0 0 auto;">
+          <div style="font-size:12px;font-weight:600;color:#5b636e;margin-bottom:8px;">A · First run — read-only</div>
+          <div style="width:390px;border:1px solid #d7dce3;border-radius:30px;background:#fff;overflow:hidden;box-shadow:0 14px 44px rgba(20,23,28,.14);">
+            <div style="height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;">9:41 <span style="letter-spacing:2px;color:#5b636e;">▪▪▪ ▪ ▮</span></div>
+            <div style="padding:18px 20px 26px;">
+              <div style="display:flex;align-items:center;gap:9px;margin-bottom:16px;">
+                <div style="width:30px;height:30px;border-radius:7px;background:#2264d1;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);"><span style="transform:rotate(-45deg);color:#fff;font-weight:700;font-size:14px;">M</span></div>
+                <div style="font-weight:700;font-size:16px;">MPFS Browser</div>
+                <span style="flex:1;"></span>
+                <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #cfe0fb;border-radius:14px;font-size:11px;color:#123a86;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Preprod</span>
+              </div>
+              <h1 style="margin:0 0 8px;font-size:23px;font-weight:700;line-height:1.2;">Inspect &amp; verify on-chain MPFS data.</h1>
+              <p style="margin:0 0 18px;font-size:13.5px;color:#5b636e;line-height:1.55;">Browse tokens, facts and requests — all decoded and re-verified. No wallet needed to read.</p>
+              <button style="width:100%;padding:13px;border:0;border-radius:9px;background:#2264d1;color:#fff;font-size:15px;font-weight:600;margin-bottom:10px;">Browse tokens →</button>
+              <button style="width:100%;padding:13px;border:1px solid #c6ccd5;border-radius:9px;background:#fff;color:#3d444e;font-size:15px;font-weight:500;">Connect wallet</button>
+              <div style="text-align:center;font-size:11.5px;color:#8a919c;margin-top:12px;">Nami · Eternl · Lace — only for writes</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- B: token + facts -->
+        <div style="width:390px;flex:0 0 auto;">
+          <div style="font-size:12px;font-weight:600;color:#5b636e;margin-bottom:8px;">B · Token workspace</div>
+          <div style="width:390px;border:1px solid #d7dce3;border-radius:30px;background:#eceef2;overflow:hidden;box-shadow:0 14px 44px rgba(20,23,28,.14);">
+            <div style="height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;background:#fff;">9:41 <span style="letter-spacing:2px;color:#5b636e;">▪▪▪ ▪ ▮</span></div>
+            <div style="display:flex;align-items:center;gap:9px;padding:10px 16px;background:#fff;border-bottom:1px solid #e2e6ec;">
+              <div style="width:24px;height:24px;border-radius:6px;background:#2264d1;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);"><span style="transform:rotate(-45deg);color:#fff;font-weight:700;font-size:12px;">M</span></div>
+              <b style="font-size:14px;">MPFS</b><span style="flex:1;"></span>
+              <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border:1px solid #cfe0fb;border-radius:16px;background:#eaf1fd;font-size:11px;color:#123a86;"><span style="width:16px;height:16px;border-radius:50%;background:#2264d1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">E</span>c4d1e2…0188</span>
+            </div>
+            <!-- token picker -->
+            <div style="padding:12px 16px 4px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border:1px solid #bcd6f7;border-radius:9px;background:#fff;">
+                <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:2px;background:#2264d1;transform:rotate(45deg);"></span><b style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;">9f3c7b…e0c1</b><span style="font-size:10px;font-weight:700;color:#0b5a2e;background:#e2f3e8;border-radius:4px;padding:1px 5px;">MINE</span></div>
+                <span style="color:#8a919c;font-size:14px;">▾</span>
+              </div>
+            </div>
+            <div style="padding:8px 16px 16px;">
+              <div style="display:flex;align-items:center;gap:8px;margin:8px 0 12px;">
+                <span style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid #b7e0c6;border-radius:18px;background:#e2f3e8;color:#0b5a2e;font-size:12px;font-weight:600;"><span style="width:8px;height:8px;border-radius:50%;background:#1f8a4c;"></span>Verified</span>
+                <span style="font-size:11px;color:#8a919c;">View proof ›</span>
+              </div>
+              <!-- tabs -->
+              <div style="display:flex;gap:4px;border-bottom:1px solid #e2e6ec;margin-bottom:12px;">
+                <span style="padding:8px 10px;border-bottom:2px solid #2264d1;color:#123a86;font-size:13px;font-weight:600;">Facts <span style="font-size:11px;background:#dbe6fb;border-radius:9px;padding:0 6px;">3</span></span>
+                <span style="padding:8px 10px;color:#5b636e;font-size:13px;">Pending <span style="font-size:11px;background:#eceef2;border-radius:9px;padding:0 6px;color:#8a919c;">4</span></span>
+                <span style="padding:8px 10px;color:#5b636e;font-size:13px;">Verify</span>
+              </div>
+              <!-- fact cards -->
+              <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:12px;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><b style="color:#123a86;font-size:13px;">type: config</b><span style="flex:1;"></span><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #b7e0c6;border-radius:12px;background:#e2f3e8;color:#0b5a2e;font-size:11px;font-weight:500;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Included</span></div>
+                <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#5b636e;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:5px 7px;margin-bottom:6px;">{"type":"config"}</code>
+                <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#2b313a;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:6px 7px;white-space:pre-wrap;">{ "agent": "orchestrator-01", "testRun": { "status": "passed" } }</code>
+              </div>
+              <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:12px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><b style="color:#123a86;font-size:13px;">endpoint: primary</b><span style="flex:1;"></span><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #b7e0c6;border-radius:12px;background:#e2f3e8;color:#0b5a2e;font-size:11px;font-weight:500;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Included</span></div>
+                <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#5b636e;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:5px 7px;">{"type":"endpoint","name":"primary"}</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- C: pending cards -->
+        <div style="width:390px;flex:0 0 auto;">
+          <div style="font-size:12px;font-weight:600;color:#5b636e;margin-bottom:8px;">C · Pending requests — stacked cards + gating</div>
+          <div style="width:390px;border:1px solid #d7dce3;border-radius:30px;background:#eceef2;overflow:hidden;box-shadow:0 14px 44px rgba(20,23,28,.14);">
+            <div style="height:38px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;font-size:13px;font-weight:600;background:#fff;">9:41 <span style="letter-spacing:2px;color:#5b636e;">▪▪▪ ▪ ▮</span></div>
+            <div style="padding:12px 16px;background:#fff;border-bottom:1px solid #e2e6ec;font-size:13px;color:#5b636e;"><b style="color:#191c20;">Pending</b> · 3 requests · <span style="font-family:'Roboto Mono',ui-monospace,monospace;">9f3c7b…e0c1</span></div>
+            <div style="padding:14px 16px;">
+              <!-- card 1: you, processable -> retract disabled -->
+              <div style="border:1px solid #e2e6ec;border-radius:11px;background:#fff;padding:13px;margin-bottom:11px;">
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;"><span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;background:#e2f3e8;color:#0b5a2e;border:1px solid #b7e0c6;">INSERT</span><b style="font-size:13px;color:#123a86;">agent: worker-09</b><span style="flex:1;"></span><span style="font-size:11px;color:#b6bcc6;font-family:'Roboto Mono',ui-monospace,monospace;">2h</span></div>
+                <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#2b313a;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:6px 8px;margin-bottom:9px;">{"agent":"worker-09"} → {"caps":["build"],"idle":true}</code>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px;"><span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#3d444e;">c4d1e2…0188</span><span style="font-size:10px;font-weight:700;color:#123a86;background:#dbe6fb;border-radius:4px;padding:1px 5px;">YOU</span><span style="font-size:11px;color:#8a919c;">· fee 1.8 ADA</span></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:13px;font-size:11.5px;font-weight:500;background:#e2eefb;color:#123a86;border:1px solid #bcd6f7;"><span style="width:6px;height:6px;border-radius:50%;background:#2264d1;"></span>Processable</span><span style="font-size:11px;color:#8a919c;">Retract opens in 1h 40m</span></div>
+                <div style="display:flex;gap:8px;"><button style="flex:1;padding:9px;border:1px solid #c6ccd5;border-radius:7px;background:#fff;color:#3d444e;font-size:12.5px;font-weight:500;">Proof ✓</button><button disabled style="flex:1;padding:9px;border:1px solid #d7dce3;border-radius:7px;background:#f6f7f9;color:#b6bcc6;font-size:12.5px;font-weight:500;cursor:not-allowed;">Retract</button></div>
+                <div style="font-size:10.5px;color:#b6bcc6;text-align:center;margin-top:6px;">Retract opens after the process window</div>
+              </div>
+              <!-- card 2: other, retractable -> can't retract -->
+              <div style="border:1px solid #e2e6ec;border-radius:11px;background:#fff;padding:13px;margin-bottom:11px;">
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;"><span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;background:#e2eefb;color:#123a86;border:1px solid #bcd6f7;">UPDATE</span><b style="font-size:13px;color:#123a86;">agent: worker-07</b><span style="flex:1;"></span><span style="font-size:11px;color:#b6bcc6;font-family:'Roboto Mono',ui-monospace,monospace;">4h</span></div>
+                <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#2b313a;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:6px 8px;margin-bottom:9px;">{"agent":"worker-07"} → {"maxJobs":6}</code>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;"><span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#3d444e;">5a9012…7c63</span><span style="font-size:11px;color:#8a919c;">· fee 2.0 ADA</span></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:13px;font-size:11.5px;font-weight:500;background:#f8ecd4;color:#6e430a;border:1px solid #ecd39b;"><span style="width:6px;height:6px;border-radius:50%;background:#a9680c;"></span>Retractable</span><span style="font-size:11px;color:#8a919c;">Closes in 2h 05m</span></div>
+                <div style="display:flex;gap:8px;"><button style="flex:1;padding:9px;border:1px solid #c6ccd5;border-radius:7px;background:#fff;color:#3d444e;font-size:12.5px;font-weight:500;">Proof ✓</button><button disabled style="flex:1;padding:9px;border:1px solid #d7dce3;border-radius:7px;background:#f6f7f9;color:#b6bcc6;font-size:12.5px;font-weight:500;cursor:not-allowed;">Retract</button></div>
+                <div style="font-size:10.5px;color:#b6bcc6;text-align:center;margin-top:6px;">Only the requester may retract</div>
+              </div>
+              <!-- card 3: you, retractable -> CAN retract -->
+              <div style="border:1px solid #f0c3bd;border-radius:11px;background:#fff;padding:13px;">
+                <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;"><span style="padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.5px;background:#fadedb;color:#7a1c16;border:1px solid #f0c3bd;">DELETE</span><b style="font-size:13px;color:#123a86;">agent: legacy-03</b><span style="flex:1;"></span><span style="font-size:11px;color:#b6bcc6;font-family:'Roboto Mono',ui-monospace,monospace;">3h</span></div>
+                <code style="display:block;font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#2b313a;background:#f6f7f9;border:1px solid #eef1f5;border-radius:5px;padding:6px 8px;margin-bottom:9px;">{"agent":"legacy-03"}</code>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px;"><span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11.5px;color:#3d444e;">c4d1e2…0188</span><span style="font-size:10px;font-weight:700;color:#123a86;background:#dbe6fb;border-radius:4px;padding:1px 5px;">YOU</span><span style="font-size:11px;color:#8a919c;">· fee 1.2 ADA</span></div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:13px;font-size:11.5px;font-weight:500;background:#f8ecd4;color:#6e430a;border:1px solid #ecd39b;"><span style="width:6px;height:6px;border-radius:50%;background:#a9680c;"></span>Retractable</span><span style="font-size:11px;color:#8a919c;">Closes in 48m</span></div>
+                <div style="display:flex;gap:8px;"><button style="flex:1;padding:9px;border:1px solid #c6ccd5;border-radius:7px;background:#fff;color:#3d444e;font-size:12.5px;font-weight:500;">Proof ✓</button><button style="flex:1;padding:9px;border:0;border-radius:7px;background:#c0362c;color:#fff;font-size:12.5px;font-weight:600;">Retract</button></div>
+                <div style="font-size:10.5px;color:#1f8a4c;text-align:center;margin-top:6px;">You submitted this — retract available now</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== TABLET 768 ===================== -->
+  <sc-if value="{{ isTablet }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:32px 24px 64px;">
+    <div style="max-width:1000px;margin:0 auto;">
+      <h2 style="margin:0 0 4px;font-size:18px;font-weight:700;">Tablet · 768</h2>
+      <p style="margin:0 0 24px;font-size:13px;color:#5b636e;">Token sidebar collapses into a horizontal picker above a full-width workspace; tables keep their own scroll.</p>
+      <div style="width:768px;max-width:100%;border:1px solid #d7dce3;border-radius:16px;background:#eceef2;overflow:hidden;box-shadow:0 14px 44px rgba(20,23,28,.14);">
+        <!-- app bar -->
+        <div style="display:flex;align-items:center;gap:10px;height:52px;padding:0 16px;background:#fff;border-bottom:1px solid #e2e6ec;">
+          <div style="width:24px;height:24px;border-radius:6px;background:#2264d1;display:flex;align-items:center;justify-content:center;transform:rotate(45deg);"><span style="transform:rotate(-45deg);color:#fff;font-weight:700;font-size:12px;">M</span></div>
+          <b style="font-size:14px;">MPFS Browser</b><span style="flex:1;"></span>
+          <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border:1px solid #e2e6ec;border-radius:14px;font-size:11px;color:#5b636e;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Preprod</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border:1px solid #cfe0fb;border-radius:16px;background:#eaf1fd;font-size:11px;color:#123a86;"><span style="width:16px;height:16px;border-radius:50%;background:#2264d1;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">E</span>c4d1e2…0188</span>
+        </div>
+        <!-- token picker row -->
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;background:#f6f7f9;border-bottom:1px solid #e2e6ec;overflow-x:auto;">
+          <span style="font-size:11px;font-weight:700;letter-spacing:.5px;color:#8a919c;text-transform:uppercase;flex:0 0 auto;">Tokens</span>
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid #bcd6f7;border-radius:8px;background:#eaf1fd;"><span style="width:7px;height:7px;border-radius:2px;background:#2264d1;transform:rotate(45deg);"></span><b style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:12.5px;color:#123a86;">9f3c7b…e0c1</b><span style="font-size:10px;font-weight:700;color:#0b5a2e;background:#e2f3e8;border-radius:4px;padding:1px 5px;">MINE</span></span>
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid #d7dce3;border-radius:8px;background:#fff;"><span style="width:7px;height:7px;border-radius:2px;background:#c6ccd5;transform:rotate(45deg);"></span><span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:12.5px;color:#3d444e;">2b7eff…4880</span></span>
+          <span style="flex:0 0 auto;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid #d7dce3;border-radius:8px;background:#fff;"><span style="width:7px;height:7px;border-radius:2px;background:#c6ccd5;transform:rotate(45deg);"></span><span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:12.5px;color:#3d444e;">e10a4d…4f56</span><span style="font-size:10px;font-weight:700;color:#0b5a2e;background:#e2f3e8;border-radius:4px;padding:1px 5px;">MINE</span></span>
+        </div>
+        <!-- workspace -->
+        <div style="padding:18px 18px 24px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+            <h1 style="margin:0;font-size:18px;font-weight:700;">Token</h1>
+            <span style="font-size:10px;font-weight:700;color:#0b5a2e;background:#e2f3e8;border-radius:4px;padding:2px 6px;">MINE</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border:1px solid #d3d8e0;border-radius:6px;background:#eef1f5;font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;">9f3c7b1e…ade0c1 ⧉</span>
+            <span style="flex:1;"></span>
+            <span style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid #b7e0c6;border-radius:18px;background:#e2f3e8;color:#0b5a2e;font-size:12.5px;font-weight:600;"><span style="width:8px;height:8px;border-radius:50%;background:#1f8a4c;"></span>Verified · View proof ›</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#e2e6ec;border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;margin-bottom:18px;">
+            <div style="background:#fff;padding:10px 12px;"><div style="font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:4px;">Root</div><span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:12px;">7ade0c…4f56</span></div>
+            <div style="background:#fff;padding:10px 12px;"><div style="font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:4px;">Max fee</div><b style="font-size:14px;">2.5</b> <span style="font-size:11px;color:#8a919c;">ADA</span></div>
+            <div style="background:#fff;padding:10px 12px;"><div style="font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:4px;">Process</div><b style="font-size:14px;">300</b> <span style="font-size:11px;color:#8a919c;">slots</span></div>
+            <div style="background:#fff;padding:10px 12px;"><div style="font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;margin-bottom:4px;">Retract</div><b style="font-size:14px;">600</b> <span style="font-size:11px;color:#8a919c;">slots</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;border-bottom:1px solid #e2e6ec;margin-bottom:14px;">
+            <span style="padding:9px 12px;border-bottom:2px solid #2264d1;color:#123a86;font-size:13px;font-weight:600;">Facts <span style="font-size:11px;background:#dbe6fb;border-radius:9px;padding:0 6px;">3</span></span>
+            <span style="padding:9px 12px;color:#5b636e;font-size:13px;">Pending <span style="font-size:11px;background:#eceef2;border-radius:9px;padding:0 6px;color:#8a919c;">4</span></span>
+            <span style="padding:9px 12px;color:#5b636e;font-size:13px;">Verification ✓</span>
+            <span style="flex:1;"></span>
+            <span style="padding:7px 12px;border-radius:6px;background:#2264d1;color:#fff;font-size:12.5px;font-weight:500;margin-bottom:5px;">+ New fact</span>
+          </div>
+          <div style="border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;background:#fff;">
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+              <thead><tr style="text-align:left;color:#8a919c;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;"><th style="padding:8px 12px;border-bottom:1px solid #e2e6ec;">Key</th><th style="padding:8px 12px;border-bottom:1px solid #e2e6ec;">Value</th><th style="padding:8px 12px;border-bottom:1px solid #e2e6ec;">Proof</th></tr></thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #eef1f5;vertical-align:top;"><td style="padding:10px 12px;"><b style="color:#123a86;">type: config</b><br><code style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;color:#5b636e;">{"type":"config"}</code></td><td style="padding:10px 12px;"><code style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;color:#2b313a;">{"agent":"orchestrator-01",…}</code></td><td style="padding:10px 12px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #b7e0c6;border-radius:12px;background:#e2f3e8;color:#0b5a2e;font-size:11px;font-weight:500;white-space:nowrap;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Included</span></td></tr>
+                <tr style="border-bottom:1px solid #eef1f5;vertical-align:top;"><td style="padding:10px 12px;"><b style="color:#123a86;">endpoint: primary</b><br><code style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;color:#5b636e;">{"type":"endpoint",…}</code></td><td style="padding:10px 12px;"><code style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;color:#2b313a;">{"url":"https://relay.mpfs.dev",…}</code></td><td style="padding:10px 12px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #b7e0c6;border-radius:12px;background:#e2f3e8;color:#0b5a2e;font-size:11px;font-weight:500;white-space:nowrap;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Included</span></td></tr>
+                <tr style="vertical-align:top;"><td style="padding:10px 12px;"><b style="color:#123a86;">agent: worker-07</b><br><code style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;color:#5b636e;">{"agent":"worker-07"}</code></td><td style="padding:10px 12px;"><code style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:11px;color:#2b313a;">{"caps":["build","test","deploy"],…}</code></td><td style="padding:10px 12px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #b7e0c6;border-radius:12px;background:#e2f3e8;color:#0b5a2e;font-size:11px;font-weight:500;white-space:nowrap;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Included</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ===================== COMPONENTS + TOKENS ===================== -->
+  <sc-if value="{{ isComponents }}" hint-placeholder-val="{{ false }}">
+  <div style="padding:32px 24px 80px;">
+    <div style="max-width:1120px;margin:0 auto;">
+      <h2 style="margin:0 0 4px;font-size:20px;font-weight:700;">Component inventory &amp; design tokens</h2>
+      <p style="margin:0 0 28px;font-size:13px;color:#5b636e;">A small hand-rolled Material-3 set — no runtime component library. Ports directly to PureScript/Halogen.</p>
+
+      <!-- ===== TOKENS ===== -->
+      <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#8a919c;margin:0 0 12px;">Design tokens</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:16px;">
+        <!-- color -->
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Color</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+            <div><div style="height:40px;border-radius:6px;background:#2264d1;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">primary</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#2264d1</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#eaf1fd;border:1px solid #dbe6fb;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">primary-c</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#eaf1fd</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#1f8a4c;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">success</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#1f8a4c</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#e2f3e8;border:1px solid #b7e0c6;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">success-c</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#e2f3e8</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#a9680c;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">warning</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#a9680c</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#f8ecd4;border:1px solid #ecd39b;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">warning-c</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#f8ecd4</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#c0362c;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">danger</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#c0362c</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#fadedb;border:1px solid #f0c3bd;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">danger-c</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#fadedb</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#191c20;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">text</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#191c20</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#5b636e;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">text-2</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#5b636e</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#e2e6ec;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">line</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#e2e6ec</div></div>
+            <div><div style="height:40px;border-radius:6px;background:#eceef2;border:1px solid #e2e6ec;"></div><div style="font-size:10px;color:#5b636e;margin-top:4px;">surface</div><div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;">#eceef2</div></div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #eef1f5;">
+            <div style="font-size:11px;color:#8a919c;margin-bottom:8px;">Dark surface tokens (noted for parity)</div>
+            <div style="display:flex;gap:6px;border-radius:8px;overflow:hidden;">
+              <div style="flex:1;height:28px;background:#14171c;"></div><div style="flex:1;height:28px;background:#1e232a;"></div><div style="flex:1;height:28px;background:#2b323b;"></div><div style="flex:1;height:28px;background:#4d9bff;"></div><div style="flex:1;height:28px;background:#3ea56b;"></div><div style="flex:1;height:28px;background:#e0663b;"></div>
+            </div>
+            <div style="font-size:9.5px;color:#8a919c;font-family:'Roboto Mono',ui-monospace,monospace;margin-top:5px;">#14171c · #1e232a · #2b323b · primary #4d9bff · success #3ea56b · danger #e0663b</div>
+          </div>
+        </div>
+        <!-- type + radius + elevation -->
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Type scale · Roboto / Roboto&nbsp;Mono</div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:7px;"><span style="font-size:20px;font-weight:700;">Title</span><span style="font-size:10.5px;color:#8a919c;">20 / 700 — page title</span></div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:7px;"><span style="font-size:16px;font-weight:700;">Section</span><span style="font-size:10.5px;color:#8a919c;">16 / 700 — dialog · section</span></div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:7px;"><span style="font-size:13px;font-weight:400;">Body text</span><span style="font-size:10.5px;color:#8a919c;">13 / 400 — table · body</span></div>
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:7px;"><span style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;">Overline</span><span style="font-size:10.5px;color:#8a919c;">11 / 700 caps — labels</span></div>
+          <div style="display:flex;align-items:baseline;gap:10px;"><span style="font-size:12.5px;font-family:'Roboto Mono',ui-monospace,monospace;">Mono 0x7f3a…</span><span style="font-size:10.5px;color:#8a919c;">12.5 — hashes · JSON</span></div>
+          <div style="font-size:13px;font-weight:600;margin:18px 0 10px;">Radius</div>
+          <div style="display:flex;gap:12px;align-items:flex-end;">
+            <div style="text-align:center;"><div style="width:44px;height:34px;background:#eaf1fd;border:1px solid #bcd6f7;border-radius:4px;"></div><div style="font-size:10px;color:#8a919c;margin-top:4px;">4 chip</div></div>
+            <div style="text-align:center;"><div style="width:44px;height:34px;background:#eaf1fd;border:1px solid #bcd6f7;border-radius:6px;"></div><div style="font-size:10px;color:#8a919c;margin-top:4px;">6 base</div></div>
+            <div style="text-align:center;"><div style="width:44px;height:34px;background:#eaf1fd;border:1px solid #bcd6f7;border-radius:8px;"></div><div style="font-size:10px;color:#8a919c;margin-top:4px;">8 card</div></div>
+            <div style="text-align:center;"><div style="width:44px;height:34px;background:#eaf1fd;border:1px solid #bcd6f7;border-radius:20px;"></div><div style="font-size:10px;color:#8a919c;margin-top:4px;">20 pill</div></div>
+          </div>
+          <div style="font-size:13px;font-weight:600;margin:18px 0 10px;">Spacing · 4px base</div>
+          <div style="display:flex;gap:8px;align-items:flex-end;">
+            <div style="text-align:center;"><div style="width:4px;height:22px;background:#2264d1;"></div><div style="font-size:9.5px;color:#8a919c;margin-top:3px;">4</div></div>
+            <div style="text-align:center;"><div style="width:8px;height:22px;background:#2264d1;"></div><div style="font-size:9.5px;color:#8a919c;margin-top:3px;">8</div></div>
+            <div style="text-align:center;"><div style="width:12px;height:22px;background:#2264d1;"></div><div style="font-size:9.5px;color:#8a919c;margin-top:3px;">12</div></div>
+            <div style="text-align:center;"><div style="width:16px;height:22px;background:#2264d1;"></div><div style="font-size:9.5px;color:#8a919c;margin-top:3px;">16</div></div>
+            <div style="text-align:center;"><div style="width:20px;height:22px;background:#2264d1;"></div><div style="font-size:9.5px;color:#8a919c;margin-top:3px;">20</div></div>
+            <div style="text-align:center;"><div style="width:24px;height:22px;background:#2264d1;"></div><div style="font-size:9.5px;color:#8a919c;margin-top:3px;">24</div></div>
+          </div>
+          <div style="font-size:13px;font-weight:600;margin:18px 0 10px;">Elevation</div>
+          <div style="display:flex;gap:14px;">
+            <div style="width:60px;height:38px;background:#fff;border:1px solid #e2e6ec;border-radius:6px;"></div>
+            <div style="width:60px;height:38px;background:#fff;border-radius:6px;box-shadow:0 2px 8px rgba(20,23,28,.10);"></div>
+            <div style="width:60px;height:38px;background:#fff;border-radius:6px;box-shadow:0 12px 32px rgba(20,23,28,.18);"></div>
+          </div>
+          <div style="font-size:9.5px;color:#8a919c;margin-top:5px;">e0 flat · e1 card/menu · e3 dialog/drawer</div>
+        </div>
+      </div>
+
+      <!-- ===== COMPONENTS ===== -->
+      <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#8a919c;margin:24px 0 12px;">Components &amp; states</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
+
+        <!-- buttons -->
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Buttons</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+            <button style="padding:9px 16px;border:0;border-radius:6px;background:#2264d1;color:#fff;font-size:13px;font-weight:600;font-family:inherit;">Primary</button>
+            <button style="padding:9px 16px;border:0;border-radius:6px;background:#1b57bd;color:#fff;font-size:13px;font-weight:600;font-family:inherit;">Hover</button>
+            <button style="padding:9px 16px;border:1px solid #c6ccd5;border-radius:6px;background:#fff;color:#3d444e;font-size:13px;font-weight:500;font-family:inherit;">Secondary</button>
+            <button style="padding:9px 16px;border:0;border-radius:6px;background:#c0362c;color:#fff;font-size:13px;font-weight:600;font-family:inherit;">Danger</button>
+            <button disabled style="padding:9px 16px;border:0;border-radius:6px;background:#e2e6ec;color:#aeb4bd;font-size:13px;font-weight:600;font-family:inherit;cursor:not-allowed;">Disabled</button>
+            <button style="display:inline-flex;align-items:center;gap:8px;padding:9px 16px;border:0;border-radius:6px;background:#2264d1;color:#fff;font-size:13px;font-weight:600;font-family:inherit;"><span style="width:13px;height:13px;border:2px solid rgba(255,255,255,.5);border-top-color:#fff;border-radius:50%;display:inline-block;animation:mpfs-spin .8s linear infinite;"></span>Loading</button>
+          </div>
+        </div>
+
+        <!-- status/phase/op chips -->
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Status · phase · op chips</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:13px;font-size:12px;font-weight:500;background:#e2eefb;color:#123a86;border:1px solid #bcd6f7;"><span style="width:7px;height:7px;border-radius:50%;background:#2264d1;"></span>Processable</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:13px;font-size:12px;font-weight:500;background:#f8ecd4;color:#6e430a;border:1px solid #ecd39b;"><span style="width:7px;height:7px;border-radius:50%;background:#a9680c;"></span>Retractable</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:13px;font-size:12px;font-weight:500;background:#eceef2;color:#5b636e;border:1px solid #d7dce3;"><span style="width:7px;height:7px;border-radius:50%;background:#8a919c;"></span>Expired</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <span style="padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.5px;background:#e2f3e8;color:#0b5a2e;border:1px solid #b7e0c6;">INSERT</span>
+            <span style="padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.5px;background:#e2eefb;color:#123a86;border:1px solid #bcd6f7;">UPDATE</span>
+            <span style="padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.5px;background:#fadedb;color:#7a1c16;border:1px solid #f0c3bd;">DELETE</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:13px;font-size:12px;font-weight:500;background:#e2f3e8;color:#0b5a2e;border:1px solid #b7e0c6;"><span style="width:7px;height:7px;border-radius:50%;background:#1f8a4c;"></span>Included</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:13px;font-size:12px;font-weight:500;background:#f8ecd4;color:#6e430a;border:1px solid #ecd39b;"><span style="width:7px;height:7px;border-radius:50%;background:#a9680c;"></span>Pending</span>
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:13px;font-size:12px;font-weight:500;background:#fadedb;color:#7a1c16;border:1px solid #f0c3bd;"><span style="width:7px;height:7px;border-radius:50%;background:#c0362c;"></span>Rejected</span>
+            <span style="font-size:11px;font-weight:700;letter-spacing:.4px;color:#0b5a2e;background:#e2f3e8;border-radius:4px;padding:3px 7px;">MINE</span>
+            <span style="font-size:11px;font-weight:700;letter-spacing:.4px;color:#123a86;background:#dbe6fb;border-radius:4px;padding:3px 7px;">YOU</span>
+          </div>
+        </div>
+
+        <!-- hash chip -->
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Hash chip + copy</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+            <dc-import name="HashChip" full="7f3a91c4d8e2b5a03f1c9d7e64b2a80f5c3e91d27a4b6c8e0f2a1b3c4d5e6f70" hint-size="150px,28px"></dc-import>
+            <dc-import name="HashChip" full="7f3a91c4d8e2b5a03f1c9d7e64b2a80f5c3e91d27a4b6c8e0f2a1b3c4d5e6f70" label="owner" hint-size="180px,28px"></dc-import>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:2px 6px 2px 8px;border:1px solid #d3d8e0;border-radius:6px;background:#eef1f5;font-size:12px;"><span style="font-family:'Roboto Mono',ui-monospace,monospace;">7f3a91…e6f70</span><span style="color:#1f8a4c;font-weight:600;">✓</span></span>
+          </div>
+          <div style="font-size:11px;color:#8a919c;margin-top:10px;line-height:1.5;">Default · labeled · copied. Middle-truncated <code style="font-family:'Roboto Mono',ui-monospace,monospace;">xxxx…yyyy</code>; click copies the full identifier. Never renders raw 64-char hex.</div>
+        </div>
+
+        <!-- text field -->
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Text field</div>
+          <div style="display:grid;gap:12px;">
+            <div><label style="display:block;font-size:11px;color:#8a919c;margin-bottom:4px;">Default</label><input value="{&quot;type&quot;:&quot;config&quot;}" readonly style="width:100%;padding:9px 12px;border:1px solid #c6ccd5;border-radius:6px;font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;box-sizing:border-box;" /></div>
+            <div><label style="display:block;font-size:11px;color:#8a919c;margin-bottom:4px;">Focus</label><input value="{&quot;type&quot;:&quot;config&quot;}" readonly style="width:100%;padding:9px 12px;border:1px solid #2264d1;border-radius:6px;font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;box-sizing:border-box;box-shadow:0 0 0 3px rgba(34,100,209,.15);" /></div>
+            <div><label style="display:block;font-size:11px;color:#8a919c;margin-bottom:4px;">Error</label><input value="{type:config" readonly style="width:100%;padding:9px 12px;border:1px solid #c0362c;border-radius:6px;font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;box-sizing:border-box;box-shadow:0 0 0 3px rgba(192,54,44,.13);" /><div style="font-size:11px;color:#c0362c;margin-top:4px;">✕ Not valid JSON</div></div>
+            <div><label style="display:block;font-size:11px;color:#8a919c;margin-bottom:4px;">Disabled</label><input value="read-only" disabled style="width:100%;padding:9px 12px;border:1px solid #e2e6ec;border-radius:6px;background:#f6f7f9;color:#aeb4bd;font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;box-sizing:border-box;" /></div>
+          </div>
+        </div>
+
+        <!-- alerts -->
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Alerts</div>
+          <div style="display:grid;gap:10px;">
+            <div style="display:flex;gap:9px;padding:10px 12px;border:1px solid #cfe0fb;background:#eef4fd;border-radius:8px;font-size:12.5px;color:#123a86;line-height:1.5;"><span>ⓘ</span><span>Requests are not yet applied to the forest.</span></div>
+            <div style="display:flex;gap:9px;padding:10px 12px;border:1px solid #ecd39b;background:#fbf3e0;border-radius:8px;font-size:12.5px;color:#6e430a;line-height:1.5;"><span>⚠</span><span>Retract window closes in 48 minutes.</span></div>
+            <div style="display:flex;gap:9px;padding:10px 12px;border:1px solid #f0c3bd;background:#fdeeec;border-radius:8px;font-size:12.5px;color:#7a1c16;line-height:1.5;"><span>⚠</span><span>Delete removes the fact once processed.</span></div>
+            <div style="display:flex;gap:9px;padding:10px 12px;border:1px solid #b7e0c6;background:#eef8f1;border-radius:8px;font-size:12.5px;color:#0b5a2e;line-height:1.5;"><span>✓</span><span>Independently verified against the on-chain root.</span></div>
+          </div>
+        </div>
+
+        <!-- sidebar item + verdict -->
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:14px;">Sidebar item · verdict card</div>
+          <div style="background:#f6f7f9;border-radius:8px;padding:8px;margin-bottom:14px;">
+            <div style="padding:10px;border:1px solid #bcd6f7;border-radius:8px;background:#eaf1fd;margin-bottom:4px;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:2px;background:#2264d1;transform:rotate(45deg);"></span><span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;font-weight:500;">9f3c7b…e0c1</span><span style="font-size:10px;font-weight:700;color:#0b5a2e;background:#e2f3e8;border-radius:4px;padding:1px 5px;">MINE</span></div>
+              <div style="display:flex;gap:10px;margin-top:6px;padding-left:16px;font-size:11px;color:#8a919c;"><span>3 facts</span><span style="color:#a9680c;font-weight:500;">4 pending</span></div>
+            </div>
+            <div style="padding:10px;border:1px solid transparent;border-radius:8px;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;border-radius:2px;background:#c6ccd5;transform:rotate(45deg);"></span><span style="font-family:'Roboto Mono',ui-monospace,monospace;font-size:13px;font-weight:500;">2b7eff…4880</span></div>
+              <div style="display:flex;gap:10px;margin-top:6px;padding-left:16px;font-size:11px;color:#8a919c;"><span>3 facts</span><span style="color:#a9680c;font-weight:500;">1 pending</span></div>
+            </div>
+          </div>
+          <div style="border:1px solid #b7e0c6;border-radius:8px;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(0deg,#f2faf5,#eaf6ee);">
+              <div style="width:30px;height:30px;border-radius:50%;background:#1f8a4c;color:#fff;display:flex;align-items:center;justify-content:center;">✓</div>
+              <div><div style="font-size:14px;font-weight:700;color:#0b5a2e;">Verified independently</div><div style="font-size:11px;color:#3d7a52;">3 checks · snapshot 134,872,910</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- table + overlays reference -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;margin-top:16px;">
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Data table</div>
+          <div style="border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;">
+            <table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+              <thead><tr style="text-align:left;color:#8a919c;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;background:#f6f7f9;"><th style="padding:8px 12px;border-bottom:1px solid #e2e6ec;">Key</th><th style="padding:8px 12px;border-bottom:1px solid #e2e6ec;">Proof</th></tr></thead>
+              <tbody>
+                <tr style="border-bottom:1px solid #eef1f5;"><td style="padding:9px 12px;"><b style="color:#123a86;">type: config</b></td><td style="padding:9px 12px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #b7e0c6;border-radius:12px;background:#e2f3e8;color:#0b5a2e;font-size:11px;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Included</span></td></tr>
+                <tr style="background:#f9fafc;"><td style="padding:9px 12px;"><b style="color:#123a86;">endpoint</b></td><td style="padding:9px 12px;"><span style="display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border:1px solid #b7e0c6;border-radius:12px;background:#e2f3e8;color:#0b5a2e;font-size:11px;"><span style="width:6px;height:6px;border-radius:50%;background:#1f8a4c;"></span>Included</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:11px;color:#8a919c;margin-top:10px;">Header row · zebra hover · scrolls inside its own container. Empty state: dimmed ∅ glyph + explanation.</div>
+        </div>
+        <div style="border:1px solid #e2e6ec;border-radius:10px;background:#fff;padding:16px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px;">Dialog &amp; proof drawer</div>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;box-shadow:0 8px 20px rgba(20,23,28,.12);">
+              <div style="padding:9px 11px;border-bottom:1px solid #e2e6ec;display:flex;align-items:center;gap:6px;"><span style="padding:1px 6px;border-radius:4px;font-size:9px;font-weight:700;background:#e2f3e8;color:#0b5a2e;border:1px solid #b7e0c6;">INSERT</span><b style="font-size:11px;">Insert fact</b></div>
+              <div style="padding:11px;"><div style="height:8px;background:#eceef2;border-radius:3px;margin-bottom:6px;width:60%;"></div><div style="height:26px;background:#f6f7f9;border:1px solid #e2e6ec;border-radius:4px;margin-bottom:8px;"></div><div style="height:8px;background:#eceef2;border-radius:3px;margin-bottom:6px;width:40%;"></div><div style="height:40px;background:#f6f7f9;border:1px solid #e2e6ec;border-radius:4px;"></div></div>
+              <div style="padding:9px 11px;border-top:1px solid #e2e6ec;background:#fafbfc;display:flex;justify-content:flex-end;gap:6px;"><div style="width:40px;height:20px;border:1px solid #c6ccd5;border-radius:4px;"></div><div style="width:56px;height:20px;background:#2264d1;border-radius:4px;"></div></div>
+            </div>
+            <div style="flex:1;border:1px solid #e2e6ec;border-radius:8px;overflow:hidden;box-shadow:0 8px 20px rgba(20,23,28,.12);">
+              <div style="padding:9px 11px;border-bottom:1px solid #e2e6ec;"><div style="font-size:8px;letter-spacing:.5px;text-transform:uppercase;color:#8a919c;">Proof inspector</div><b style="font-size:11px;">Inclusion proof</b></div>
+              <div style="padding:11px;"><div style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;background:#e2f3e8;border:1px solid #b7e0c6;color:#0b5a2e;font-size:9px;font-weight:600;margin-bottom:8px;"><span style="width:5px;height:5px;border-radius:50%;background:#1f8a4c;"></span>Verified</div><div style="height:36px;background:#14171c;border-radius:5px;"></div></div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#8a919c;margin-top:10px;">Modal is a 2-step edit → review → sign flow; the drawer slides from the right with verdict, meta, path and raw proof (copy / download).</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const WALLET = 'c4d1e2a90b773451f8ac09d6e2b1770c3f9a24e6d5188facb02e19a4d7c630188';
+    const OTHER = '5a9012cd7734f8ac09d6e2b1770c3f9a24e6d5188fac4d1e2a90b02e19a4d7c63';
+    this.WALLET = WALLET; this.OTHER = OTHER;
+    this.TOKENS = [
+      { id:'A', hash:'9f3c7b1e0a44d6b2c8e15af0937bd2c1a6e4880fa02b7e11c9d34f5608ade0c1', owner:WALLET, root:'7ade0c19c8e15af0937bd2c19f3c7b1e0a44d6b2a6e4880fa02b7e11c9d34f56', mine:true, maxFee:'2.5', processWindow:300, retractWindow:600 },
+      { id:'B', hash:'2b7eff01c9d34f5608ade0c199f3c7b1e0a44d6b2c8e15af0937bd2c1a6e4880', owner:OTHER, root:'c1d4a6e4880fa02b7e11c9d34f5608ade0c199f3c7b1e0a44d6b2c8e15af0937', mine:false, maxFee:'1.0', processWindow:180, retractWindow:360 },
+      { id:'C', hash:'e10a4d6b2c8e15af0937bd2c19f3c7b1e0a44d6b2a6e4880fa02b7e11c9d34f56', owner:WALLET, root:'44fb937bd2c1a6e4880fa02b7e11c9d349f3c7b1e0a44d6b2c8e15af05608ade', mine:true, maxFee:'3.0', processWindow:240, retractWindow:480 },
+      { id:'D', hash:'8c22e15af0937bd2c1a6e4880fa02b7e11c9d34f5608ade0c199f3c7b1e0a44d6', owner:'ab19a4d7c6301885a9012cd7734f8ac09d6e2b1770c3f9a24e6d5188fac4d1e2', root:'99a02b7e11c9d34f5608ade0c199f3c7b1e0a44d6b2c8e15af0937bd2c1a6e48', mine:false, maxFee:'0.8', processWindow:120, retractWindow:240 },
+    ];
+    this.FACTS = {
+      A: [
+        { keyLabel:'type: config', keyJson:'{"type":"config"}', valueJson:'{\n  "agent": "orchestrator-01",\n  "testRun": {\n    "id": "tr-4821",\n    "status": "passed",\n    "durationMs": 18244\n  }\n}', proof:'verified' },
+        { keyLabel:'endpoint: primary', keyJson:'{"type":"endpoint","name":"primary"}', valueJson:'{\n  "url": "https://relay.mpfs.dev",\n  "region": "eu-central-1",\n  "tls": true\n}', proof:'verified' },
+        { keyLabel:'agent: worker-07', keyJson:'{"agent":"worker-07"}', valueJson:'{\n  "caps": ["build", "test", "deploy"],\n  "maxJobs": 4,\n  "idle": false\n}', proof:'verified' },
+      ],
+      B: [
+        { keyLabel:'sensor: temp-01', keyJson:'{"sensor":"temp-01"}', valueJson:'{"unit":"C","value":21.4,"ts":134870011}', proof:'verified' },
+        { keyLabel:'sensor: hum-01', keyJson:'{"sensor":"hum-01"}', valueJson:'{"unit":"%","value":47.2,"ts":134870011}', proof:'verified' },
+        { keyLabel:'type: meta', keyJson:'{"type":"meta"}', valueJson:'{"fleet":"weatherfleet","version":3}', proof:'verified' },
+      ],
+      C: [
+        { keyLabel:'type: policy', keyJson:'{"type":"policy"}', valueJson:'{"retries":3,"backoffMs":500}', proof:'verified' },
+        { keyLabel:'agent: indexer', keyJson:'{"agent":"indexer"}', valueJson:'{"cursor":134872910,"lag":2}', proof:'verified' },
+      ],
+      D: [],
+    };
+    this.REQS = {
+      A: [
+        { id:'a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90', op:'insert', requester:WALLET, keyLabel:'agent: worker-09', keyJson:'{"agent":"worker-09"}', valueJson:'{"caps":["build"],"maxJobs":2,"idle":true}', fee:'1.8', age:'2h ago', phase:'processable', proof:'verified', deadline:'Retract opens in 1h 40m · slot 134,873,540' },
+        { id:'b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1', op:'update', requester:WALLET, keyLabel:'endpoint: primary', keyJson:'{"type":"endpoint","name":"primary"}', valueJson:'{"url":"https://relay2.mpfs.dev","region":"eu-west-1","tls":true}', fee:'2.1', age:'5h ago', phase:'retractable', proof:'verified', deadline:'Retract closes in 3h 12m · slot 134,876,110' },
+        { id:'c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2', op:'update', requester:OTHER, keyLabel:'agent: worker-07', keyJson:'{"agent":"worker-07"}', valueJson:'{"caps":["build","test"],"maxJobs":6}', fee:'2.0', age:'4h ago', phase:'retractable', proof:'verified', deadline:'Retract closes in 2h 05m · slot 134,875,300' },
+        { id:'d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3', op:'delete', requester:WALLET, keyLabel:'agent: legacy-03', keyJson:'{"agent":"legacy-03"}', valueJson:'', fee:'1.2', age:'1d ago', phase:'expired', proof:'pending', deadline:'Retract window closed 6h ago · slot 134,861,020' },
+      ],
+      B: [
+        { id:'e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4', op:'insert', requester:OTHER, keyLabel:'sensor: pressure-01', keyJson:'{"sensor":"pressure-01"}', valueJson:'{"unit":"hPa","value":1013.2}', fee:'0.9', age:'40m ago', phase:'processable', proof:'verified', deadline:'Retract opens in 2h 20m · slot 134,874,900' },
+      ],
+      C: [],
+      D: [
+        { id:'f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5', op:'update', requester:'ab19a4d7c6301885a9012cd7734f8ac09d6e2b1770c3f9a24e6d5188fac4d1e2', keyLabel:'type: schedule', keyJson:'{"type":"schedule"}', valueJson:'{"cron":"*/5 * * * *"}', fee:'0.7', age:'3h ago', phase:'retractable', proof:'verified', deadline:'Retract closes in 1h 30m · slot 134,875,000' },
+        { id:'0718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f6', op:'insert', requester:OTHER, keyLabel:'type: owner', keyJson:'{"type":"owner"}', valueJson:'{"contact":"ops@fleet.dev"}', fee:'0.6', age:'20m ago', phase:'processable', proof:'verified', deadline:'Retract opens in 3h 05m · slot 134,876,400' },
+      ],
+    };
+    this.state = {
+      view:'workbench', activeToken:'A', tab:'facts', mineOnly:false, search:'',
+      wallet:null, drawer:null, dialog:null,
+    };
+  }
+
+  // ---- helpers ----
+  selectToken(id){ this.setState({ activeToken:id, tab:'facts', drawer:null }); }
+  short(h){ return h.slice(0,6)+'…'+h.slice(-4); }
+  isYou(h){ return this.state.wallet && h===this.WALLET; }
+
+  openDrawer(payload){ this.setState({ drawer:payload }); }
+  closeDrawer(){ this.setState({ drawer:null }); }
+
+  openDialog(mode, prefill){
+    prefill=prefill||{};
+    if(!this.state.wallet){ this.setState({ dialog:{ mode, step:'connect', prefill } }); return; }
+    const startStep = mode==='retract' ? 'review' : 'edit';
+    this.setState({ dialog:{ mode, step:startStep, prefill,
+      key: prefill.keyJson!=null ? prefill.keyJson : '',
+      value: prefill.valueJson!=null ? prefill.valueJson : '',
+      fee:'2.0', reqId: prefill.reqId } });
+  }
+  dialogSet(patch){ this.setState(s=>({ dialog:{ ...s.dialog, ...patch } })); }
+  dialogSign(){
+    this.dialogSet({ step:'signing' });
+    clearTimeout(this._sg);
+    this._sg=setTimeout(()=>this.dialogSet({ step:'done' }), 1600);
+  }
+  connectWallet(){ this.setState({ wallet:{ name:'Eternl', addr:this.WALLET } }, ()=>{
+    if(this.state.dialog && this.state.dialog.step==='connect'){ this.openDialog(this.state.dialog.mode, this.state.dialog.prefill); }
+  }); }
+
+  phaseChip(phase){
+    const M={
+      processable:{ bg:'#e2eefb', bd:'#bcd6f7', fg:'#123a86', dot:'#2264d1', label:'Processable' },
+      retractable:{ bg:'#f8ecd4', bd:'#ecd39b', fg:'#6e430a', dot:'#a9680c', label:'Retractable' },
+      expired:{ bg:'#eceef2', bd:'#d7dce3', fg:'#5b636e', dot:'#8a919c', label:'Expired' },
+    };
+    return M[phase]||M.expired;
+  }
+  toHex(s){ try{ return Array.from(new TextEncoder().encode(s)).map(b=>b.toString(16).padStart(2,'0')).join(''); }catch(_){ return ''; } }
+  rot(s,n){ if(!s) return ''; n=n%s.length; return s.slice(n)+s.slice(0,n); }
+  tryJson(s){ try{ const v=JSON.parse(s); return { ok:true, pretty:JSON.stringify(v,null,2) }; }catch(e){ return { ok:false, pretty:s, err:(e&&e.message)||'error' }; } }
+  copyText(t){ try{ if(navigator.clipboard) navigator.clipboard.writeText(t); }catch(_){}; this.setState({copiedRaw:true}); clearTimeout(this._cr); this._cr=setTimeout(()=>this.setState({copiedRaw:false}),1200); }
+  downloadText(name,t){ try{ const b=new Blob([t],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),1000);}catch(_){} }
+
+  renderVals(){
+    const S=this.state;
+    const T=(id)=>this.TOKENS.find(t=>t.id===id);
+    const tk=T(S.activeToken)||this.TOKENS[0];
+    const facts=this.FACTS[tk.id]||[];
+    const reqs=this.REQS[tk.id]||[];
+    const wallet=S.wallet;
+
+    // view tabs (demo chrome)
+    const vt=[['workbench','Workbench'],['firstrun','First run'],['mobile','Mobile 390'],['tablet','Tablet 768'],['components','Components']];
+    const viewTabs=vt.map(([id,label])=>({ label, go:()=>this.setState({view:id}),
+      style:`padding:3px 9px;margin:0 1px;border:0;border-radius:5px;background:${S.view===id?'#2b323b':'transparent'};color:${S.view===id?'#e6e9ee':'#8a919c'};font-size:12px;font-family:inherit;cursor:pointer;` }));
+
+    // sidebar tokens
+    let list=this.TOKENS.slice();
+    if(S.mineOnly) list=list.filter(t=>t.mine);
+    if(S.search.trim()){ const q=S.search.trim().toLowerCase(); list=list.filter(t=>t.hash.toLowerCase().includes(q)||t.owner.toLowerCase().includes(q)); }
+    const tokens=list.map(t=>{
+      const active=t.id===S.activeToken;
+      const pcount=(this.REQS[t.id]||[]).length;
+      const fcount=(this.FACTS[t.id]||[]).length;
+      return { ...t, short:this.short(t.hash), active,
+        select:()=>this.selectToken(t.id),
+        rowStyle:`display:block;width:100%;text-align:left;padding:10px 10px;margin-bottom:3px;border:1px solid ${active?'#bcd6f7':'transparent'};border-radius:8px;background:${active?'#eaf1fd':'transparent'};cursor:pointer;font-family:inherit;`,
+        hoverStyle: active? `background:#eaf1fd;` : `background:#eceef2;`,
+        dotStyle:`width:8px;height:8px;border-radius:2px;background:${active?'#2264d1':'#c6ccd5'};transform:rotate(45deg);flex:0 0 auto;`,
+        factsLabel:`${fcount} fact${fcount===1?'':'s'}`,
+        pendingLabel: pcount? `${pcount} pending` : 'no pending',
+        pendingLabelStyle: pcount? `color:#a9680c;font-weight:500;` : `color:#b6bcc6;` };
+    });
+
+    // tabs
+    const mk=(id,label,count)=>{ const active=S.tab===id; return { id,label,count, go:()=>this.setState({tab:id}),
+      style:`display:inline-flex;align-items:center;gap:7px;padding:9px 12px;margin-bottom:-1px;border:0;border-bottom:2px solid ${active?'#2264d1':'transparent'};background:transparent;color:${active?'#123a86':'#5b636e'};font-size:13px;font-weight:${active?600:500};font-family:inherit;cursor:pointer;`,
+      hoverStyle: active?'':'color:#191c20;',
+      countStyle:`font-size:11px;font-weight:600;padding:1px 7px;border-radius:10px;background:${active?'#dbe6fb':'#eceef2'};color:${active?'#123a86':'#8a919c'};` }; };
+    const tabs=[ mk('facts','Facts',facts.length), mk('pending','Pending',reqs.length), mk('verify','Verification','✓') ];
+
+    // verdict
+    const verdictLabel='Verified'; const verifiedAgo='verified 12s ago';
+    const verdictPillStyle=`display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border:1px solid #b7e0c6;border-radius:20px;background:#e2f3e8;color:#0b5a2e;font-size:13px;cursor:pointer;font-family:inherit;`;
+    const verdictDotStyle=`width:8px;height:8px;border-radius:50%;background:#1f8a4c;`;
+
+    // facts rows
+    const factsV=facts.map((f,i)=>({ ...f,
+      canEdit: tk.mine,
+      openProof:()=>this.openDrawer({ kind:'fact', tokenId:tk.id, index:i, ...f }),
+      edit:()=>this.openDialog('update',{ keyJson:f.keyJson, valueJson:f.valueJson }),
+      proofLabel: f.proof==='verified'?'Included':'Pending',
+      proofChipStyle:`display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border:1px solid ${f.proof==='verified'?'#b7e0c6':'#ecd39b'};border-radius:14px;background:${f.proof==='verified'?'#e2f3e8':'#f8ecd4'};color:${f.proof==='verified'?'#0b5a2e':'#6e430a'};font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;`,
+      proofDotStyle:`width:7px;height:7px;border-radius:50%;background:${f.proof==='verified'?'#1f8a4c':'#a9680c'};` }));
+
+    // request rows
+    const opMap={ insert:{bg:'#e2f3e8',fg:'#0b5a2e',bd:'#b7e0c6',label:'INSERT'}, update:{bg:'#e2eefb',fg:'#123a86',bd:'#bcd6f7',label:'UPDATE'}, delete:{bg:'#fadedb',fg:'#7a1c16',bd:'#f0c3bd',label:'DELETE'} };
+    const reqsV=reqs.map((r)=>{
+      const you=this.isYou(r.requester);
+      const ph=this.phaseChip(r.phase);
+      const canRetract = you && r.phase==='retractable';
+      let reason='';
+      if(!you) reason='Only the requester may retract';
+      else if(r.phase==='processable') reason='Retract opens after the process window';
+      else if(r.phase==='expired') reason='Retract window has closed';
+      const om=opMap[r.op];
+      return { ...r, you, hasValue:!!r.valueJson, requesterShort:this.short(r.requester),
+        opStyle:`display:inline-flex;align-items:center;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.5px;background:${om.bg};color:${om.fg};border:1px solid ${om.bd};`,
+        opLabel:om.label,
+        phaseStyle:`display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:14px;font-size:12px;font-weight:500;white-space:nowrap;background:${ph.bg};color:${ph.fg};border:1px solid ${ph.bd};`,
+        phaseDot:`width:7px;height:7px;border-radius:50%;background:${ph.dot};`, phaseLabel:ph.label,
+        proofLabel: r.proof==='verified'?'Verified':'Pending',
+        proofChipStyle:`display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:14px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;background:${r.proof==='verified'?'#e2f3e8':'#f8ecd4'};color:${r.proof==='verified'?'#0b5a2e':'#6e430a'};border:1px solid ${r.proof==='verified'?'#b7e0c6':'#ecd39b'};`,
+        proofDot:`width:7px;height:7px;border-radius:50%;background:${r.proof==='verified'?'#1f8a4c':'#a9680c'};`,
+        openProof:()=>this.openDrawer({ kind:'request', tokenId:tk.id, ...r, you }),
+        canRetract, cannotRetract:!canRetract, showReason:!canRetract, retractTitle: canRetract?'Retract this request (requires signing)':reason, retractReason:reason,
+        retractBtnStyle:`padding:6px 12px;border-radius:6px;font-size:12px;font-weight:500;font-family:inherit;${canRetract?'border:0;background:#c0362c;color:#fff;cursor:pointer;':'border:1px solid #d7dce3;background:#f6f7f9;color:#b6bcc6;cursor:not-allowed;'}`,
+        retract:()=> canRetract ? this.openDialog('retract',{ reqId:r.id, keyJson:r.keyJson, valueJson:r.valueJson, op:r.op, keyLabel:r.keyLabel }) : null };
+    });
+
+    // verification detail
+    const verify={ overall:'Verified', verifiedAgo:'12s ago', snapshotSlot:'134,872,910', trustedRoot:tk.root, verifierOp:'verifyRoot @ oracle-2.mpfs.dev',
+      checks:[
+        { name:'Second-oracle agreement', detail:'State root reproduced by an independent oracle (oracle-2) and matched byte-for-byte against the on-chain root.', status:'pass' },
+        { name:'Facts-set completeness', detail:`All ${facts.length} committed facts are present in the snapshot — no omissions, no extras.`, status:'pass' },
+        { name:'Per-fact inclusion proofs', detail:`${facts.length}/${facts.length} Merkle-Patricia inclusion proofs re-computed locally (WASM) up to the trusted root.`, status:'pass' },
+      ] };
+
+    // ---- proof drawer view-model ----
+    const D=S.drawer; let drawer={ open:false };
+    if(D){
+      const dtk=T(D.tokenId)||tk; const rootH=dtk.root;
+      const vmap={ verified:{txt:'Included & verified',bg:'#e2f3e8',bd:'#b7e0c6',fg:'#0b5a2e',dot:'#1f8a4c'},
+                   pending:{txt:'Proof pending',bg:'#f8ecd4',bd:'#ecd39b',fg:'#6e430a',dot:'#a9680c'},
+                   rejected:{txt:'Proof rejected',bg:'#fadedb',bd:'#f0c3bd',fg:'#7a1c16',dot:'#c0362c'} };
+      if(D.kind==='set'){
+        const v=vmap.verified; const nf=(this.FACTS[dtk.id]||[]).length;
+        const raw=JSON.stringify({ verifier:'mpfs-wasm v0.4.1', snapshotSlot:134872910, trustedRoot:rootH, oracle:'oracle-2.mpfs.dev', factsChecked:nf, secondOracleAgreement:true, factsSetComplete:true, allInclusionProofs:true, verdict:'verified' }, null, 2);
+        drawer={ open:true, isSet:true, isReq:false, title:'Facts-set verification', subtitle:this.short(dtk.hash),
+          vTxt:v.txt, vStyle:`background:${v.bg};border:1px solid ${v.bd};color:${v.fg};`, vDot:`background:${v.dot};`,
+          reason:'', snapshot:'134,872,910', root:rootH, verifierOp:'verifyRoot @ oracle-2.mpfs.dev', leafHash:'',
+          checks:[ {name:'Second-oracle agreement',detail:'Root reproduced by an independent oracle (oracle-2) and matched the on-chain root byte-for-byte.'},
+                   {name:'Facts-set completeness',detail:`All ${nf} committed facts present in the snapshot — no omissions, no extras.`},
+                   {name:'Per-fact inclusion proofs',detail:`${nf}/${nf} Merkle-Patricia leaves re-hashed to the trusted root locally via WASM.`} ],
+          raw, copiedRaw:S.copiedRaw, notCopiedRaw:!S.copiedRaw,
+          copyRaw:()=>this.copyText(raw), downloadRaw:()=>this.downloadText('facts-set-proof.json',raw), close:()=>this.closeDrawer() };
+      } else {
+        const verdict = D.proof==='verified'?'verified':(D.proof==='pending'?'pending':'rejected');
+        const v=vmap[verdict]; const keyHex=this.toHex(D.keyJson||''); const leafHash=this.rot(rootH,4);
+        const steps=[8,20,36,52].map((n)=>({ branch:'0x'+(rootH[n]||'0'), sibling:this.rot(rootH,n) }));
+        const raw=JSON.stringify({ verifier:'mpfs-wasm v0.4.1', op:D.op||'lookup', keyHex, leaf:leafHash, trustedRoot:rootH, steps, recomputedRoot:rootH, match:verdict==='verified' }, null, 2);
+        drawer={ open:true, isSet:false, isReq:D.kind==='request', title: D.kind==='request'?'Request inclusion proof':'Fact inclusion proof', subtitle:D.keyLabel,
+          vTxt:v.txt, vStyle:`background:${v.bg};border:1px solid ${v.bd};color:${v.fg};`, vDot:`background:${v.dot};`,
+          reason: verdict==='pending'?'The verifier is still computing this proof against the current snapshot. Re-check shortly.':'',
+          snapshot:'134,872,910', root:rootH, verifierOp:'verifyRoot @ oracle-2.mpfs.dev',
+          keyJson:D.keyJson, valueJson:D.valueJson||'', hasValue:!!D.valueJson, leafHash,
+          steps: steps.map(st=>({ branch:st.branch, sibling:st.sibling })),
+          raw, copiedRaw:S.copiedRaw, notCopiedRaw:!S.copiedRaw,
+          copyRaw:()=>this.copyText(raw), downloadRaw:()=>this.downloadText('inclusion-proof.json',raw), close:()=>this.closeDrawer() };
+      }
+    }
+    // ---- write / review / sign dialog view-model ----
+    const G=S.dialog; let dialog={ open:false };
+    if(G){
+      const mm={ insert:{title:'Insert fact',verb:'Insert',op:'INSERT',oc:'#0b5a2e',ob:'#b7e0c6',obg:'#e2f3e8',btn:'#1f8a4c'},
+                 update:{title:'Update fact',verb:'Update',op:'UPDATE',oc:'#123a86',ob:'#bcd6f7',obg:'#e2eefb',btn:'#2264d1'},
+                 delete:{title:'Delete fact',verb:'Delete',op:'DELETE',oc:'#7a1c16',ob:'#f0c3bd',obg:'#fadedb',btn:'#c0362c'},
+                 retract:{title:'Retract request',verb:'Retract',op:'RETRACT',oc:'#7a1c16',ob:'#f0c3bd',obg:'#fadedb',btn:'#c0362c'} }[G.mode];
+      const needsValue = G.mode==='insert'||G.mode==='update';
+      const kJson=this.tryJson(G.key||''); const vJson=this.tryJson(G.value||'');
+      const keyOk = (G.key||'').trim()!=='' && kJson.ok;
+      const valOk = !needsValue || ((G.value||'').trim()!=='' && vJson.ok);
+      dialog={ open:true, mode:G.mode, title:mm.title, verb:mm.verb, signLabel:mm.verb+' & submit',
+        opLabel:mm.op, opStyle:`display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.5px;background:${mm.obg};color:${mm.oc};border:1px solid ${mm.ob};`,
+        signBtnStyle:`padding:9px 16px;border:0;border-radius:6px;background:${mm.btn};color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;`,
+        isConnect:G.step==='connect', isEdit:G.step==='edit', isReview:G.step==='review', isSigning:G.step==='signing', isDone:G.step==='done',
+        needsValue, isDelete:G.mode==='delete', isRetract:G.mode==='retract',
+        keyVal:G.key||'', valueVal:G.value||'', feeVal:G.fee||'2.0',
+        onKey:(e)=>this.dialogSet({key:e.target.value}), onValue:(e)=>this.dialogSet({value:e.target.value}), onFee:(e)=>this.dialogSet({fee:e.target.value}),
+        keyErr: (G.key||'').trim()!=='' && !kJson.ok ? 'Not valid JSON' : '', valErr: needsValue && (G.value||'').trim()!=='' && !vJson.ok ? 'Not valid JSON' : '',
+        canReview: keyOk && valOk, cannotReview: !(keyOk && valOk),
+        reviewBtnStyle:`padding:9px 16px;border:0;border-radius:6px;font-size:13px;font-weight:600;font-family:inherit;${(keyOk&&valOk)?'background:#2264d1;color:#fff;cursor:pointer;':'background:#e2e6ec;color:#aeb4bd;cursor:not-allowed;'}`,
+        keyPretty: kJson.ok?kJson.pretty:(G.key||''), valuePretty: vJson.ok?vJson.pretty:(G.value||''),
+        close:()=>this.setState({dialog:null}), noop:(e)=>{ if(e&&e.stopPropagation) e.stopPropagation(); },
+        toReview:()=>{ if(keyOk&&valOk) this.dialogSet({step:'review'}); }, back:()=>this.dialogSet({step: G.mode==='retract'?'review':'edit'}),
+        canBack: G.mode!=='retract',
+        sign:()=>this.dialogSign(), connect:()=>this.connectWallet(),
+        walletName: wallet?wallet.name:'Eternl', walletAddr: wallet?this.short(wallet.addr):'—',
+        tokenShort:this.short(tk.hash), tokenFull:tk.hash };
+    }
+
+    return {
+      drawer, dialog, noop:(e)=>{ if(e&&e.stopPropagation) e.stopPropagation(); },
+      isFirstrun: S.view==='firstrun', isMobile: S.view==='mobile', isTablet: S.view==='tablet', isComponents: S.view==='components',
+      goWorkbench:()=>this.setState({view:'workbench'}),
+      viewTabs,
+      isWorkbench: S.view==='workbench',
+      // wallet
+      noWallet: !wallet, hasWallet: !!wallet,
+      walletName: wallet?wallet.name:'', walletShort: wallet?this.short(wallet.addr):'',
+      connectWallet:()=>this.connectWallet(),
+      openWalletMenu:()=>this.setState({ wallet:null }),
+      // sidebar
+      search:S.search, onSearch:(e)=>this.setState({search:e.target.value}),
+      toggleMine:()=>this.setState(s=>({mineOnly:!s.mineOnly})),
+      mineTrackStyle:`width:34px;height:20px;border-radius:12px;background:${S.mineOnly?'#2264d1':'#c6ccd5'};position:relative;transition:background .15s;flex:0 0 auto;display:inline-block;`,
+      mineKnobStyle:`position:absolute;top:2px;left:${S.mineOnly?'16px':'2px'};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s;box-shadow:0 1px 2px rgba(0,0,0,.25);`,
+      tokenCountLabel:`${tokens.length} of ${this.TOKENS.length}`,
+      mineCountLabel:`${this.TOKENS.filter(t=>t.mine).length} mine`,
+      tokens, noTokens: tokens.length===0,
+      // token summary
+      tk,
+      tokenShort:this.short(tk.hash), ownerShort:this.short(tk.owner),
+      copyTokenId:()=>this.copyText(tk.hash), copyOwner:()=>this.copyText(tk.owner),
+      openVerifyDrawer:()=>this.openDrawer({ kind:'set', tokenId:tk.id }),
+      verdictLabel, verifiedAgo, verdictPillStyle, verdictDotStyle,
+      // tabs
+      tabs,
+      showFacts: S.tab==='facts', showPending: S.tab==='pending', showVerify: S.tab==='verify',
+      openInsert:()=>this.openDialog('insert',{}),
+      // facts
+      facts:factsV, noFacts: facts.length===0,
+      factsCountLabel:`${facts.length} entr${facts.length===1?'y':'ies'}`,
+      // pending
+      reqs:reqsV, noReqs: reqs.length===0, reqsCountLabel:`${reqs.length} request${reqs.length===1?'':'s'}`,
+      // verification
+      verify, verifyChecks:verify.checks.map(c=>({ ...c })),
+      verifySnapshot:verify.snapshotSlot, verifyRoot:verify.trustedRoot, verifierOp:verify.verifierOp, verifyAgo:verify.verifiedAgo,
+      openFactProofFromVerify:()=>this.openDrawer({ kind:'set', tokenId:tk.id }),
+    };
+  }
+}
+</script>
+</body>
+</html>
