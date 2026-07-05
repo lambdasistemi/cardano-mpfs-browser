@@ -6,6 +6,7 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import MPFS.App.Facts
   ( RequestPhase(..)
+  , factRowViewModel
   , failSecondOracleCheck
   , failFactLookup
   , finishSecondOracleCheck
@@ -221,6 +222,37 @@ spec = describe "MPFS App Facts" do
     unavailable.secondOracle
       `shouldEqual`
         Failure "Output reference unavailable"
+
+  it "builds facts table row state from decoded facts and edit authority" do
+    let
+      decoded =
+        factRowViewModel
+          VerificationVerified
+          true
+          { key: "7b226b6579223a226e616d65227d"
+          , value: "7b2276223a34327d"
+          }
+
+      fallback =
+        factRowViewModel
+          VerificationNotAsked
+          false
+          { key: "ff"
+          , value: "00"
+          }
+
+    decoded.keyJson `shouldEqual` Just "{\"key\":\"name\"}"
+    decoded.valueJson `shouldEqual` Just "{\"v\":42}"
+    decoded.keyLabel `shouldEqual` "Decoded key"
+    decoded.proofLabel `shouldEqual` "Included"
+    decoded.canEdit `shouldEqual` true
+    decoded.editDisabledReason `shouldEqual` Nothing
+    fallback.keyJson `shouldEqual` Nothing
+    fallback.valueJson `shouldEqual` Nothing
+    fallback.keyLabel `shouldEqual` "Raw key"
+    fallback.proofLabel `shouldEqual` "Not checked"
+    fallback.canEdit `shouldEqual` false
+    fallback.editDisabledReason `shouldEqual` Just "Only the token owner may edit this fact."
 
 tokenState :: TokenState
 tokenState =
