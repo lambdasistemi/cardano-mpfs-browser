@@ -14,6 +14,7 @@ import Test.AppWriteSpec as AppWriteSpec
 import Test.FactsSpec as FactsSpec
 import Test.MPFS.CageSpec as CageSpec
 import Test.MPFS.ClientSpec as ClientSpec
+import Test.MPFS.App.PendingSpec as PendingSpec
 import Test.MPFS.App.RuntimeConfigSpec as RuntimeConfigSpec
 import Test.MPFS.MaterialPrimitivesSpec as MaterialPrimitivesSpec
 import Test.MPFS.MaterialTextSpec as MaterialTextSpec
@@ -39,6 +40,7 @@ main = do
       CageSpec.spec
       RuntimeConfigSpec.spec
       FactsSpec.spec
+      PendingSpec.spec
       ProofSpec.spec
       MaterialPrimitivesSpec.spec
       MaterialTextSpec.spec
