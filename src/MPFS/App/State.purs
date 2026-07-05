@@ -59,6 +59,8 @@ type FactLookup =
 type AppState =
   { activeTab :: AppTab
   , selectedToken :: Maybe TokenId
+  , tokenSearch :: String
+  , tokenMineOnly :: Boolean
   , baseUrl :: String
   , tokens :: Remote (Array TokenId)
   , facts :: Remote (Array FactEntry)
@@ -81,6 +83,8 @@ defaultState :: AppState
 defaultState =
   { activeTab: defaultTab
   , selectedToken: Nothing
+  , tokenSearch: ""
+  , tokenMineOnly: false
   , baseUrl: "/api"
   , tokens: NotAsked
   , facts: NotAsked
