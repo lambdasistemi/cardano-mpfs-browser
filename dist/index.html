@@ -466,6 +466,204 @@
         }
         .placeholder-panel--empty { margin-top: 24px; }
 
+        .material-paper {
+            min-width: 0;
+            overflow: hidden;
+            border: 1px solid var(--outline);
+            border-radius: var(--radius-card);
+            background: var(--surface-bright);
+        }
+        .facts-panel__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--outline);
+            background: var(--surface-container);
+        }
+        .facts-panel__eyebrow,
+        .facts-panel__count {
+            color: var(--on-surface-variant);
+            font-size: 12px;
+        }
+        .facts-panel__proof-summary {
+            margin-top: 2px;
+            color: var(--on-surface-dim);
+            font-size: 11px;
+        }
+        .facts-panel__count {
+            flex: 0 0 auto;
+            color: var(--on-surface-dim);
+        }
+        .facts-table-shell {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            overflow-x: auto;
+        }
+        .material-data-table-container {
+            min-width: 760px;
+            overflow: visible;
+        }
+        .material-data-table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .material-data-table th {
+            padding: 9px 14px;
+            border-bottom: 1px solid var(--outline);
+            color: var(--on-surface-dim);
+            font-size: 11px;
+            font-weight: 600;
+            text-align: left;
+            text-transform: uppercase;
+        }
+        .material-data-table th[data-column="proof"],
+        .material-data-table th[data-column="actions"] {
+            white-space: nowrap;
+        }
+        .material-data-table th[data-column="actions"] { text-align: right; }
+        .material-data-table td {
+            min-width: 0;
+            padding: 12px 14px;
+            border-bottom: 1px solid #eef1f5;
+            vertical-align: top;
+        }
+        .material-data-table tr:hover td { background: #f9fafc; }
+        .material-data-table td:nth-child(1) { width: 26%; min-width: 210px; }
+        .material-data-table td:nth-child(2) { width: 44%; min-width: 300px; }
+        .material-data-table td:nth-child(3) { width: 120px; white-space: nowrap; }
+        .material-data-table td:nth-child(4) {
+            width: 150px;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .fact-key-cell { min-width: 0; }
+        .fact-key-label {
+            margin-bottom: 5px;
+            color: var(--on-primary-container);
+            font-weight: 600;
+        }
+        .fact-json-well {
+            display: block;
+            max-width: 100%;
+            min-width: 0;
+            overflow: auto;
+            border: 1px solid #eef1f5;
+            border-radius: 5px;
+            background: var(--surface-container);
+            color: var(--on-surface);
+            font: 12px/1.45 var(--font-mono);
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+        .fact-json-well--key {
+            max-width: 250px;
+            padding: 4px 7px;
+            color: var(--on-surface-variant);
+        }
+        .fact-json-well--value {
+            max-width: 420px;
+            max-height: 96px;
+            padding: 6px 8px;
+        }
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 9px;
+            border: 1px solid var(--outline-strong);
+            border-radius: 14px;
+            background: var(--neutral-chip-bg);
+            color: var(--neutral-chip-text);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-chip::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+        .status-chip--ok {
+            border-color: #b7e0c6;
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+        .status-chip--warn {
+            border-color: #ecd39b;
+            background: var(--warning-bg);
+            color: var(--warning-text);
+        }
+        .status-chip--error {
+            border-color: #f0c3bd;
+            background: var(--error-bg);
+            color: var(--error-text);
+        }
+        .status-chip--neutral {
+            border-color: var(--outline);
+            background: var(--neutral-chip-bg);
+            color: var(--neutral-chip-text);
+        }
+        .material-button {
+            min-height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 0 10px;
+            border-radius: var(--radius-base);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .material-button--secondary {
+            border: 1px solid var(--outline-strong);
+            background: var(--surface-bright);
+            color: #3d444e;
+        }
+        .material-button--secondary:hover:not(:disabled) { background: #f1f3f6; }
+        .material-button:disabled {
+            opacity: .58;
+            cursor: not-allowed;
+        }
+        .fact-actions {
+            display: inline-flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-width: 170px;
+        }
+        .fact-action-button { flex: 0 0 auto; }
+        .fact-actions .disabled-reason {
+            flex-basis: 100%;
+            margin: 0;
+            white-space: normal;
+            text-align: right;
+        }
+        .facts-empty {
+            padding: 44px 20px;
+            color: var(--on-surface-dim);
+            text-align: center;
+        }
+        .facts-empty h2 {
+            margin: 0 0 4px;
+            color: var(--on-surface-variant);
+            font-size: 17px;
+        }
+        .facts-empty p {
+            margin: 0 auto;
+            max-width: 48ch;
+        }
+        .facts-empty--error h2,
+        .facts-empty--error .empty-glyph {
+            color: var(--error-text);
+        }
+
         .primary-button,
         .secondary-button {
             min-height: 34px;

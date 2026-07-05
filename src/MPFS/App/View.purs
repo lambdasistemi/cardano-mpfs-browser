@@ -19,17 +19,21 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import MPFS.App.Facts as Facts
 import MPFS.App.State (AppState, WalletStatus(..))
 import MPFS.App.Tab (AppTab(..), allTabs, tabLabel, tabSlug)
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.App.Write (WriteStatus(..))
-import MPFS.Client.Types (TokenState)
+import MPFS.Client.Types (FactEntry, TokenState)
 import MPFS.SecondOracle.Types
   ( SecondOracleUnavailable(..)
   , SecondOracleVerdict(..)
   )
 import MPFS.Types (RequestId, TokenId(..))
+import MPFS.UI.Material.DataTable as DataTable
 import MPFS.UI.Material.HashChip as HashChip
+import MPFS.UI.Material.Paper as Paper
+import MPFS.UI.Material.StatusChip as StatusChip
 import MPFS.UI.Remote (Remote(..))
 import MPFS.Wallet.Cip30 (WalletInfo)
 import Type.Proxy (Proxy(..))
@@ -325,7 +329,7 @@ workspace actions state =
         [ tokenHeader actions state token
         , summaryStrip state
         , workspaceTabs actions state
-        , placeholderPanel state.activeTab
+        , activePanel state
         ]
 
 emptyWorkspace
@@ -426,6 +430,194 @@ tabButton actions state tab =
     ]
   where
   active = state.activeTab == tab
+
+activePanel
+  :: forall action m
+   . MonadAff m
+  => AppState
+  -> H.ComponentHTML action Slots m
+activePanel state = case state.activeTab of
+  FactsTab -> factsPanel state
+  PendingTab -> placeholderPanel PendingTab
+  VerificationTab -> placeholderPanel VerificationTab
+
+factsPanel
+  :: forall action m
+   . MonadAff m
+  => AppState
+  -> H.ComponentHTML action Slots m
+factsPanel state =
+  Paper.paper
+    [ HH.div
+        [ HP.class_ (HH.ClassName "facts-panel__header") ]
+        [ HH.div_
+            [ HH.div [ HP.class_ (HH.ClassName "facts-panel__eyebrow") ] [ HH.text "Committed facts · decoded UTF-8 JSON" ]
+            , HH.div [ HP.class_ (HH.ClassName "facts-panel__proof-summary") ] [ HH.text (factsSetStatusLabel state.factsSetVerification) ]
+            ]
+        , HH.div [ HP.class_ (HH.ClassName "facts-panel__count") ] [ HH.text factsCount ]
+        ]
+    , factsPanelBody state
+    ]
+  where
+  factsCount = case state.facts of
+    Success facts -> show (Array.length facts) <> " " <> if Array.length facts == 1 then "entry" else "entries"
+    Loading -> "Loading"
+    Failure _ -> "Unavailable"
+    NotAsked -> "Not loaded"
+
+factsPanelBody
+  :: forall action m
+   . MonadAff m
+  => AppState
+  -> H.ComponentHTML action Slots m
+factsPanelBody state = case state.facts of
+  NotAsked ->
+    dimmedFactsState
+      "No facts loaded"
+      "Load details to inspect committed key/value facts for the selected token."
+  Loading ->
+    dimmedFactsState "Loading facts" "Fetching the committed forest and verification status."
+  Failure message ->
+    HH.div
+      [ HP.class_ (HH.ClassName "facts-empty facts-empty--error") ]
+      [ HH.div [ HP.class_ (HH.ClassName "empty-glyph") ] [ HH.text "!" ]
+      , HH.h2_ [ HH.text "Facts unavailable" ]
+      , HH.p_ [ HH.text message ]
+      ]
+  Success facts ->
+    if Array.null facts then
+      dimmedFactsState
+        "No facts"
+        "This token's forest is empty. Committed key/value facts will appear here."
+    else
+      factsTable state facts
+
+factsTable
+  :: forall action m
+   . MonadAff m
+  => AppState
+  -> Array FactEntry
+  -> H.ComponentHTML action Slots m
+factsTable state facts =
+  HH.div
+    [ HP.class_ (HH.ClassName "facts-table-shell") ]
+    [ DataTable.dataTable
+        { columns:
+            [ { key: "key", label: "Key" }
+            , { key: "value", label: "Value" }
+            , { key: "proof", label: "Proof" }
+            , { key: "actions", label: "Actions" }
+            ]
+        , rows: Array.mapWithIndex (factTableRow state isMine) facts
+        , maxHeight: Nothing
+        }
+    ]
+  where
+  isMine = case state.selectedToken of
+    Nothing -> false
+    Just token -> tokenIsMine state token
+
+factTableRow
+  :: forall action m
+   . MonadAff m
+  => AppState
+  -> Boolean
+  -> Int
+  -> FactEntry
+  -> DataTable.TableRow (H.ComponentSlot Slots m action) action
+factTableRow state isMine index fact =
+  { key: show index <> "-" <> fact.key
+  , cells:
+      [ factKeyCell index vm
+      , factValueCell index vm
+      , factProofCell vm
+      , factActionsCell vm
+      ]
+  }
+  where
+  vm = Facts.factRowViewModel state.factsSetVerification isMine fact
+
+factKeyCell
+  :: forall action m
+   . MonadAff m
+  => Int
+  -> Facts.FactRowViewModel
+  -> H.ComponentHTML action Slots m
+factKeyCell index vm =
+  HH.div
+    [ HP.class_ (HH.ClassName "fact-key-cell") ]
+    [ HH.div [ HP.class_ (HH.ClassName "fact-key-label") ] [ HH.text vm.keyLabel ]
+    , case vm.keyJson of
+        Just json -> jsonWell "fact-json-well fact-json-well--key" json
+        Nothing -> hashChip ("fact-key-" <> show index) vm.key
+    ]
+
+factValueCell
+  :: forall action m
+   . MonadAff m
+  => Int
+  -> Facts.FactRowViewModel
+  -> H.ComponentHTML action Slots m
+factValueCell index vm =
+  case vm.valueJson of
+    Just json -> jsonWell "fact-json-well fact-json-well--value" json
+    Nothing -> hashChip ("fact-value-" <> show index) vm.value
+
+factProofCell
+  :: forall action m
+   . Facts.FactRowViewModel
+  -> H.ComponentHTML action Slots m
+factProofCell vm =
+  StatusChip.statusChip
+    { label: vm.proofLabel
+    , tone: proofTone vm.proofTone
+    }
+
+factActionsCell
+  :: forall action m
+   . Facts.FactRowViewModel
+  -> H.ComponentHTML action Slots m
+factActionsCell vm =
+  HH.div
+    [ HP.class_ (HH.ClassName "fact-actions") ]
+    ( [ HH.button
+          [ HP.type_ HP.ButtonButton
+          , HP.classes (map HH.ClassName [ "material-button", "material-button--secondary", "fact-action-button" ])
+          , HP.title "Proof drawer placeholder (#69)"
+          ]
+          [ HH.text "Proof" ]
+      , HH.button
+          [ HP.type_ HP.ButtonButton
+          , HP.classes (map HH.ClassName [ "material-button", "material-button--secondary", "fact-action-button" ])
+          , HP.disabled (not vm.canEdit)
+          , HP.title (fromMaybe "Edit dialog placeholder (#70)" vm.editDisabledReason)
+          ]
+          [ HH.text "Edit" ]
+      ]
+        <> disabledReasonWhen (not vm.canEdit) (fromMaybe "" vm.editDisabledReason)
+    )
+
+jsonWell :: forall action m. String -> String -> H.ComponentHTML action Slots m
+jsonWell classes value =
+  HH.code
+    [ HP.classes (map HH.ClassName (String.split (Pattern " ") classes)) ]
+    [ HH.text value ]
+
+proofTone :: String -> StatusChip.StatusTone
+proofTone = case _ of
+  "ok" -> StatusChip.StatusOk
+  "warn" -> StatusChip.StatusWarn
+  "error" -> StatusChip.StatusError
+  _ -> StatusChip.StatusNeutral
+
+dimmedFactsState :: forall action m. String -> String -> H.ComponentHTML action Slots m
+dimmedFactsState title message =
+  HH.div
+    [ HP.class_ (HH.ClassName "facts-empty") ]
+    [ HH.div [ HP.class_ (HH.ClassName "empty-glyph") ] [ HH.text "{}" ]
+    , HH.h2_ [ HH.text title ]
+    , HH.p_ [ HH.text message ]
+    ]
 
 placeholderPanel :: forall action m. AppTab -> H.ComponentHTML action Slots m
 placeholderPanel tab =
