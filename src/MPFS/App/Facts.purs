@@ -15,6 +15,7 @@ module MPFS.App.Facts
   , phaseLabel
   , requestPhase
   , resetSecondOracle
+  , setVerificationProofEnvelopes
   , setFactLookupKey
   , setFactProofEnvelope
   , startSecondOracleCheck
@@ -28,7 +29,7 @@ import Prelude
 
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import MPFS.App.State (AppState)
+import MPFS.App.State (AppState, ProofDrawer(..))
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
 import MPFS.SecondOracle.Types (SecondOracleVerdict)
@@ -71,6 +72,10 @@ startFactsLoad state =
     , secondOracle = Loading
     , factsSetVerification = VerificationLoading
     , pendingRequestsVerification = VerificationLoading
+    , verificationSnapshotSlot = Nothing
+    , factsSetProofEnvelope = ""
+    , pendingRequestsProofEnvelope = ""
+    , proofDrawer = ProofDrawerClosed
     }
 
 finishFactsLoad
@@ -119,6 +124,18 @@ failFactsLoad message state =
     , secondOracle = Failure message
     , factsSetVerification = VerificationFailed message
     , pendingRequestsVerification = VerificationFailed message
+    , verificationSnapshotSlot = Nothing
+    , factsSetProofEnvelope = ""
+    , pendingRequestsProofEnvelope = ""
+    , proofDrawer = ProofDrawerClosed
+    }
+
+setVerificationProofEnvelopes :: Maybe Int -> String -> String -> AppState -> AppState
+setVerificationProofEnvelopes snapshotSlot factsEnvelope requestsEnvelope state =
+  state
+    { verificationSnapshotSlot = snapshotSlot
+    , factsSetProofEnvelope = factsEnvelope
+    , pendingRequestsProofEnvelope = requestsEnvelope
     }
 
 startFactsSetVerification :: AppState -> AppState

@@ -1,6 +1,7 @@
 module MPFS.App.State
   ( AppState
   , FactLookup
+  , ProofDrawer(..)
   , WalletSession
   , WalletStatus(..)
   , defaultState
@@ -56,6 +57,12 @@ type FactLookup =
   , verification :: VerificationStatus
   }
 
+data ProofDrawer
+  = ProofDrawerClosed
+  | ProofDrawerSet
+  | ProofDrawerFact FactEntry
+  | ProofDrawerRequest PendingRequest
+
 type AppState =
   { activeTab :: AppTab
   , selectedToken :: Maybe TokenId
@@ -71,6 +78,10 @@ type AppState =
   , tokenCompleteness :: VerificationStatus
   , factsSetVerification :: VerificationStatus
   , pendingRequestsVerification :: VerificationStatus
+  , verificationSnapshotSlot :: Maybe Int
+  , factsSetProofEnvelope :: String
+  , pendingRequestsProofEnvelope :: String
+  , proofDrawer :: ProofDrawer
   , requestNowMillis :: Number
   , factLookup :: FactLookup
   , writeStatus :: Write.WriteStatus
@@ -95,6 +106,10 @@ defaultState =
   , tokenCompleteness: VerificationNotAsked
   , factsSetVerification: VerificationNotAsked
   , pendingRequestsVerification: VerificationNotAsked
+  , verificationSnapshotSlot: Nothing
+  , factsSetProofEnvelope: ""
+  , pendingRequestsProofEnvelope: ""
+  , proofDrawer: ProofDrawerClosed
   , requestNowMillis: 0.0
   , factLookup:
       { key: ""

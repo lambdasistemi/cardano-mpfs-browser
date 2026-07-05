@@ -21,7 +21,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import MPFS.App.Facts as Facts
 import MPFS.App.Pending as Pending
-import MPFS.App.State (AppState, WalletStatus(..))
+import MPFS.App.Proof as Proof
+import MPFS.App.State (AppState, ProofDrawer(..), WalletStatus(..))
 import MPFS.App.Tab (AppTab(..), allTabs, tabLabel, tabSlug)
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.App.Write (WriteStatus(..))
@@ -30,8 +31,9 @@ import MPFS.SecondOracle.Types
   ( SecondOracleUnavailable(..)
   , SecondOracleVerdict(..)
   )
-import MPFS.Types (RequestId(..), TokenId(..))
+import MPFS.Types (RequestId(..), TokenId(..), TrustedRoot(..))
 import MPFS.UI.Material.Chip as Chip
+import MPFS.UI.Material.CopyButton as CopyButton
 import MPFS.UI.Material.DataTable as DataTable
 import MPFS.UI.Material.HashChip as HashChip
 import MPFS.UI.Material.Paper as Paper
@@ -41,8 +43,12 @@ import MPFS.Wallet.Cip30 (WalletInfo)
 import Type.Proxy (Proxy(..))
 
 type Slots =
-  ( hashChip :: forall query. H.Slot query Void String
+  ( copyButton :: forall query. H.Slot query Void String
+  , hashChip :: forall query. H.Slot query Void String
   )
+
+_copyButton :: Proxy "copyButton"
+_copyButton = Proxy
 
 _hashChip :: Proxy "hashChip"
 _hashChip = Proxy
@@ -72,6 +78,10 @@ type AppActions action =
   , rejectExpired :: action
   , updateToken :: action
   , endCage :: action
+  , openSetProofDrawer :: action
+  , openFactProofDrawer :: FactEntry -> action
+  , openRequestProofDrawer :: PendingRequest -> action
+  , closeProofDrawer :: action
   , lookupFact :: action
   , selectTab :: AppTab -> action
   , selectToken :: TokenId -> action
@@ -95,6 +105,7 @@ render actions state =
         [ tokenSidebar actions state
         , workspace actions state
         ]
+    , proofDrawer actions state
     ]
 
 appBar
@@ -380,7 +391,7 @@ tokenHeader actions state (TokenId tokenId) =
         ]
     , HH.div
         [ HP.class_ (HH.ClassName "token-header__actions") ]
-        [ verdictPill state
+        [ verdictPill actions state
         , HH.button
             [ HP.type_ HP.ButtonButton
             , HP.class_ (HH.ClassName "secondary-button")
@@ -440,16 +451,17 @@ activePanel
   -> AppState
   -> H.ComponentHTML action Slots m
 activePanel actions state = case state.activeTab of
-  FactsTab -> factsPanel state
+  FactsTab -> factsPanel actions state
   PendingTab -> pendingPanel actions state
-  VerificationTab -> placeholderPanel VerificationTab
+  VerificationTab -> verificationPanel actions state
 
 factsPanel
   :: forall action m
    . MonadAff m
-  => AppState
+  => AppActions action
+  -> AppState
   -> H.ComponentHTML action Slots m
-factsPanel state =
+factsPanel actions state =
   Paper.paper
     [ HH.div
         [ HP.class_ (HH.ClassName "facts-panel__header") ]
@@ -459,7 +471,7 @@ factsPanel state =
             ]
         , HH.div [ HP.class_ (HH.ClassName "facts-panel__count") ] [ HH.text factsCount ]
         ]
-    , factsPanelBody state
+    , factsPanelBody actions state
     ]
   where
   factsCount = case state.facts of
@@ -471,9 +483,10 @@ factsPanel state =
 factsPanelBody
   :: forall action m
    . MonadAff m
-  => AppState
+  => AppActions action
+  -> AppState
   -> H.ComponentHTML action Slots m
-factsPanelBody state = case state.facts of
+factsPanelBody actions state = case state.facts of
   NotAsked ->
     dimmedFactsState
       "No facts loaded"
@@ -493,15 +506,16 @@ factsPanelBody state = case state.facts of
         "No facts"
         "This token's forest is empty. Committed key/value facts will appear here."
     else
-      factsTable state facts
+      factsTable actions state facts
 
 factsTable
   :: forall action m
    . MonadAff m
-  => AppState
+  => AppActions action
+  -> AppState
   -> Array FactEntry
   -> H.ComponentHTML action Slots m
-factsTable state facts =
+factsTable actions state facts =
   HH.div
     [ HP.class_ (HH.ClassName "facts-table-shell") ]
     [ DataTable.dataTable
@@ -511,7 +525,7 @@ factsTable state facts =
             , { key: "proof", label: "Proof" }
             , { key: "actions", label: "Actions" }
             ]
-        , rows: Array.mapWithIndex (factTableRow state isMine) facts
+        , rows: Array.mapWithIndex (factTableRow actions state isMine) facts
         , maxHeight: Nothing
         }
     ]
@@ -523,18 +537,19 @@ factsTable state facts =
 factTableRow
   :: forall action m
    . MonadAff m
-  => AppState
+  => AppActions action
+  -> AppState
   -> Boolean
   -> Int
   -> FactEntry
   -> DataTable.TableRow (H.ComponentSlot Slots m action) action
-factTableRow state isMine index fact =
+factTableRow actions state isMine index fact =
   { key: show index <> "-" <> fact.key
   , cells:
       [ factKeyCell index vm
       , factValueCell index vm
-      , factProofCell vm
-      , factActionsCell vm
+      , factProofCell actions fact vm
+      , factActionsCell actions fact vm
       ]
   }
   where
@@ -568,25 +583,32 @@ factValueCell index vm =
 
 factProofCell
   :: forall action m
-   . Facts.FactRowViewModel
+   . AppActions action
+  -> FactEntry
+  -> Facts.FactRowViewModel
   -> H.ComponentHTML action Slots m
-factProofCell vm =
-  StatusChip.statusChip
+factProofCell actions fact vm =
+  proofChipButton
     { label: vm.proofLabel
     , tone: proofTone vm.proofTone
+    , title: "Open fact proof"
+    , onClick: actions.openFactProofDrawer fact
     }
 
 factActionsCell
   :: forall action m
-   . Facts.FactRowViewModel
+   . AppActions action
+  -> FactEntry
+  -> Facts.FactRowViewModel
   -> H.ComponentHTML action Slots m
-factActionsCell vm =
+factActionsCell actions fact vm =
   HH.div
     [ HP.class_ (HH.ClassName "fact-actions") ]
     ( [ HH.button
           [ HP.type_ HP.ButtonButton
           , HP.classes (map HH.ClassName [ "material-button", "material-button--secondary", "fact-action-button" ])
-          , HP.title "Proof drawer placeholder (#69)"
+          , HP.title "Open fact proof"
+          , HE.onClick \_ -> actions.openFactProofDrawer fact
           ]
           [ HH.text "Proof" ]
       , HH.button
@@ -730,7 +752,7 @@ pendingTableRow actions state tokenState index request =
     , HH.td_ [ HH.span [ HP.class_ (HH.ClassName "pending-age") ] [ HH.text vm.ageLabel ] ]
     , HH.td_ [ HH.span [ HP.class_ (HH.ClassName "pending-fee") ] [ HH.text vm.feeLabel ] ]
     , HH.td_ [ pendingPhaseCell vm ]
-    , HH.td_ [ pendingProofChip vm ]
+    , HH.td_ [ pendingProofChip actions request vm ]
     , HH.td_ [ pendingRetractAction actions vm ]
     ]
   where
@@ -767,7 +789,7 @@ pendingCard actions state tokenState index request =
         ]
     , HH.div
         [ HP.class_ (HH.ClassName "pending-card__actions") ]
-        [ pendingProofChip vm
+        [ pendingProofChip actions request vm
         , pendingRetractAction actions vm
         ]
     ]
@@ -832,14 +854,20 @@ pendingPhaseCell vm =
 
 pendingProofChip
   :: forall action m
-   . Pending.PendingRowViewModel
+   . AppActions action
+  -> PendingRequest
+  -> Pending.PendingRowViewModel
   -> H.ComponentHTML action Slots m
-pendingProofChip vm =
+pendingProofChip actions request vm =
   HH.span
-    [ HP.class_ (HH.ClassName "pending-proof-chip")
-    , HP.title "Proof drawer placeholder (#69)"
+    [ HP.class_ (HH.ClassName "pending-proof-chip") ]
+    [ chipButton
+        { label: vm.proofLabel
+        , tone: vm.proofTone
+        , title: "Open request proof"
+        , onClick: actions.openRequestProofDrawer request
+        }
     ]
-    [ chip vm.proofLabel vm.proofTone ]
 
 pendingRetractAction
   :: forall action m
@@ -887,31 +915,231 @@ chip label tone =
     , leading: Just (HH.span [ HP.class_ (HH.ClassName "pending-chip-dot") ] [])
     }
 
-placeholderPanel :: forall action m. AppTab -> H.ComponentHTML action Slots m
-placeholderPanel tab =
-  HH.section
-    [ HP.class_ (HH.ClassName "placeholder-panel")
-    , HP.attr (HH.AttrName "aria-live") "polite"
+chipButton
+  :: forall action m
+   . { label :: String
+     , tone :: Chip.ChipTone
+     , title :: String
+     , onClick :: action
+     }
+  -> H.ComponentHTML action Slots m
+chipButton input =
+  HH.button
+    [ HP.type_ HP.ButtonButton
+    , HP.classes
+        ( map HH.ClassName
+            [ "material-chip"
+            , Chip.chipToneClass input.tone
+            , "proof-chip-button"
+            ]
+        )
+    , HP.title input.title
+    , HE.onClick \_ -> input.onClick
     ]
-    [ HH.div [ HP.class_ (HH.ClassName "empty-glyph") ] [ HH.text placeholderGlyph ]
-    , HH.h2_ [ HH.text (tabLabel tab) ]
-    , HH.p_ [ HH.text (tabLabel tab <> " content is coming in the next ticket.") ]
+    [ HH.span
+        [ HP.class_ (HH.ClassName "material-chip__leading") ]
+        [ HH.span [ HP.class_ (HH.ClassName "pending-chip-dot") ] [] ]
+    , HH.span_ [ HH.text input.label ]
+    ]
+
+proofChipButton
+  :: forall action m
+   . { label :: String
+     , tone :: StatusChip.StatusTone
+     , title :: String
+     , onClick :: action
+     }
+  -> H.ComponentHTML action Slots m
+proofChipButton input =
+  HH.button
+    [ HP.type_ HP.ButtonButton
+    , HP.classes
+        ( map HH.ClassName
+            [ "status-chip"
+            , StatusChip.statusToneClass input.tone
+            , "proof-chip-button"
+            ]
+        )
+    , HP.title input.title
+    , HE.onClick \_ -> input.onClick
+    ]
+    [ HH.text input.label ]
+
+verificationPanel
+  :: forall action m
+   . MonadAff m
+  => AppActions action
+  -> AppState
+  -> H.ComponentHTML action Slots m
+verificationPanel actions state =
+  HH.section
+    [ HP.classes (map HH.ClassName [ "verification-panel", "verification-panel--" <> overall.tone ]) ]
+    [ HH.div
+        [ HP.class_ (HH.ClassName "verification-card") ]
+        [ HH.div
+            [ HP.class_ (HH.ClassName "verification-card__header") ]
+            [ HH.div
+                [ HP.classes (map HH.ClassName [ "verification-card__icon", "verification-card__icon--" <> overall.tone ]) ]
+                [ HH.text overall.symbol ]
+            , HH.div
+                [ HP.class_ (HH.ClassName "verification-card__title") ]
+                [ HH.h2_ [ HH.text overall.title ]
+                , HH.p_ [ HH.text overall.subtitle ]
+                ]
+            , HH.button
+                [ HP.type_ HP.ButtonButton
+                , HP.classes (map HH.ClassName [ "material-button", "material-button--secondary", "verification-card__proof-button" ])
+                , HE.onClick \_ -> actions.openSetProofDrawer
+                ]
+                [ HH.text "Open proof drawer" ]
+            ]
+        , HH.div
+            [ HP.class_ (HH.ClassName "verification-checks") ]
+            (map verificationCheckRow rows)
+        ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "verification-meta-grid") ]
+        [ verificationMetaText "Snapshot slot" (snapshotSlotLabel state) "on-chain reference point"
+        , verificationMetaHash "Trusted root" "verification-trusted-root" (trustedRootValue state) "what proofs are checked against"
+        , verificationMetaText "Verifier ops" verifierOpsLabel "operations executed locally"
+        ]
     ]
   where
-  placeholderGlyph = case tab of
-    FactsTab -> "{}"
-    PendingTab -> "..."
-    VerificationTab -> "OK"
+  rows = verificationRows state
 
-verdictPill :: forall action m. AppState -> H.ComponentHTML action Slots m
-verdictPill state =
+  overall = overallVerificationVerdict rows
+
+  verifierOpsLabel =
+    String.joinWith ", " (map _.verifierOp rows)
+
+verificationCheckRow
+  :: forall action m
+   . Proof.ProofCheckRow
+  -> H.ComponentHTML action Slots m
+verificationCheckRow row =
+  HH.div
+    [ HP.class_ (HH.ClassName "verification-check-row") ]
+    [ HH.div
+        [ HP.classes (map HH.ClassName [ "verification-check-row__mark", "verification-check-row__mark--" <> row.tone ]) ]
+        [ HH.text (if row.tone == "pass" then "OK" else "!") ]
+    , HH.div
+        [ HP.class_ (HH.ClassName "verification-check-row__body") ]
+        ( [ HH.div [ HP.class_ (HH.ClassName "verification-check-row__name") ] [ HH.text row.name ]
+          , HH.div [ HP.class_ (HH.ClassName "verification-check-row__detail") ] [ HH.text row.detail ]
+          , HH.div [ HP.class_ (HH.ClassName "verification-check-row__op") ] [ HH.text ("op " <> row.verifierOp) ]
+          ]
+            <> case row.reason of
+              Nothing -> []
+              Just reason ->
+                [ HH.div [ HP.class_ (HH.ClassName "verification-check-row__reason") ] [ HH.text reason ] ]
+        )
+    , HH.span
+        [ HP.classes (map HH.ClassName [ "verification-badge", "verification-badge--" <> row.tone ]) ]
+        [ HH.text row.badgeLabel ]
+    ]
+
+verificationMetaText
+  :: forall action m
+   . String
+  -> String
+  -> String
+  -> H.ComponentHTML action Slots m
+verificationMetaText label value helper =
+  HH.div
+    [ HP.class_ (HH.ClassName "verification-meta-card") ]
+    [ HH.div [ HP.class_ (HH.ClassName "verification-meta-card__label") ] [ HH.text label ]
+    , HH.div [ HP.class_ (HH.ClassName "verification-meta-card__value") ] [ HH.text value ]
+    , HH.div [ HP.class_ (HH.ClassName "verification-meta-card__helper") ] [ HH.text helper ]
+    ]
+
+verificationMetaHash
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> Maybe String
+  -> String
+  -> H.ComponentHTML action Slots m
+verificationMetaHash label slotId value helper =
+  HH.div
+    [ HP.class_ (HH.ClassName "verification-meta-card") ]
+    [ HH.div [ HP.class_ (HH.ClassName "verification-meta-card__label") ] [ HH.text label ]
+    , maybeHashInline slotId value
+    , HH.div [ HP.class_ (HH.ClassName "verification-meta-card__helper") ] [ HH.text helper ]
+    ]
+
+verificationRows :: AppState -> Array Proof.ProofCheckRow
+verificationRows state =
+  [ Proof.proofCheckRow
+      { kind: Proof.CheckSecondOracle
+      , status: secondOracleVerificationStatus state.secondOracle
+      , checkedCount: 1
+      , totalCount: 1
+      }
+  , Proof.proofCheckRow
+      { kind: Proof.CheckFactsSet
+      , status: state.factsSetVerification
+      , checkedCount: factsCount
+      , totalCount: factsCount
+      }
+  , Proof.proofCheckRow
+      { kind: Proof.CheckPerFactInclusion
+      , status: state.factsSetVerification
+      , checkedCount: if state.factsSetVerification == VerificationVerified then factsCount else 0
+      , totalCount: factsCount
+      }
+  ]
+  where
+  factsCount = case state.facts of
+    Success facts -> Array.length facts
+    _ -> 0
+
+secondOracleVerificationStatus :: Remote SecondOracleVerdict -> VerificationStatus
+secondOracleVerificationStatus = case _ of
+  NotAsked -> VerificationNotAsked
+  Loading -> VerificationLoading
+  Failure message -> VerificationFailed message
+  Success (SecondOracleVerified _) -> VerificationVerified
+  Success verdict -> VerificationFailed (secondOracleVerdictLabel verdict)
+
+overallVerificationVerdict
+  :: Array Proof.ProofCheckRow
+  -> { title :: String, subtitle :: String, tone :: String, symbol :: String }
+overallVerificationVerdict rows =
+  if Array.any (_.tone >>> (_ == "reject")) rows then
+    { title: "Verification rejected"
+    , subtitle: "At least one proof check failed. Inspect the reason before trusting this snapshot."
+    , tone: "reject"
+    , symbol: "!"
+    }
+  else if Array.all (_.tone >>> (_ == "pass")) rows then
+    { title: "Verified independently"
+    , subtitle: "Second-oracle, completeness, and inclusion checks passed in this browser."
+    , tone: "pass"
+    , symbol: "OK"
+    }
+  else
+    { title: "Verification pending"
+    , subtitle: "Load details to verify the snapshot and its proof envelopes."
+    , tone: "pending"
+    , symbol: "..."
+    }
+
+verdictPill
+  :: forall action m
+   . AppActions action
+  -> AppState
+  -> H.ComponentHTML action Slots m
+verdictPill actions state =
   HH.button
     [ HP.type_ HP.ButtonButton
     , HP.classes (map HH.ClassName [ "verdict-pill", verdictClass ])
+    , HP.title "Open facts-set proof"
+    , HE.onClick \_ -> actions.openSetProofDrawer
     ]
     [ HH.span [ HP.class_ (HH.ClassName "status-dot") ] []
     , HH.span_ [ HH.text verdictText ]
-    , HH.span [ HP.class_ (HH.ClassName "verdict-pill__hint") ] [ HH.text "Proof later" ]
+    , HH.span [ HP.class_ (HH.ClassName "verdict-pill__hint") ] [ HH.text "View proof" ]
     ]
   where
   verdictClass = case state.factsSetVerification of
@@ -925,6 +1153,238 @@ verdictPill state =
     VerificationFailed _ -> "Rejected"
     VerificationLoading -> "Verifying"
     VerificationNotAsked -> "Verification pending"
+
+type ProofDrawerViewModel =
+  { slotId :: String
+  , title :: String
+  , subtitle :: String
+  , verdictLabel :: String
+  , tone :: String
+  , snapshot :: String
+  , root :: Maybe String
+  , verifierOp :: String
+  , reason :: Maybe String
+  , note :: Maybe String
+  , raw :: String
+  }
+
+proofDrawer
+  :: forall action m
+   . MonadAff m
+  => AppActions action
+  -> AppState
+  -> H.ComponentHTML action Slots m
+proofDrawer actions state = case state.proofDrawer of
+  ProofDrawerClosed ->
+    HH.text ""
+  target ->
+    let
+      vm = proofDrawerViewModel state target
+    in
+      HH.div
+        [ HP.class_ (HH.ClassName "proof-drawer-layer") ]
+        [ HH.div
+            [ HP.class_ (HH.ClassName "proof-drawer-scrim")
+            , HE.onClick \_ -> actions.closeProofDrawer
+            ]
+            []
+        , HH.aside
+            [ HP.class_ (HH.ClassName "proof-drawer")
+            , HP.attr (HH.AttrName "role") "dialog"
+            , HP.attr (HH.AttrName "aria-modal") "true"
+            , HP.attr (HH.AttrName "aria-label") vm.title
+            ]
+            [ HH.header
+                [ HP.class_ (HH.ClassName "proof-drawer__header") ]
+                [ HH.div
+                    [ HP.class_ (HH.ClassName "proof-drawer__heading") ]
+                    [ HH.div [ HP.class_ (HH.ClassName "proof-drawer__eyebrow") ] [ HH.text "Proof inspector" ]
+                    , HH.h2_ [ HH.text vm.title ]
+                    , HH.p_ [ HH.text vm.subtitle ]
+                    ]
+                , HH.button
+                    [ HP.type_ HP.ButtonButton
+                    , HP.class_ (HH.ClassName "proof-drawer__close")
+                    , HP.title "Close proof drawer"
+                    , HE.onClick \_ -> actions.closeProofDrawer
+                    ]
+                    [ HH.text "x" ]
+                ]
+            , HH.div
+                [ HP.class_ (HH.ClassName "proof-drawer__body") ]
+                ( [ HH.div
+                      [ HP.classes (map HH.ClassName [ "proof-drawer__verdict", "proof-drawer__verdict--" <> vm.tone ]) ]
+                      [ HH.span [ HP.class_ (HH.ClassName "status-dot") ] []
+                      , HH.text vm.verdictLabel
+                      ]
+                  ]
+                    <> maybeBlock "proof-drawer__reason" vm.reason
+                    <> maybeBlock "proof-drawer__note" vm.note
+                    <>
+                      [ proofDrawerMeta vm
+                      , HH.div
+                          [ HP.class_ (HH.ClassName "proof-drawer__raw") ]
+                          [ HH.div
+                              [ HP.class_ (HH.ClassName "proof-drawer__raw-header") ]
+                              [ HH.div [ HP.class_ (HH.ClassName "proof-drawer__raw-title") ] [ HH.text "Raw proof" ]
+                              , copyButton ("proof-drawer-copy-" <> vm.slotId) vm.raw "Copy raw proof"
+                              ]
+                          , HH.pre_ [ HH.text vm.raw ]
+                          ]
+                      ]
+                )
+            ]
+        ]
+
+proofDrawerMeta
+  :: forall action m
+   . MonadAff m
+  => ProofDrawerViewModel
+  -> H.ComponentHTML action Slots m
+proofDrawerMeta vm =
+  HH.div
+    [ HP.class_ (HH.ClassName "proof-drawer__meta") ]
+    [ proofDrawerMetaText "Snapshot slot" vm.snapshot
+    , HH.div
+        [ HP.class_ (HH.ClassName "proof-drawer__meta-row") ]
+        [ HH.span_ [ HH.text "Trusted root" ]
+        , case vm.root of
+            Just root ->
+              hashChip ("proof-drawer-root-" <> vm.slotId) root
+            Nothing ->
+              HH.span [ HP.class_ (HH.ClassName "muted-value") ] [ HH.text "Unavailable" ]
+        ]
+    , proofDrawerMetaText "Verifier op" vm.verifierOp
+    ]
+
+proofDrawerMetaText
+  :: forall action m
+   . String
+  -> String
+  -> H.ComponentHTML action Slots m
+proofDrawerMetaText label value =
+  HH.div
+    [ HP.class_ (HH.ClassName "proof-drawer__meta-row") ]
+    [ HH.span_ [ HH.text label ]
+    , HH.code_ [ HH.text value ]
+    ]
+
+proofDrawerViewModel :: AppState -> ProofDrawer -> ProofDrawerViewModel
+proofDrawerViewModel state target = case target of
+  ProofDrawerClosed ->
+    setProofDrawerViewModel state
+  ProofDrawerSet ->
+    setProofDrawerViewModel state
+  ProofDrawerFact fact ->
+    factProofDrawerViewModel state fact
+  ProofDrawerRequest request ->
+    requestProofDrawerViewModel state request
+
+setProofDrawerViewModel :: AppState -> ProofDrawerViewModel
+setProofDrawerViewModel state =
+  { slotId: "set"
+  , title: "Facts-set verification"
+  , subtitle: selectedTokenLabel state
+  , verdictLabel: drawerVerdictLabel status
+  , tone: Proof.proofStatusTone status
+  , snapshot: snapshotSlotLabel state
+  , root: trustedRootValue state
+  , verifierOp: "verify_facts"
+  , reason: Proof.proofStatusReason status
+  , note:
+      if state.factsSetProofEnvelope == "" then
+        Just "No raw facts-set proof envelope is loaded yet."
+      else
+        Nothing
+  , raw: proofEnvelopeOrFallback "verify_facts" state.factsSetProofEnvelope
+  }
+  where
+  status = overallVerificationStatus state
+
+factProofDrawerViewModel :: AppState -> FactEntry -> ProofDrawerViewModel
+factProofDrawerViewModel state fact =
+  { slotId: "fact-" <> fact.key
+  , title: "Fact inclusion proof"
+  , subtitle: fromMaybe fact.key (Facts.factRowViewModel state.factsSetVerification false fact).keyJson
+  , verdictLabel: drawerVerdictLabel state.factsSetVerification
+  , tone: Proof.proofStatusTone state.factsSetVerification
+  , snapshot: snapshotSlotLabel state
+  , root: trustedRootValue state
+  , verifierOp: "verify_fact_inclusion"
+  , reason: Proof.proofStatusReason state.factsSetVerification
+  , note:
+      Just "Per-fact proof data is not separately retained in current state; showing the facts-set verification envelope."
+  , raw: proofEnvelopeOrFallback "verify_fact_inclusion" state.factsSetProofEnvelope
+  }
+
+requestProofDrawerViewModel :: AppState -> PendingRequest -> ProofDrawerViewModel
+requestProofDrawerViewModel state request =
+  { slotId: "request-" <> request.request_id
+  , title: "Request proof"
+  , subtitle: request.operation <> " " <> request.key
+  , verdictLabel: drawerVerdictLabel state.pendingRequestsVerification
+  , tone: Proof.proofStatusTone state.pendingRequestsVerification
+  , snapshot: snapshotSlotLabel state
+  , root: trustedRootValue state
+  , verifierOp: "verify_snapshot"
+  , reason: Proof.proofStatusReason state.pendingRequestsVerification
+  , note:
+      Just "Request-specific proof data is not separately retained in current state; showing the pending-request snapshot envelope."
+  , raw: proofEnvelopeOrFallback "verify_snapshot" state.pendingRequestsProofEnvelope
+  }
+
+overallVerificationStatus :: AppState -> VerificationStatus
+overallVerificationStatus state =
+  let
+    rows = verificationRows state
+  in
+    case Array.find (\row -> row.tone == "reject") rows of
+      Just row -> VerificationFailed (fromMaybe "Proof check failed" row.reason)
+      Nothing ->
+        if Array.all (\row -> row.tone == "pass") rows then
+          VerificationVerified
+        else
+          VerificationLoading
+
+drawerVerdictLabel :: VerificationStatus -> String
+drawerVerdictLabel = case _ of
+  VerificationVerified -> "Verified"
+  VerificationFailed _ -> "Rejected"
+  VerificationLoading -> "Pending"
+  VerificationNotAsked -> "Not checked"
+
+snapshotSlotLabel :: AppState -> String
+snapshotSlotLabel state = case state.verificationSnapshotSlot of
+  Just slot -> show slot
+  Nothing -> "Unavailable"
+
+trustedRootValue :: AppState -> Maybe String
+trustedRootValue state = case state.trustedRoot of
+  Success (TrustedRoot root) -> Just root
+  _ -> Nothing
+
+selectedTokenLabel :: AppState -> String
+selectedTokenLabel state = case state.selectedToken of
+  Just (TokenId tokenId) -> tokenId
+  Nothing -> "No token selected"
+
+proofEnvelopeOrFallback :: String -> String -> String
+proofEnvelopeOrFallback op envelope =
+  if envelope == "" then
+    "{\n  \"op\": \""
+      <> op
+      <> "\",\n  \"status\": \"unavailable\",\n  \"note\": \"Proof envelope is not loaded in the current browser state.\"\n}"
+  else
+    envelope
+
+maybeBlock
+  :: forall action m
+   . String
+  -> Maybe String
+  -> Array (H.ComponentHTML action Slots m)
+maybeBlock _ Nothing = []
+maybeBlock className (Just message) =
+  [ HH.div [ HP.class_ (HH.ClassName className) ] [ HH.text message ] ]
 
 summaryHashCell
   :: forall action m
@@ -972,6 +1432,20 @@ hashChip slotId value =
     slotId
     HashChip.component
     { value, flank: 6 }
+
+copyButton
+  :: forall action m
+   . MonadAff m
+  => String
+  -> String
+  -> String
+  -> H.ComponentHTML action Slots m
+copyButton slotId value label =
+  HH.slot_
+    _copyButton
+    slotId
+    CopyButton.component
+    { value, label }
 
 mineBadgeIf :: forall action m. Boolean -> H.ComponentHTML action Slots m
 mineBadgeIf false = HH.text ""
