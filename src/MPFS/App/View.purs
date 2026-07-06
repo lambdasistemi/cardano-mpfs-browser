@@ -5,6 +5,8 @@ module MPFS.App.View
   , secondOracleStatusLabel
   , tokenCompletenessStatusLabel
   , verificationStatusLabel
+  , WriteStatusTone(..)
+  , writeStatusViewModel
   ) where
 
 import Prelude
@@ -32,6 +34,7 @@ import MPFS.SecondOracle.Types
   , SecondOracleVerdict(..)
   )
 import MPFS.Types (RequestId(..), TokenId(..), TrustedRoot(..))
+import MPFS.UI.Material.Alert as Alert
 import MPFS.UI.Material.Chip as Chip
 import MPFS.UI.Material.CopyButton as CopyButton
 import MPFS.UI.Material.DataTable as DataTable
@@ -88,6 +91,26 @@ type AppActions action =
   , updateFactLookupKey :: String -> action
   , updateFactProofEnvelope :: String -> action
   , verifyFactEnvelope :: action
+  , dismissWrite :: action
+  }
+
+data WriteStatusTone
+  = WriteStatusInfo
+  | WriteStatusSuccess
+  | WriteStatusError
+
+derive instance Eq WriteStatusTone
+
+instance Show WriteStatusTone where
+  show = case _ of
+    WriteStatusInfo -> "WriteStatusInfo"
+    WriteStatusSuccess -> "WriteStatusSuccess"
+    WriteStatusError -> "WriteStatusError"
+
+type WriteStatusViewModel =
+  { tone :: WriteStatusTone
+  , label :: String
+  , detail :: String
   }
 
 render
@@ -335,15 +358,172 @@ workspace
 workspace actions state =
   HH.main
     [ HP.class_ (HH.ClassName "workspace") ]
-    case state.selectedToken of
-      Nothing ->
-        [ emptyWorkspace actions state ]
-      Just token ->
-        [ tokenHeader actions state token
-        , summaryStrip state
-        , workspaceTabs actions state
-        , activePanel actions state
+    ( writeStatusBanner actions state.writeStatus
+        <> case state.selectedToken of
+          Nothing ->
+            [ emptyWorkspace actions state ]
+          Just token ->
+            [ tokenHeader actions state token
+            , summaryStrip state
+            , workspaceTabs actions state
+            , activePanel actions state
+            ]
+    )
+
+writeStatusViewModel :: WriteStatus -> Maybe WriteStatusViewModel
+writeStatusViewModel = case _ of
+  WriteIdle ->
+    Nothing
+  WriteBuilding ->
+    Just
+      { tone: WriteStatusInfo
+      , label: "Building"
+      , detail: "Building transaction…"
+      }
+  WriteBuilt _ ->
+    Just
+      { tone: WriteStatusInfo
+      , label: "Built"
+      , detail: "Transaction built."
+      }
+  WriteSigning _ ->
+    Just
+      { tone: WriteStatusInfo
+      , label: "Signing"
+      , detail: "Waiting for wallet signature…"
+      }
+  WriteAssembling _ _ ->
+    Just
+      { tone: WriteStatusInfo
+      , label: "Assembling"
+      , detail: "Assembling signed transaction…"
+      }
+  WriteSubmitting _ _ _ ->
+    Just
+      { tone: WriteStatusInfo
+      , label: "Submitting"
+      , detail: "Submitting to the network…"
+      }
+  WriteFailed message ->
+    Just
+      { tone: WriteStatusError
+      , label: "Failed"
+      , detail: message
+      }
+  WriteSubmitted _ _ _ txId ->
+    Just
+      { tone: WriteStatusSuccess
+      , label: "Submitted"
+      , detail: txId
+      }
+
+writeStatusBanner
+  :: forall action m
+   . MonadAff m
+  => AppActions action
+  -> WriteStatus
+  -> Array (H.ComponentHTML action Slots m)
+writeStatusBanner actions status = case writeStatusViewModel status of
+  Nothing ->
+    []
+  Just vm ->
+    [ HH.section
+        [ HP.classes
+            (map HH.ClassName [ "write-status-banner", writeStatusAlertClass vm.tone ])
+        , HP.attr (HH.AttrName "role") (writeStatusRole vm.tone)
+        , HP.attr (HH.AttrName "aria-live") "polite"
         ]
+        [ HH.div [ HP.class_ (HH.ClassName "write-status-banner__leading") ]
+            (writeStatusSpinner status <> [ StatusChip.statusChip { label: vm.label, tone: writeStatusChipTone vm.tone } ])
+        , HH.div
+            [ HP.class_ (HH.ClassName "write-status-banner__body") ]
+            [ HH.div
+                [ HP.class_ (HH.ClassName "write-status-banner__detail") ]
+                (writeStatusDetail status vm)
+            ]
+        , HH.div
+            [ HP.class_ (HH.ClassName "write-status-banner__actions") ]
+            (writeStatusActions actions status)
+        ]
+    ]
+
+writeStatusDetail
+  :: forall action m
+   . MonadAff m
+  => WriteStatus
+  -> WriteStatusViewModel
+  -> Array (H.ComponentHTML action Slots m)
+writeStatusDetail status vm = case status of
+  WriteSubmitted _ _ _ txId ->
+    [ HH.span_ [ HH.text "Transaction submitted" ]
+    , hashChip "write-status-txid" txId
+    , HH.a
+        [ HP.attr (HH.AttrName "href") ("https://preprod.cexplorer.io/tx/" <> txId)
+        , HP.attr (HH.AttrName "target") "_blank"
+        , HP.attr (HH.AttrName "rel") "noreferrer noopener"
+        , HP.class_ (HH.ClassName "write-status-banner__link")
+        ]
+        [ HH.text "Open in explorer" ]
+    ]
+  _ ->
+    [ HH.text vm.detail ]
+
+writeStatusActions
+  :: forall action m
+   . AppActions action
+  -> WriteStatus
+  -> Array (H.ComponentHTML action Slots m)
+writeStatusActions actions = case _ of
+  WriteFailed _ ->
+    [ dismissWriteButton actions ]
+  WriteSubmitted _ _ _ _ ->
+    [ dismissWriteButton actions ]
+  _ ->
+    []
+
+dismissWriteButton
+  :: forall action m
+   . AppActions action
+  -> H.ComponentHTML action Slots m
+dismissWriteButton actions =
+  HH.button
+    [ HP.type_ HP.ButtonButton
+    , HP.class_ (HH.ClassName "write-status-banner__dismiss")
+    , HP.title "Dismiss write status"
+    , HP.attr (HH.AttrName "aria-label") "Dismiss write status"
+    , HE.onClick \_ -> actions.dismissWrite
+    ]
+    [ HH.text "×" ]
+
+writeStatusSpinner :: forall action m. WriteStatus -> Array (H.ComponentHTML action Slots m)
+writeStatusSpinner status =
+  if writeBusy status then
+    [ HH.span
+        [ HP.class_ (HH.ClassName "write-status-banner__spinner")
+        , HP.attr (HH.AttrName "aria-hidden") "true"
+        ]
+        []
+    ]
+  else
+    []
+
+writeStatusAlertClass :: WriteStatusTone -> String
+writeStatusAlertClass tone =
+  Alert.alertToneClass case tone of
+    WriteStatusInfo -> Alert.AlertInfo
+    WriteStatusSuccess -> Alert.AlertSuccess
+    WriteStatusError -> Alert.AlertError
+
+writeStatusChipTone :: WriteStatusTone -> StatusChip.StatusTone
+writeStatusChipTone = case _ of
+  WriteStatusInfo -> StatusChip.StatusNeutral
+  WriteStatusSuccess -> StatusChip.StatusOk
+  WriteStatusError -> StatusChip.StatusError
+
+writeStatusRole :: WriteStatusTone -> String
+writeStatusRole = case _ of
+  WriteStatusError -> "alert"
+  _ -> "status"
 
 emptyWorkspace
   :: forall action m

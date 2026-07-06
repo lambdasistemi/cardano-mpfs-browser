@@ -16,3 +16,4 @@
 2026-07-05T06:45:14+01:00 T65-S1: RED targets app shell workspace tab model and token-select tab reset. Presentational pixel/layout changes will be covered by navigator review and gate.
 - T68-S1: Pending Retract buttons call the existing `RetractRequest` action when gated enabled; review/sign UX remains #70. Pending proof chips are placeholders for the #69 proof drawer.
 - T69-S1: Verification drawer opens per set, fact, and pending request. The current app state retains facts-set and pending-request verification envelopes, but not separate per-fact/request raw proof payloads; scoped fact/request drawers therefore show the relevant set/snapshot envelope with an in-drawer fallback note.
+- T70-S1: Write pipeline status is now rendered at the top of the workspace: busy states show progress, failures show the exact red error, submitted transactions show a copyable txid plus preprod explorer link, and terminal states can be dismissed back to idle.

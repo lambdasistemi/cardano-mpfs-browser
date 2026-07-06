@@ -89,6 +89,7 @@ data Action
   | LookupFact
   | UpdateFactProofEnvelope String
   | VerifyFactEnvelope
+  | DismissWrite
 
 type Input =
   { baseUrl :: String
@@ -134,6 +135,7 @@ component =
           , lookupFact: LookupFact
           , updateFactProofEnvelope: UpdateFactProofEnvelope
           , verifyFactEnvelope: VerifyFactEnvelope
+          , dismissWrite: DismissWrite
           }
     , eval:
         H.mkEval H.defaultEval
@@ -549,6 +551,9 @@ handleAction = case _ of
       result <- liftAff
         (Verification.verifyFactEnvelope state.factLookup.proofEnvelope)
       H.modify_ (Verification.finishVerification result)
+
+  DismissWrite ->
+    H.modify_ _ { writeStatus = WriteIdle }
 
 fromClientTokenIds :: Array ClientTypes.TokenId -> Array TokenId
 fromClientTokenIds = map TokenId
