@@ -1,6 +1,7 @@
 module MPFS.App.State
   ( AppState
   , FactLookup
+  , ProofDrawer(..)
   , WalletSession
   , WalletStatus(..)
   , defaultState
@@ -56,9 +57,17 @@ type FactLookup =
   , verification :: VerificationStatus
   }
 
+data ProofDrawer
+  = ProofDrawerClosed
+  | ProofDrawerSet
+  | ProofDrawerFact FactEntry
+  | ProofDrawerRequest PendingRequest
+
 type AppState =
   { activeTab :: AppTab
   , selectedToken :: Maybe TokenId
+  , tokenSearch :: String
+  , tokenMineOnly :: Boolean
   , baseUrl :: String
   , tokens :: Remote (Array TokenId)
   , facts :: Remote (Array FactEntry)
@@ -69,6 +78,10 @@ type AppState =
   , tokenCompleteness :: VerificationStatus
   , factsSetVerification :: VerificationStatus
   , pendingRequestsVerification :: VerificationStatus
+  , verificationSnapshotSlot :: Maybe Int
+  , factsSetProofEnvelope :: String
+  , pendingRequestsProofEnvelope :: String
+  , proofDrawer :: ProofDrawer
   , requestNowMillis :: Number
   , factLookup :: FactLookup
   , writeStatus :: Write.WriteStatus
@@ -81,6 +94,8 @@ defaultState :: AppState
 defaultState =
   { activeTab: defaultTab
   , selectedToken: Nothing
+  , tokenSearch: ""
+  , tokenMineOnly: false
   , baseUrl: "/api"
   , tokens: NotAsked
   , facts: NotAsked
@@ -91,6 +106,10 @@ defaultState =
   , tokenCompleteness: VerificationNotAsked
   , factsSetVerification: VerificationNotAsked
   , pendingRequestsVerification: VerificationNotAsked
+  , verificationSnapshotSlot: Nothing
+  , factsSetProofEnvelope: ""
+  , pendingRequestsProofEnvelope: ""
+  , proofDrawer: ProofDrawerClosed
   , requestNowMillis: 0.0
   , factLookup:
       { key: ""

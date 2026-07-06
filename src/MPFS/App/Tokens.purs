@@ -8,6 +8,7 @@ module MPFS.App.Tokens
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
+import MPFS.App.Tab (AppTab(..))
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.App.State (AppState)
 import MPFS.Types (TokenId)
@@ -48,4 +49,4 @@ failTokenLoad message state =
     }
 
 selectToken :: TokenId -> AppState -> AppState
-selectToken token state = state { selectedToken = Just token }
+selectToken token state = state { selectedToken = Just token, activeTab = FactsTab }

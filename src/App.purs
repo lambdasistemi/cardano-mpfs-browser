@@ -2,6 +2,7 @@ module App where
 
 import Prelude
 
+import Data.Argonaut.Core (Json)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -16,7 +17,13 @@ import Halogen as H
 import Halogen.Subscription as HS
 import MPFS.App.Config as AppConfig
 import MPFS.App.Facts as Facts
-import MPFS.App.State (AppState, WalletStatus(..), defaultState, selectTab)
+import MPFS.App.State
+  ( AppState
+  , ProofDrawer(..)
+  , WalletStatus(..)
+  , defaultState
+  , selectTab
+  )
 import MPFS.App.Tab (AppTab)
 import MPFS.App.Tokens as Tokens
 import MPFS.App.Verification as Verification
@@ -54,6 +61,8 @@ data Action
   | RefreshWallet
   | DisconnectWallet
   | LoadTokens
+  | UpdateTokenSearch String
+  | ToggleMineOnly
   | SelectToken TokenId
   | LoadFacts
   | RegisterToken
@@ -72,6 +81,10 @@ data Action
   | RejectExpired
   | UpdateToken
   | EndCage
+  | OpenSetProofDrawer
+  | OpenFactProofDrawer ClientTypes.FactEntry
+  | OpenRequestProofDrawer ClientTypes.PendingRequest
+  | CloseProofDrawer
   | UpdateFactLookupKey String
   | LookupFact
   | UpdateFactProofEnvelope String
@@ -93,6 +106,8 @@ component =
           , refreshWallet: RefreshWallet
           , disconnectWallet: DisconnectWallet
           , loadTokens: LoadTokens
+          , updateTokenSearch: UpdateTokenSearch
+          , toggleMineOnly: ToggleMineOnly
           , selectToken: SelectToken
           , loadFacts: LoadFacts
           , registerToken: RegisterToken
@@ -111,6 +126,10 @@ component =
           , rejectExpired: RejectExpired
           , updateToken: UpdateToken
           , endCage: EndCage
+          , openSetProofDrawer: OpenSetProofDrawer
+          , openFactProofDrawer: OpenFactProofDrawer
+          , openRequestProofDrawer: OpenRequestProofDrawer
+          , closeProofDrawer: CloseProofDrawer
           , updateFactLookupKey: UpdateFactLookupKey
           , lookupFact: LookupFact
           , updateFactProofEnvelope: UpdateFactProofEnvelope
@@ -238,10 +257,20 @@ handleAction = case _ of
               (fromClientTokenIds tokenResponse.tokenIds)
           )
 
+  UpdateTokenSearch search ->
+    H.modify_ _ { tokenSearch = search }
+
+  ToggleMineOnly ->
+    H.modify_ \state -> state { tokenMineOnly = not state.tokenMineOnly }
+
   SelectToken token ->
     H.modify_ \state ->
       Facts.resetSecondOracle
-        ((Tokens.selectToken token state) { selectedRequestIds = [] })
+        ( (Tokens.selectToken token state)
+            { selectedRequestIds = []
+            , proofDrawer = ProofDrawerClosed
+            }
+        )
 
   LoadFacts -> do
     state <- H.get
@@ -317,6 +346,12 @@ handleAction = case _ of
             H.modify_
               ( Facts.finishPendingRequestsVerification
                   pendingRequestsVerificationResult
+              )
+            H.modify_
+              ( Facts.setVerificationProofEnvelopes
+                  (Just factsResponse.snapshot.chainpoint.slot)
+                  (verificationEnvelopeFrom factsRootResult factsResponse.raw)
+                  (requestsEnvelopeFrom requestsRootResult requestsResponse.raw clientToken)
               )
             runSecondOracleCheck tokenState.root
           Left error, _, _ ->
@@ -440,6 +475,18 @@ handleAction = case _ of
               token
           )
 
+  OpenSetProofDrawer ->
+    H.modify_ _ { proofDrawer = ProofDrawerSet }
+
+  OpenFactProofDrawer fact ->
+    H.modify_ _ { proofDrawer = ProofDrawerFact fact }
+
+  OpenRequestProofDrawer request ->
+    H.modify_ _ { proofDrawer = ProofDrawerRequest request }
+
+  CloseProofDrawer ->
+    H.modify_ _ { proofDrawer = ProofDrawerClosed }
+
   UpdateFactLookupKey key ->
     H.modify_ (Facts.setFactLookupKey key)
 
@@ -505,6 +552,24 @@ handleAction = case _ of
 
 fromClientTokenIds :: Array ClientTypes.TokenId -> Array TokenId
 fromClientTokenIds = map TokenId
+
+verificationEnvelopeFrom :: Either String String -> Json -> String
+verificationEnvelopeFrom rootResult facts =
+  case rootResult of
+    Left _ -> ""
+    Right trustedRoot ->
+      Verification.buildFactsVerificationEnvelope trustedRoot facts
+
+requestsEnvelopeFrom :: Either String String -> Json -> String -> String
+requestsEnvelopeFrom rootResult facts tokenId =
+  case rootResult of
+    Left _ -> ""
+    Right trustedRoot ->
+      Verification.buildRequestsVerificationEnvelope
+        trustedRoot
+        facts
+        AppConfig.defaultCageConfig
+        tokenId
 
 fromAppTokenId :: TokenId -> ClientTypes.TokenId
 fromAppTokenId (TokenId tokenId) = tokenId

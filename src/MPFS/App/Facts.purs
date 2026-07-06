@@ -1,5 +1,7 @@
 module MPFS.App.Facts
-  ( RequestPhase(..)
+  ( FactRowViewModel
+  , RequestPhase(..)
+  , factRowViewModel
   , failSecondOracleCheck
   , failFactLookup
   , failFactsLoad
@@ -13,6 +15,7 @@ module MPFS.App.Facts
   , phaseLabel
   , requestPhase
   , resetSecondOracle
+  , setVerificationProofEnvelopes
   , setFactLookupKey
   , setFactProofEnvelope
   , startSecondOracleCheck
@@ -25,12 +28,26 @@ module MPFS.App.Facts
 import Prelude
 
 import Data.Either (Either(..))
-import MPFS.App.State (AppState)
+import Data.Maybe (Maybe(..))
+import MPFS.App.State (AppState, ProofDrawer(..))
 import MPFS.App.Verification (VerificationStatus(..))
 import MPFS.Client.Types (FactEntry, PendingRequest, TokenState)
 import MPFS.SecondOracle.Types (SecondOracleVerdict)
 import MPFS.Types (TrustedRoot)
+import MPFS.UI.Material.Text (decodeHexUtf8)
 import MPFS.UI.Remote (Remote(..))
+
+type FactRowViewModel =
+  { key :: String
+  , value :: String
+  , keyJson :: Maybe String
+  , valueJson :: Maybe String
+  , keyLabel :: String
+  , proofLabel :: String
+  , proofTone :: String
+  , canEdit :: Boolean
+  , editDisabledReason :: Maybe String
+  }
 
 data RequestPhase
   = PhaseProcessable
@@ -55,6 +72,10 @@ startFactsLoad state =
     , secondOracle = Loading
     , factsSetVerification = VerificationLoading
     , pendingRequestsVerification = VerificationLoading
+    , verificationSnapshotSlot = Nothing
+    , factsSetProofEnvelope = ""
+    , pendingRequestsProofEnvelope = ""
+    , proofDrawer = ProofDrawerClosed
     }
 
 finishFactsLoad
@@ -103,6 +124,18 @@ failFactsLoad message state =
     , secondOracle = Failure message
     , factsSetVerification = VerificationFailed message
     , pendingRequestsVerification = VerificationFailed message
+    , verificationSnapshotSlot = Nothing
+    , factsSetProofEnvelope = ""
+    , pendingRequestsProofEnvelope = ""
+    , proofDrawer = ProofDrawerClosed
+    }
+
+setVerificationProofEnvelopes :: Maybe Int -> String -> String -> AppState -> AppState
+setVerificationProofEnvelopes snapshotSlot factsEnvelope requestsEnvelope state =
+  state
+    { verificationSnapshotSlot = snapshotSlot
+    , factsSetProofEnvelope = factsEnvelope
+    , pendingRequestsProofEnvelope = requestsEnvelope
     }
 
 startFactsSetVerification :: AppState -> AppState
@@ -162,6 +195,41 @@ phaseLabel = case _ of
   PhaseProcessable -> "processable"
   PhaseRetractable -> "retractable"
   PhaseExpired -> "expired"
+
+factRowViewModel :: VerificationStatus -> Boolean -> FactEntry -> FactRowViewModel
+factRowViewModel proofStatus isMine fact =
+  { key: fact.key
+  , value: fact.value
+  , keyJson
+  , valueJson
+  , keyLabel: if keyJson == Nothing then "Raw key" else "Decoded key"
+  , proofLabel: factProofLabel proofStatus
+  , proofTone: factProofTone proofStatus
+  , canEdit: isMine
+  , editDisabledReason:
+      if isMine then
+        Nothing
+      else
+        Just "Only the token owner may edit this fact."
+  }
+  where
+  keyJson = decodeHexUtf8 fact.key
+
+  valueJson = decodeHexUtf8 fact.value
+
+factProofLabel :: VerificationStatus -> String
+factProofLabel = case _ of
+  VerificationVerified -> "Included"
+  VerificationLoading -> "Pending"
+  VerificationFailed _ -> "Rejected"
+  VerificationNotAsked -> "Not checked"
+
+factProofTone :: VerificationStatus -> String
+factProofTone = case _ of
+  VerificationVerified -> "ok"
+  VerificationLoading -> "warn"
+  VerificationFailed _ -> "error"
+  VerificationNotAsked -> "neutral"
 
 setFactLookupKey :: String -> AppState -> AppState
 setFactLookupKey key state =

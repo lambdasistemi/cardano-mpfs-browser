@@ -13,40 +13,36 @@ import Data.Array as Array
 import Data.Maybe (Maybe)
 
 data AppTab
-  = ConnectTab
-  | TokensTab
-  | FactsTab
-  | EndTab
+  = FactsTab
+  | PendingTab
+  | VerificationTab
 
 derive instance Eq AppTab
 derive instance Ord AppTab
 
 instance Show AppTab where
   show = case _ of
-    ConnectTab -> "ConnectTab"
-    TokensTab -> "TokensTab"
     FactsTab -> "FactsTab"
-    EndTab -> "EndTab"
+    PendingTab -> "PendingTab"
+    VerificationTab -> "VerificationTab"
 
 allTabs :: Array AppTab
-allTabs = [ ConnectTab, TokensTab, FactsTab, EndTab ]
+allTabs = [ FactsTab, PendingTab, VerificationTab ]
 
 defaultTab :: AppTab
-defaultTab = ConnectTab
+defaultTab = FactsTab
 
 tabLabel :: AppTab -> String
 tabLabel = case _ of
-  ConnectTab -> "Connect"
-  TokensTab -> "Tokens"
   FactsTab -> "Facts"
-  EndTab -> "End"
+  PendingTab -> "Pending"
+  VerificationTab -> "Verification"
 
 tabSlug :: AppTab -> String
 tabSlug = case _ of
-  ConnectTab -> "connect"
-  TokensTab -> "tokens"
   FactsTab -> "facts"
-  EndTab -> "end"
+  PendingTab -> "pending"
+  VerificationTab -> "verification"
 
 tabFromSlug :: String -> Maybe AppTab
 tabFromSlug slug =
