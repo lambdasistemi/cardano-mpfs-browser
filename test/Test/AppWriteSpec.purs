@@ -6,6 +6,7 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import MPFS.Client (decodeRequestsBody)
 import MPFS.App.State (WalletStatus(..), defaultState)
+import MPFS.App.View (WriteStatusTone(..), writeStatusViewModel)
 import MPFS.App.Write
   ( RefreshTarget(..)
   , WriteOperation(..)
@@ -24,6 +25,67 @@ import Test.Spec.Assertions (fail, shouldEqual)
 
 spec :: Spec Unit
 spec = describe "MPFS App Write" do
+  it "maps write status to banner view models" do
+    writeStatusViewModel WriteIdle
+      `shouldEqual`
+        Nothing
+
+    writeStatusViewModel WriteBuilding
+      `shouldEqual`
+        Just
+          { tone: WriteStatusInfo
+          , label: "Building"
+          , detail: "Building transaction…"
+          }
+
+    writeStatusViewModel (WriteBuilt (UnsignedTxCbor "unsigned-cbor"))
+      `shouldEqual`
+        Just
+          { tone: WriteStatusInfo
+          , label: "Built"
+          , detail: "Transaction built."
+          }
+
+    writeStatusViewModel (WriteSigning (UnsignedTxCbor "unsigned-cbor"))
+      `shouldEqual`
+        Just
+          { tone: WriteStatusInfo
+          , label: "Signing"
+          , detail: "Waiting for wallet signature…"
+          }
+
+    writeStatusViewModel (WriteAssembling (UnsignedTxCbor "unsigned-cbor") "witness-cbor")
+      `shouldEqual`
+        Just
+          { tone: WriteStatusInfo
+          , label: "Assembling"
+          , detail: "Assembling signed transaction…"
+          }
+
+    writeStatusViewModel (WriteSubmitting (UnsignedTxCbor "unsigned-cbor") "witness-cbor" "signed-cbor")
+      `shouldEqual`
+        Just
+          { tone: WriteStatusInfo
+          , label: "Submitting"
+          , detail: "Submitting to the network…"
+          }
+
+    writeStatusViewModel (WriteFailed "Wallet rejected signing")
+      `shouldEqual`
+        Just
+          { tone: WriteStatusError
+          , label: "Failed"
+          , detail: "Wallet rejected signing"
+          }
+
+    writeStatusViewModel (WriteSubmitted (UnsignedTxCbor "unsigned-cbor") "witness-cbor" "signed-cbor" "tx-id")
+      `shouldEqual`
+        Just
+          { tone: WriteStatusSuccess
+          , label: "Submitted"
+          , detail: "tx-id"
+          }
+
   it "tracks write operation status through successful submit details" do
     let
       submitted =
