@@ -1,5 +1,10 @@
 # WIP
 
+- 2026-07-08T11:05:41+01:00 T91-S1: brief received; scope is boot/register only, with RED pure walletUtxoAddresses tests required before getUtxos wiring.
+- 2026-07-08T11:06:20+01:00 T91-S1: RED confirmed with `nix develop --quiet -c spago test`; compile fails because `walletUtxoAddresses` is not exported from `MPFS.App.Wallet`.
+- 2026-07-08T11:08:52+01:00 T91-S1: GREEN confirmed with `nix develop --quiet -c just test`; 144/144 tests passed including base, enterprise, dedupe, map-output, and boot body shape fixtures.
+- 2026-07-08T11:09:47+01:00 T91-S1: restored root `gate.sh` because HEAD lacked it; `./gate.sh` passed lint, build, bundle, cage-config verification, and 144/144 tests.
+- 2026-07-08T11:10:03+01:00 T91-S1: SHA milestone is the final HEAD commit for this slice; exact hash is reported after commit because a commit cannot contain its own final hash.
 - T60-S1: renamed runtime browser global to `window.MPFS_BASE_URL` so the cage-config verifier's `__MPFS_*__` placeholder scan remains reserved for cage substitutions.
 - T60-S2: RED intentionally skipped because this slice is CI YAML and has no unit harness; local proof is YAML parsing plus the unchanged project gate, while live preview publication is checked post-push.
 - T60-S2: `.github/workflows/preview.yml` parses locally with `yq '.' .github/workflows/preview.yml`.

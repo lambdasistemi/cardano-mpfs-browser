@@ -25,6 +25,7 @@ import Test.MPFS.SecondOracleClientSpec as SecondOracleClientSpec
 import Test.MPFS.SecondOracleSpec as SecondOracleSpec
 import Test.MPFS.TxCborSpec as TxCborSpec
 import Test.MPFS.VerifyE2ESpec as VerifyE2ESpec
+import Test.MPFS.WalletUtxoSpec as WalletUtxoSpec
 import Test.MPFS.WalletSpec as WalletSpec
 import Test.SecondOracleAppSpec as SecondOracleAppSpec
 import Test.TokensSpec as TokensSpec
@@ -52,6 +53,7 @@ main = do
       SecondOracleSpec.spec
       TokensSpec.spec
       TxCborSpec.spec
+      WalletUtxoSpec.spec
       WalletSpec.spec
       ClientSpec.spec mUrl
       case mUrl of

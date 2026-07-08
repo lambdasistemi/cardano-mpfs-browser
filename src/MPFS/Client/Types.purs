@@ -103,7 +103,7 @@ type FactResponse =
   }
 
 -- | @POST /tx/boot@ body.
-type BootBody = { address :: Hex }
+type BootBody = { addresses :: Array Hex }
 
 -- | @POST /tx/request/insert@ body.
 type InsertBody =

@@ -16,11 +16,12 @@ import MPFS.Types
   , Value
   , WalletAddr
   )
+import MPFS.Client.Types (Hex)
 
 type CageResult = Aff (Either CageError UnsignedTxCbor)
 
 type CageHelpers =
-  { registerToken :: WalletAddr -> CageConfig -> CageResult
+  { registerToken :: Array Hex -> CageConfig -> CageResult
   , insertFact :: WalletAddr -> CageConfig -> TokenId -> Key -> Value -> CageResult
   , updateFact ::
       WalletAddr -> CageConfig -> TokenId -> Key -> Value -> Value -> CageResult

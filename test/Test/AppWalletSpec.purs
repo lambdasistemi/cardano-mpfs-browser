@@ -58,6 +58,7 @@ spec = describe "MPFS App Wallet" do
     state.walletSession.selectedAddress `shouldEqual` Just "addr_used"
     state.walletSession.changeAddress `shouldEqual` Just "addr_change"
     state.walletSession.usedAddresses `shouldEqual` [ "addr_used", "addr_second" ]
+    state.walletSession.walletUtxoAddresses `shouldEqual` [ "addr_coin" ]
     state.walletSession.lovelace `shouldEqual` Just "1234567"
     state.walletSession.feedback `shouldEqual` Just "Connected to Lace."
 
@@ -70,6 +71,7 @@ spec = describe "MPFS App Wallet" do
 
     state.walletSession.selectedAddress `shouldEqual` Just "addr_change"
     state.walletSession.usedAddresses `shouldEqual` []
+    state.walletSession.walletUtxoAddresses `shouldEqual` [ "addr_coin" ]
 
   it "accepts preprod/testnet and rejects unsupported network ids" do
     let
@@ -116,6 +118,7 @@ connectedDetails :: ConnectedWalletDetails
 connectedDetails =
   { networkId: 0
   , usedAddresses: [ "addr_used", "addr_second" ]
+  , walletUtxoAddresses: [ "addr_coin" ]
   , changeAddress: "addr_change"
   , lovelace: Just "1234567"
   }

@@ -4,6 +4,7 @@
 module MPFS.Tx.Cbor
   ( decodeTx
   , decodeTxOutput
+  , decodeUtxoOutputAddress
   , decodePlutusData
   , RawTx
   , TxInput
@@ -630,3 +631,12 @@ decodeTxOutput bytes = ST.run do
   offset <- Ref.new 0
   let r = { bytes, offset }
   readOutput r
+
+decodeUtxoOutputAddress :: Uint8Array -> String
+decodeUtxoOutputAddress bytes = ST.run do
+  offset <- Ref.new 0
+  let r = { bytes, offset }
+  _ <- readArrayLen r
+  skip r
+  output <- readOutput r
+  pure output.address

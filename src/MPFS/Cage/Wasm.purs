@@ -24,6 +24,7 @@ import MPFS.Cage.Reactor
   , runCageReactor
   )
 import MPFS.Client (Client, ClientError)
+import MPFS.Client.Types (Hex)
 import MPFS.Types
   ( CageConfig
   , CageError(..)
@@ -50,9 +51,9 @@ wasmCageHelpers client =
   , updateToken: updateToken client
   }
 
-registerToken :: Client -> WalletAddr -> CageConfig -> CageResult
-registerToken client (WalletAddr address) cfg =
-  cageTxWithFacts client cfg "boot" (client.postBootFacts { address })
+registerToken :: Client -> Array Hex -> CageConfig -> CageResult
+registerToken client addresses cfg =
+  cageTxWithFacts client cfg "boot" (client.postBootFacts { addresses })
 
 insertFact :: Client -> WalletAddr -> CageConfig -> TokenId -> Key -> Value -> CageResult
 insertFact client (WalletAddr address) cfg (TokenId token) (Key key) (Value value) =

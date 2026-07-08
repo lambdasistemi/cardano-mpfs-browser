@@ -44,6 +44,7 @@ type WalletSession =
   , selectedAddress :: Maybe String
   , changeAddress :: Maybe String
   , usedAddresses :: Array String
+  , walletUtxoAddresses :: Array String
   , lovelace :: Maybe String
   , feedback :: Maybe String
   , api :: Maybe WalletApi
@@ -130,6 +131,7 @@ defaultState =
       , selectedAddress: Nothing
       , changeAddress: Nothing
       , usedAddresses: []
+      , walletUtxoAddresses: []
       , lovelace: Nothing
       , feedback: Nothing
       , api: Nothing

@@ -362,8 +362,12 @@ handleAction = case _ of
             H.modify_ (Facts.failFactsLoad (show error))
 
   RegisterToken ->
-    runWriteOperation Write.WriteRegisterToken \client address cfg _state ->
-      Right $ (CageWasm.wasmCageHelpers client).registerToken address cfg
+    runWriteOperation Write.WriteRegisterToken \client _address cfg _state ->
+      case _state.walletSession.walletUtxoAddresses of
+        [] ->
+          Left "Connected wallet has no UTxOs to register from."
+        addresses ->
+          Right $ (CageWasm.wasmCageHelpers client).registerToken addresses cfg
 
   UpdateInsertKey key ->
     H.modify_ (Write.setInsertKey key)
@@ -633,11 +637,13 @@ readWalletDetails :: Cip30.WalletApi -> Aff Wallet.ConnectedWalletDetails
 readWalletDetails api = do
   networkId <- Cip30.getNetworkId api
   usedAddresses <- Cip30.getUsedAddresses api
+  utxos <- Cip30.getUtxos api
   changeAddress <- Cip30.getChangeAddress api
   balance <- Cip30.getBalance api
   pure
     { networkId
     , usedAddresses
+    , walletUtxoAddresses: Wallet.walletUtxoAddresses utxos
     , changeAddress
     , lovelace: Cip30.lovelaceOfBalance balance
     }
