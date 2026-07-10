@@ -19,6 +19,7 @@ export const _enable = (key) => () => window.cardano[key].enable();
 
 export const _getNetworkId = (api) => () => api.getNetworkId();
 export const _getUsedAddresses = (api) => () => api.getUsedAddresses();
+export const _getUtxos = (api) => () => getAllUtxos(api);
 export const _getChangeAddress = (api) => () => api.getChangeAddress();
 export const _getBalance = (api) => () => api.getBalance();
 
@@ -110,6 +111,23 @@ function trySubscribeTarget(target, eventName, handler) {
     return null;
   }
   return null;
+}
+
+async function getAllUtxos(api) {
+  if (!api || typeof api.getUtxos !== "function") return [];
+
+  const limit = 100;
+  const firstPage = await api.getUtxos(undefined, { page: 0, limit });
+  const first = Array.isArray(firstPage) ? firstPage : [];
+  if (first.length < limit) return first;
+
+  const out = first.slice();
+  for (let page = 1; ; page++) {
+    const nextPage = await api.getUtxos(undefined, { page, limit });
+    const next = Array.isArray(nextPage) ? nextPage : [];
+    out.push(...next);
+    if (next.length < limit) return out;
+  }
 }
 
 function hexToBytes(hex) {

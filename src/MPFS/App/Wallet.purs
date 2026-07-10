@@ -10,6 +10,7 @@ module MPFS.App.Wallet
   , startWalletConnection
   , startWalletDiscovery
   , unsupportedNetworkMessage
+  , walletUtxoAddresses
   ) where
 
 import Prelude
@@ -19,11 +20,14 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Halogen.Query.HalogenM (SubscriptionId)
 import MPFS.App.State (AppState, WalletStatus(..))
 import MPFS.UI.Remote (Remote(..))
+import MPFS.Tx.Cbor (decodeUtxoOutputAddress)
+import MPFS.Tx.Cbor.Bytes (hexToBytes)
 import MPFS.Wallet.Cip30 (WalletApi, WalletInfo)
 
 type ConnectedWalletDetails =
   { networkId :: Int
   , usedAddresses :: Array String
+  , walletUtxoAddresses :: Array String
   , changeAddress :: String
   , lovelace :: Maybe String
   }
@@ -71,6 +75,7 @@ startWalletConnection info state =
           , selectedAddress = Nothing
           , changeAddress = Nothing
           , usedAddresses = []
+          , walletUtxoAddresses = []
           , lovelace = Nothing
           , feedback = Nothing
           , api = Nothing
@@ -93,6 +98,7 @@ finishWalletConnection info details state =
             , selectedAddress = Just (selectedAddress details)
             , changeAddress = Just details.changeAddress
             , usedAddresses = details.usedAddresses
+            , walletUtxoAddresses = details.walletUtxoAddresses
             , lovelace = details.lovelace
             , feedback = Just ("Connected to " <> info.name <> ".")
             }
@@ -119,6 +125,7 @@ failWalletConnection message state =
           , selectedAddress = Nothing
           , changeAddress = Nothing
           , usedAddresses = []
+          , walletUtxoAddresses = []
           , lovelace = Nothing
           , feedback = Just message
           , api = Nothing
@@ -150,6 +157,7 @@ disconnectWallet state =
           , selectedAddress = Nothing
           , changeAddress = Nothing
           , usedAddresses = []
+          , walletUtxoAddresses = []
           , lovelace = Nothing
           , feedback = Just "Wallet disconnected."
           , api = Nothing
@@ -160,6 +168,12 @@ disconnectWallet state =
 selectedAddress :: ConnectedWalletDetails -> String
 selectedAddress details =
   fromMaybe details.changeAddress (Array.head details.usedAddresses)
+
+walletUtxoAddresses :: Array String -> Array String
+walletUtxoAddresses =
+  Array.nub
+    <<< Array.filter (_ /= "")
+    <<< map (decodeUtxoOutputAddress <<< hexToBytes)
 
 preprodNetworkLabel :: String
 preprodNetworkLabel = "preprod/testnet"

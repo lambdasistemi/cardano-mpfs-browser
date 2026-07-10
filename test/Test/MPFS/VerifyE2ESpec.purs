@@ -29,7 +29,7 @@ spec = describe "MPFS Verify E2E" do
     url <- baseUrl
     let client = mkClient url
     facts <- expectRight "POST /facts/boot" $
-      client.postBootFacts { address: devnetGenesisAddress }
+      client.postBootFacts { addresses: [ devnetGenesisAddress ] }
     trustedRoot <- expectRight "GET /status trusted root" client.getTrustedRoot
 
     honest <- verifyEnvelope (buildBootEnvelope trustedRoot facts)

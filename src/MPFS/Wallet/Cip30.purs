@@ -6,6 +6,7 @@ module MPFS.Wallet.Cip30
   , enable
   , getNetworkId
   , getUsedAddresses
+  , getUtxos
   , getChangeAddress
   , getBalance
   , subscribeAccountChanges
@@ -32,6 +33,7 @@ foreign import _availableWallets :: Effect (Array WalletInfo)
 foreign import _enable :: String -> Effect (Promise WalletApi)
 foreign import _getNetworkId :: WalletApi -> Effect (Promise Int)
 foreign import _getUsedAddresses :: WalletApi -> Effect (Promise (Array String))
+foreign import _getUtxos :: WalletApi -> Effect (Promise (Array String))
 foreign import _getChangeAddress :: WalletApi -> Effect (Promise String)
 foreign import _getBalance :: WalletApi -> Effect (Promise String)
 foreign import _subscribeAccountChanges :: WalletApi -> Effect Unit -> Effect (Effect Unit)
@@ -51,6 +53,9 @@ getNetworkId api = toAffE (_getNetworkId api)
 
 getUsedAddresses :: WalletApi -> Aff (Array String)
 getUsedAddresses api = toAffE (_getUsedAddresses api)
+
+getUtxos :: WalletApi -> Aff (Array String)
+getUtxos api = toAffE (_getUtxos api)
 
 getChangeAddress :: WalletApi -> Aff String
 getChangeAddress api = toAffE (_getChangeAddress api)
